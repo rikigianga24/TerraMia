@@ -5,21 +5,21 @@ extends RefCounted
 ## da tools/build_theme.gd): qui si scelgono solo le varianti.
 
 const ICONS := {
-	"coin": preload("res://assets/graphics/icons/coin.svg"),
-	"lira": preload("res://assets/graphics/icons/lira.svg"),
-	"drop": preload("res://assets/graphics/icons/drop.svg"),
-	"espresso": preload("res://assets/graphics/icons/espresso.svg"),
-	"fertilizer": preload("res://assets/graphics/icons/fertilizer.svg"),
-	"star": preload("res://assets/graphics/icons/star.svg"),
-	"hand": preload("res://assets/graphics/icons/hand.svg"),
-	"hoe": preload("res://assets/graphics/icons/hoe.svg"),
-	"watering_can": preload("res://assets/graphics/icons/watering_can.svg"),
-	"seeds": preload("res://assets/graphics/icons/seeds.svg"),
-	"shop": preload("res://assets/graphics/icons/shop.svg"),
-	"farm": preload("res://assets/graphics/icons/farm.svg"),
-	"borgo": preload("res://assets/graphics/icons/borgo.svg"),
-	"close": preload("res://assets/graphics/icons/close.svg"),
-	"lock": preload("res://assets/graphics/icons/lock.svg"),
+	"coin": preload("res://assets/graphics/icons/coin.png"),
+	"lira": preload("res://assets/graphics/icons/lira.png"),
+	"drop": preload("res://assets/graphics/icons/drop.png"),
+	"espresso": preload("res://assets/graphics/icons/espresso.png"),
+	"fertilizer": preload("res://assets/graphics/icons/fertilizer.png"),
+	"star": preload("res://assets/graphics/icons/star.png"),
+	"hand": preload("res://assets/graphics/icons/hand.png"),
+	"hoe": preload("res://assets/graphics/icons/hoe.png"),
+	"watering_can": preload("res://assets/graphics/icons/watering_can.png"),
+	"seeds": preload("res://assets/graphics/icons/seeds.png"),
+	"shop": preload("res://assets/graphics/icons/shop.png"),
+	"farm": preload("res://assets/graphics/icons/farm.png"),
+	"borgo": preload("res://assets/graphics/icons/borgo.png"),
+	"close": preload("res://assets/graphics/icons/close.png"),
+	"lock": preload("res://assets/graphics/icons/lock.png"),
 }
 
 static var _crop_icons: Dictionary = {}

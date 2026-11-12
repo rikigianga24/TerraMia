@@ -47,7 +47,8 @@ scripts/autoload/
   save_manager.gd        salvataggio locale in user:// e progresso offline
 tests/test_game_state.gd test delle regole di gioco (senza grafica)
 tools/build_theme.gd     genera il tema dell'interfaccia
-assets/graphics/         SVG: blocchi di terreno (tiles/) e icone (icons/)
+assets/graphics/         blocchi di terreno SVG (tiles/), icone PNG (icons/) ritagliate
+                         da source/icons_sheet.webp con tools/extract_icons.py
 assets/theme/            tema dell'interfaccia (generato, non modificarlo a mano)
 assets/fonts/            Fredoka (SIL Open Font License, vedi OFL.txt)
 docs/design.md           documento di design
