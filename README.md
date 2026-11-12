@@ -38,13 +38,18 @@ scenes/
   main.tscn / main.gd    scena principale, HUD, navigazione Fattoria ↔ Borgo
   farm/farm.gd           griglia isometrica 6×6, piantare e raccogliere
   borgo/borgo.gd         bacheca degli ordini e mulino
+  farm/backdrop.gd       sfondo: cielo, colline, nuvole, il paese
   ui/shop.gd             negozio di semi e concime
+scripts/ui/ui_kit.gd     pezzi d'interfaccia riusati (pastiglie, icone, pulsanti)
 scripts/autoload/
   game_data.gd           dati statici: colture, edifici, livelli (dal documento)
   game_state.gd          stato della partita e regole (monete, XP, ordini, restauri)
   save_manager.gd        salvataggio locale in user:// e progresso offline
 tests/test_game_state.gd test delle regole di gioco (senza grafica)
-assets/                  grafica, audio e font (per ora vuoti)
+tools/build_theme.gd     genera il tema dell'interfaccia
+assets/graphics/         SVG: blocchi di terreno (tiles/) e icone (icons/)
+assets/theme/            tema dell'interfaccia (generato, non modificarlo a mano)
+assets/fonts/            Fredoka (SIL Open Font License, vedi OFL.txt)
 docs/design.md           documento di design
 ```
 
@@ -56,8 +61,13 @@ docs/design.md           documento di design
 - **Dati in un posto solo.** Tempi, livelli, prezzi, zappa, gocce e concime
   stanno in `game_data.gd`; il bilanciamento si fa lì. I prezzi delle piante
   vengono da una formula descritta in testa al file.
-- **Grafica provvisoria.** La fattoria si disegna con `_draw()` e il borgo è
-  fatto di controlli standard, finché non arrivano gli SVG.
+- **Grafica 2.5D.** Vista isometrica con blocchi di terra in rilievo (SVG),
+  ombre e piante disegnate da codice in `farm.gd`. Le icone sono SVG in
+  `assets/graphics/icons`.
+- **Tema dell'interfaccia.** È l'equivalente del CSS: colori, bordi, font e
+  varianti dei controlli (`PrimaryButton`, `ToolButton`, `Card`, `Pill`...) stanno
+  in `tools/build_theme.gd`. Dopo una modifica si rigenera con
+  `godot --headless --path . -s tools/build_theme.gd`.
 - **Salvataggi locali** in `user://terramia_save.json` (su web finisce in
   IndexedDB). Supabase arriva solo con gli acquisti in-app.
 

@@ -11,3 +11,7 @@
 - Indentazione con tab nei file `.gd`.
 - Dopo ogni modifica alle regole lancia i test: `godot --headless --path . -s tests/test_game_state.gd`.
   Negli script lanciati con `-s` gli autoload non si vedono per nome: si prendono con `root.get_node("GameState")`.
+- Stili dell'interfaccia solo nel tema: si modifica `tools/build_theme.gd` e si rigenera
+  `assets/theme/terramia_theme.tres`; nei controlli si usa `theme_type_variation`, non override sparsi.
+- Per controllare la grafica: avvio con `xvfb-run -a godot --path . --rendering-driver opengl3`
+  e screenshot con `get_viewport().get_texture().get_image().save_png(...)`.

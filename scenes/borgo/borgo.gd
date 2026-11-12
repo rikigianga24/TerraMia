@@ -1,7 +1,7 @@
 class_name Borgo
 extends Control
 ## Il borgo: bacheca degli ordini in piazza e il mulino da restaurare.
-## Interfaccia costruita da codice finché non arriva la grafica del borgo.
+## Lo sfondo (il paese sulla collina) lo disegna Backdrop; qui ci sono le schede.
 
 var _orders_box: VBoxContainer
 var _mill_box: VBoxContainer
@@ -11,27 +11,24 @@ var _mill_ready_shown := false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-
-	var bg := ColorRect.new()
-	bg.color = Color("e9d8b4")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 24)
-	margin.add_theme_constant_override("margin_top", 72)
-	margin.add_theme_constant_override("margin_bottom", 96)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_theme_constant_override("margin_left", 210)
+	margin.add_theme_constant_override("margin_right", 210)
+	margin.add_theme_constant_override("margin_top", 84)
+	margin.add_theme_constant_override("margin_bottom", 24)
 	add_child(margin)
 
 	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 24)
+	columns.add_theme_constant_override("separation", 20)
+	columns.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(columns)
 
-	_orders_box = _make_panel(columns, "Bacheca degli ordini")
-	_mill_box = _make_panel(columns, "Mulino")
+	_orders_box = _make_panel(columns, "Bacheca degli ordini", "Gli abitanti chiedono i tuoi prodotti", "borgo", 1.3)
+	_mill_box = _make_panel(columns, "Il mulino", "Gino, il mugnaio", "farm", 1.0)
 
 	GameState.changed.connect(_refresh)
 	_refresh()
@@ -49,23 +46,27 @@ func _process(_delta: float) -> void:
 		_refresh_mill()
 
 
-func _make_panel(parent: Control, title: String) -> VBoxContainer:
+func _make_panel(parent: Control, title: String, subtitle: String, icon_name: String, ratio: float) -> VBoxContainer:
 	var panel := PanelContainer.new()
+	panel.theme_type_variation = "Sheet"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_stretch_ratio = ratio
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	parent.add_child(panel)
-	var inner := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		inner.add_theme_constant_override("margin_" + side, 16)
-	panel.add_child(inner)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
-	inner.add_child(col)
-	var label := Label.new()
-	label.text = title
-	label.add_theme_font_size_override("font_size", 24)
-	col.add_child(label)
+	col.add_theme_constant_override("separation", 12)
+	panel.add_child(col)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	col.add_child(head)
+	head.add_child(UiKit.texture_rect(UiKit.icon(icon_name), 44))
+	var titles := VBoxContainer.new()
+	titles.add_theme_constant_override("separation", -4)
+	head.add_child(titles)
+	titles.add_child(UiKit.label(title, "Title"))
+	titles.add_child(UiKit.label(subtitle, "Small"))
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 8)
+	body.add_theme_constant_override("separation", 10)
 	col.add_child(body)
 	return body
 
@@ -82,24 +83,52 @@ func _refresh() -> void:
 	_refresh_mill()
 
 
+## Un biglietto per ordine: chi lo chiede, cosa serve (con quanto ne hai), premio.
 func _refresh_orders() -> void:
 	_clear(_orders_box)
 	for i in GameState.orders.size():
 		var order: Dictionary = GameState.orders[i]
+		var card := PanelContainer.new()
+		card.theme_type_variation = "Card"
+		_orders_box.add_child(card)
 		var row := HBoxContainer.new()
-		var parts: PackedStringArray = []
+		row.add_theme_constant_override("separation", 12)
+		card.add_child(row)
+
+		var info := VBoxContainer.new()
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info.add_theme_constant_override("separation", 4)
+		row.add_child(info)
+		info.add_child(UiKit.label("%s chiede:" % order["giver"], "Heading"))
+		var items := HBoxContainer.new()
+		items.add_theme_constant_override("separation", 12)
+		info.add_child(items)
 		for product in order["items"]:
-			parts.append("%d %s (%d)" % [int(order["items"][product]), product, GameState.item_count(product)])
-		var label := Label.new()
-		label.text = "%s chiede: %s\n→ %d monete, %d esp." % [order["giver"], ", ".join(parts), int(order["coins"]), int(order["xp"])]
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(label)
-		var button := Button.new()
-		button.text = "Consegna"
+			var need := int(order["items"][product])
+			var have := GameState.item_count(product)
+			var item := HBoxContainer.new()
+			item.add_theme_constant_override("separation", 4)
+			var crop_id := GameData.crop_for_product(product)
+			var tex: Texture2D = UiKit.crop_icon(crop_id) if crop_id != "" else UiKit.icon("seeds")
+			item.add_child(UiKit.texture_rect(tex, 24))
+			var l := UiKit.label("%s %d/%d" % [product, mini(have, need), need])
+			l.add_theme_color_override("font_color", Color("5e7a28") if have >= need else Color("a94c2a"))
+			item.add_child(l)
+			items.add_child(item)
+
+		var reward := VBoxContainer.new()
+		reward.add_theme_constant_override("separation", 2)
+		row.add_child(reward)
+		var coin_row := HBoxContainer.new()
+		coin_row.add_child(UiKit.texture_rect(UiKit.icon("coin"), 22))
+		coin_row.add_child(UiKit.label(str(int(order["coins"])), "Heading"))
+		coin_row.add_child(UiKit.texture_rect(UiKit.icon("star"), 22))
+		coin_row.add_child(UiKit.label(str(int(order["xp"])), "Heading"))
+		reward.add_child(coin_row)
+		var button := UiKit.button("Consegna", "PrimaryButton")
 		button.disabled = not GameState.can_fulfill(i)
 		button.pressed.connect(GameState.fulfill_order.bind(i))
-		row.add_child(button)
-		_orders_box.add_child(row)
+		reward.add_child(button)
 
 
 func _refresh_mill() -> void:
@@ -107,39 +136,48 @@ func _refresh_mill() -> void:
 	_mill_bar = null
 	_mill_ready_shown = false
 	var b := GameData.building("mulino")
-	var label := Label.new()
+	var label := UiKit.label("")
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(220, 0)
 	_mill_box.add_child(label)
 
 	if not GameState.is_restored("mulino"):
 		var cost: Dictionary = b["restore"]
-		label.text = "Un rudere coperto d'edera. Restauralo per riportare %s.\nServono: %d monete e %d grano (hai %d).\nSi sblocca al livello %d." % [
-			b["resident"], int(cost["coins"]), int(cost["items"]["grano"]),
-			GameState.item_count("grano"), int(b["level"])]
-		var restore_btn := Button.new()
-		restore_btn.text = "Restaura"
+		label.text = "Un rudere coperto d'edera. Restauralo per riportare in paese %s." % b["resident"]
+		var need := HBoxContainer.new()
+		need.add_theme_constant_override("separation", 6)
+		need.add_child(UiKit.texture_rect(UiKit.icon("coin"), 24))
+		need.add_child(UiKit.label("%d" % int(cost["coins"]), "Heading"))
+		need.add_child(UiKit.texture_rect(UiKit.crop_icon("grano"), 24))
+		need.add_child(UiKit.label("grano %d/%d" % [mini(GameState.item_count("grano"), int(cost["items"]["grano"])), int(cost["items"]["grano"])], "Heading"))
+		_mill_box.add_child(need)
+		if GameState.level < int(b["level"]):
+			_mill_box.add_child(UiKit.label("Si sblocca al livello %d." % int(b["level"]), "Small"))
+		var restore_btn := UiKit.button("Restaura il mulino", "PrimaryButton")
 		restore_btn.disabled = not GameState.can_restore("mulino")
 		restore_btn.pressed.connect(GameState.restore.bind("mulino"))
 		_mill_box.add_child(restore_btn)
 		return
 
 	var recipe: Dictionary = b["recipe"]
-	label.text = "%s: \"%s\"\n%d grano → %d farina in %d min. Farina in magazzino: %d." % [
-		b["resident"], b["lines"][1], int(recipe["in"]["grano"]), int(recipe["out"]["farina"]),
-		int(recipe["time"]) / 60, GameState.item_count("farina")]
+	label.text = "\"%s\"\n%d grano → %d farina in %d minuti." % [
+		b["lines"][1], int(recipe["in"]["grano"]), int(recipe["out"]["farina"]), int(recipe["time"]) / 60]
+	_mill_box.add_child(UiKit.label("Farina in magazzino: %d" % GameState.item_count("farina"), "Heading"))
 
-	var button := Button.new()
+	var button: Button
 	if GameState.productions.has("mulino"):
 		var progress := GameState.production_progress("mulino")
 		_mill_bar = ProgressBar.new()
+		_mill_bar.custom_minimum_size = Vector2(0, 16)
+		_mill_bar.show_percentage = false
 		_mill_bar.value = progress * 100.0
 		_mill_box.add_child(_mill_bar)
 		_mill_ready_shown = progress >= 1.0
-		button.text = "Ritira la farina" if progress >= 1.0 else "Macina in corso..."
+		button = UiKit.button("Ritira la farina" if progress >= 1.0 else "Macina in corso...", "PrimaryButton")
 		button.disabled = progress < 1.0
 		button.pressed.connect(GameState.collect_production.bind("mulino"))
 	else:
-		button.text = "Macina"
+		button = UiKit.button("Macina", "PrimaryButton")
 		button.disabled = not GameState.has_items(recipe["in"])
 		button.pressed.connect(GameState.start_production.bind("mulino"))
 	_mill_box.add_child(button)
