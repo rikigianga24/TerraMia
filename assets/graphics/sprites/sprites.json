@@ -1,0 +1,1145 @@
+{
+ "anfora": {
+  "box": [
+   1092,
+   777,
+   1170,
+   870
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "anfora_fiori": {
+  "box": [
+   1050,
+   480,
+   1107,
+   558
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "arancio_0": {
+  "box": [
+   1059,
+   399,
+   1173,
+   504
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "arancio_1": {
+  "box": [
+   1191,
+   372,
+   1308,
+   504
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "arancio_2": {
+  "box": [
+   1335,
+   354,
+   1461,
+   504
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "arancio_albero": {
+  "box": [
+   330,
+   753,
+   447,
+   891
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "arancio_albero_a": {
+  "box": [
+   201,
+   480,
+   276,
+   567
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "balle_fieno": {
+  "box": [
+   645,
+   789,
+   771,
+   888
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "bancarella": {
+  "box": [
+   819,
+   555,
+   1029,
+   726
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "bancarella_a": {
+  "box": [
+   705,
+   363,
+   798,
+   459
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "bancarella_c": {
+  "box": [
+   747,
+   357,
+   930,
+   531
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "botte": {
+  "box": [
+   804,
+   786,
+   882,
+   870
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "cancellata": {
+  "box": [
+   1068,
+   567,
+   1221,
+   681
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "capanno": {
+  "box": [
+   309,
+   348,
+   438,
+   447
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "carretto": {
+  "box": [
+   1365,
+   768,
+   1500,
+   867
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "carretto_botte": {
+  "box": [
+   891,
+   489,
+   987,
+   564
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "carretto_fieno": {
+  "box": [
+   1143,
+   399,
+   1302,
+   513
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "casa_grande": {
+  "box": [
+   486,
+   42,
+   828,
+   342
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "casa_pergola": {
+  "box": [
+   840,
+   108,
+   1077,
+   339
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "casa_piccola": {
+  "box": [
+   18,
+   348,
+   135,
+   459
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "casale": {
+  "box": [
+   27,
+   528,
+   297,
+   735
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "casetta": {
+  "box": [
+   1278,
+   546,
+   1509,
+   735
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "cassetta_uva": {
+  "box": [
+   924,
+   789,
+   1035,
+   876
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "cespuglio_fiori": {
+  "box": [
+   378,
+   495,
+   453,
+   564
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "cipressi_coppia": {
+  "box": [
+   1251,
+   525,
+   1332,
+   681
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "cipresso": {
+  "box": [
+   213,
+   729,
+   288,
+   888
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "cipresso_a": {
+  "box": [
+   21,
+   465,
+   63,
+   564
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "contadina": {
+  "box": [
+   1053,
+   831,
+   1125,
+   963
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "contadino": {
+  "box": [
+   960,
+   813,
+   1041,
+   963
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "fienile": {
+  "box": [
+   996,
+   363,
+   1107,
+   459
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "fontana": {
+  "box": [
+   471,
+   477,
+   567,
+   567
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "fontanella": {
+  "box": [
+   972,
+   381,
+   1122,
+   534
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "forno": {
+  "box": [
+   1083,
+   78,
+   1278,
+   342
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "forno_a": {
+  "box": [
+   585,
+   330,
+   687,
+   453
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "forno_legna": {
+  "box": [
+   1212,
+   753,
+   1341,
+   879
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "gallina": {
+  "box": [
+   1329,
+   876,
+   1389,
+   951
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "gatto": {
+  "box": [
+   1404,
+   888,
+   1458,
+   954
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "girasole_0": {
+  "box": [
+   75,
+   249,
+   192,
+   339
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "girasole_1": {
+  "box": [
+   204,
+   216,
+   318,
+   342
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "girasole_2": {
+  "box": [
+   330,
+   195,
+   447,
+   339
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "grano_0": {
+  "box": [
+   609,
+   90,
+   720,
+   177
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "grano_1": {
+  "box": [
+   732,
+   45,
+   843,
+   177
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "grano_2": {
+  "box": [
+   855,
+   24,
+   972,
+   177
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_annaffiatoio": {
+  "box": [
+   723,
+   588,
+   786,
+   642
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "item_annaffiatoio_c": {
+  "box": [
+   1116,
+   732,
+   1191,
+   798
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "item_arance": {
+  "box": [
+   900,
+   915,
+   981,
+   993
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_cassetta": {
+  "box": [
+   1392,
+   729,
+   1461,
+   798
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "item_cassetta_frutta": {
+  "box": [
+   1038,
+   585,
+   1104,
+   642
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "item_falce": {
+  "box": [
+   1308,
+   726,
+   1362,
+   804
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "item_formaggio": {
+  "box": [
+   1017,
+   921,
+   1098,
+   990
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_girasole": {
+  "box": [
+   189,
+   912,
+   270,
+   990
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_grano": {
+  "box": [
+   678,
+   909,
+   756,
+   990
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_lattuga": {
+  "box": [
+   588,
+   591,
+   642,
+   639
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "item_lavanda": {
+  "box": [
+   321,
+   909,
+   387,
+   990
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_miele": {
+  "box": [
+   1332,
+   918,
+   1401,
+   990
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_moneta": {
+  "box": [
+   1428,
+   921,
+   1497,
+   987
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_monete": {
+  "box": [
+   969,
+   591,
+   1020,
+   636
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "item_olio": {
+  "box": [
+   1128,
+   894,
+   1194,
+   996
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_olive": {
+  "box": [
+   564,
+   909,
+   642,
+   987
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_pala": {
+  "box": [
+   657,
+   582,
+   705,
+   648
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "item_pane": {
+  "box": [
+   891,
+   591,
+   948,
+   639
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "item_peperoncini": {
+  "box": [
+   789,
+   909,
+   861,
+   984
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_pomodori": {
+  "box": [
+   63,
+   915,
+   141,
+   987
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_pomodoro": {
+  "box": [
+   555,
+   720,
+   633,
+   798
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "item_uova": {
+  "box": [
+   1224,
+   924,
+   1302,
+   993
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_uova_a": {
+  "box": [
+   810,
+   594,
+   867,
+   636
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "item_uva": {
+  "box": [
+   435,
+   909,
+   516,
+   993
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "item_zappa": {
+  "box": [
+   1212,
+   735,
+   1284,
+   795
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "lampione": {
+  "box": [
+   1005,
+   480,
+   1044,
+   564
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "lattuga_0": {
+  "box": [
+   75,
+   408,
+   192,
+   498
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "lattuga_1": {
+  "box": [
+   204,
+   390,
+   318,
+   501
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "lattuga_2": {
+  "box": [
+   327,
+   378,
+   450,
+   501
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "lavanda_0": {
+  "box": [
+   1050,
+   90,
+   1164,
+   180
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "lavanda_1": {
+  "box": [
+   1191,
+   60,
+   1311,
+   180
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "lavanda_2": {
+  "box": [
+   1335,
+   30,
+   1455,
+   177
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "limone_vaso": {
+  "box": [
+   303,
+   483,
+   354,
+   564
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "mais_0": {
+  "box": [
+   21,
+   249,
+   87,
+   315
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "mais_1": {
+  "box": [
+   96,
+   222,
+   165,
+   315
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "mais_2": {
+  "box": [
+   177,
+   216,
+   246,
+   318
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "melanzana_0": {
+  "box": [
+   834,
+   156,
+   900,
+   210
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "melanzana_1": {
+  "box": [
+   912,
+   135,
+   978,
+   213
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "melanzana_2": {
+  "box": [
+   990,
+   120,
+   1062,
+   213
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "mucca": {
+  "box": [
+   1212,
+   843,
+   1320,
+   960
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "mulino": {
+  "box": [
+   1281,
+   45,
+   1476,
+   333
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "mulino_a": {
+  "box": [
+   456,
+   330,
+   570,
+   459
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "mulino_b": {
+  "box": [
+   597,
+   507,
+   786,
+   744
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "muretto": {
+  "box": [
+   786,
+   498,
+   879,
+   561
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "muretto_cancello": {
+  "box": [
+   780,
+   600,
+   936,
+   681
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "nonno": {
+  "box": [
+   1134,
+   828,
+   1197,
+   963
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "panchina": {
+  "box": [
+   1329,
+   387,
+   1467,
+   516
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "panchina_fiori": {
+  "box": [
+   588,
+   492,
+   678,
+   558
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "peperoncino_0": {
+  "box": [
+   591,
+   399,
+   708,
+   501
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "peperoncino_1": {
+  "box": [
+   726,
+   378,
+   843,
+   501
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "peperoncino_2": {
+  "box": [
+   858,
+   369,
+   978,
+   501
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "pergolato": {
+  "box": [
+   564,
+   528,
+   741,
+   693
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "pomodoro_0": {
+  "box": [
+   75,
+   84,
+   192,
+   180
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "pomodoro_0x": {
+  "box": [
+   21,
+   60,
+   84,
+   111
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "pomodoro_1": {
+  "box": [
+   324,
+   36,
+   441,
+   177
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "pomodoro_1x": {
+  "box": [
+   93,
+   39,
+   165,
+   111
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "pomodoro_2": {
+  "box": [
+   450,
+   30,
+   567,
+   177
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "pomodoro_2x": {
+  "box": [
+   174,
+   21,
+   246,
+   111
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "pozzo": {
+  "box": [
+   1077,
+   558,
+   1242,
+   723
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "pozzo_a": {
+  "box": [
+   819,
+   363,
+   888,
+   450
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "pozzo_c": {
+  "box": [
+   552,
+   354,
+   696,
+   522
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "staccionata": {
+  "box": [
+   483,
+   792,
+   612,
+   873
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "staccionata_a": {
+  "box": [
+   699,
+   498,
+   771,
+   564
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "staccionata_c": {
+  "box": [
+   954,
+   597,
+   1059,
+   678
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "stalla": {
+  "box": [
+   324,
+   528,
+   576,
+   747
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "tile_acqua": {
+  "box": [
+   645,
+   666,
+   801,
+   741
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "tile_ciottoli": {
+  "box": [
+   501,
+   669,
+   630,
+   738
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "tile_erba": {
+  "box": [
+   198,
+   666,
+   327,
+   738
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "tile_sterrato": {
+  "box": [
+   351,
+   669,
+   480,
+   738
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "tile_terra": {
+  "box": [
+   30,
+   666,
+   165,
+   738
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "torre": {
+  "box": [
+   906,
+   345,
+   984,
+   444
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "ulivo_0": {
+  "box": [
+   585,
+   234,
+   702,
+   342
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "ulivo_1": {
+  "box": [
+   726,
+   198,
+   840,
+   342
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "ulivo_2": {
+  "box": [
+   864,
+   195,
+   999,
+   342
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "ulivo_albero": {
+  "box": [
+   48,
+   750,
+   186,
+   888
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "ulivo_albero_a": {
+  "box": [
+   90,
+   480,
+   177,
+   570
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "ulivo_albero_c": {
+  "box": [
+   1344,
+   549,
+   1467,
+   684
+  ],
+  "sheet": "sheet_c.webp"
+ },
+ "villa": {
+  "box": [
+   144,
+   345,
+   309,
+   459
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "vite_0": {
+  "box": [
+   1053,
+   243,
+   1164,
+   342
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "vite_1": {
+  "box": [
+   1191,
+   222,
+   1308,
+   345
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "vite_2": {
+  "box": [
+   1335,
+   195,
+   1461,
+   342
+  ],
+  "sheet": "sheet_b.webp"
+ },
+ "zucchina_0": {
+  "box": [
+   288,
+   258,
+   354,
+   315
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "zucchina_1": {
+  "box": [
+   363,
+   243,
+   432,
+   315
+  ],
+  "sheet": "sheet_a.webp"
+ },
+ "zucchina_2": {
+  "box": [
+   441,
+   231,
+   510,
+   315
+  ],
+  "sheet": "sheet_a.webp"
+ }
+}

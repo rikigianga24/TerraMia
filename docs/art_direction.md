@@ -30,3 +30,16 @@ copiare: personaggi, edifici e oggetti devono essere originali.
 - Erba: verde caldo e vivo (#8fb34a, #a5c45a).
 - Legno: #9a6a3e. Tetti: coppi terracotta (#c0603e). Muri: sabbia (#f0d2a6).
 - Interfaccia: crema (#fbf3e2), terracotta (#d0643c), verde oliva (#7c9a3c).
+
+## Dal foglio al gioco
+
+1. Salva il foglio (sfondo trasparente) in `assets/graphics/source/`.
+2. `python3 tools/find_sprites.py assets/graphics/source/FOGLIO.webp anteprima.png`
+   trova i disegni e salva un'anteprima con un numero su ciascuno.
+3. Aggiungi i disegni che servono a `assets/graphics/sprites/sprites.json`
+   (nome, foglio, riquadro): il modo più rapido è chiedere a Claude.
+4. `python3 tools/cut_sprites.py` ritaglia tutto. Le piante vanno anche in
+   `PLANTS` dentro lo script (coltura -> tre stadi).
+
+Fogli attuali: `sheet_a.webp`, `sheet_b.webp`, `sheet_c.webp` (piante, edifici,
+decorazioni, prodotti, attrezzi, terreni, personaggi).

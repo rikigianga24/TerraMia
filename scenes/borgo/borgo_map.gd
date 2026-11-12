@@ -38,6 +38,16 @@ const BUILDINGS := {
 	"caldarroste":     {"cell": Vector2i(8, 8),   "size": Vector2i(1, 1), "h": 26},
 	"bacheca":         {"cell": Vector2i(5, 5),   "size": Vector2i(1, 1), "h": 40},
 }
+## Sprite illustrato di ogni edificio restaurato (assets/graphics/sprites).
+## Senza sprite, o finché non è restaurato, l'edificio si disegna da codice.
+const SPRITES := {
+	"mulino": "mulino", "forno": "forno", "bar": "casetta", "osteria": "casale",
+	"ufficio_postale": "casa_piccola", "campanile": "torre", "conserve": "bancarella",
+	"caseificio": "capanno", "cantina": "fienile", "gelateria": "bancarella_c",
+	"pastificio": "casa_pergola", "pasticceria": "villa",
+}
+## Larghezza dello sprite rispetto all'ingombro (torri e mulini sono alti e stretti).
+const SPRITE_SCALE := {"campanile": 0.62, "mulino": 0.9, "conserve": 0.95, "gelateria": 0.95}
 const PIAZZA := Rect2i(5, 5, 4, 4)
 const FOUNTAIN := Vector2(7.0, 7.0)
 
@@ -213,6 +223,9 @@ func _draw_cobbles(cell: Vector2i) -> void:
 
 func _draw_fountain() -> void:
 	var c := cell_to_local(FOUNTAIN)
+	if Sprites.tex("fontana") != null:
+		Sprites.draw(self, "fontana", c + Vector2(0, 34), 150.0, 0.0)
+		return
 	draw_set_transform(c, 0.0, Vector2(1.0, 0.5))
 	draw_circle(Vector2(0, 8), 54.0, Color(0.2, 0.15, 0.1, 0.18))
 	draw_circle(Vector2.ZERO, 52.0, Color("bfae8e"))
@@ -258,6 +271,10 @@ func _draw_building(id: String) -> void:
 			return
 	if not restored:
 		_draw_ruin(id, top, right, front, left, h)
+		return
+	if SPRITES.has(id) and Sprites.tex(SPRITES[id]) != null:
+		# lo sprite ha il suo pezzo di terreno: la punta davanti sullo spigolo
+		Sprites.draw(self, SPRITES[id], front + Vector2(0, 8), TILE_W * float(s.x) * 1.12 * SPRITE_SCALE.get(id, 1.0), 0.0)
 		return
 	var up := Vector2(0, -h)
 	var wall_l := Color("f0d2a6")

@@ -56,6 +56,8 @@ const SHAPES := {
 	"zafferano": "flower",
 }
 
+## Le piante illustrate occupano un po' meno del quadrante: resta un filo di terra.
+const PLANT_SCALE := 0.88
 const FARMER_SPEED := 220.0
 const SOW_TIME := 0.7
 const POPUP_TIME := 1.3
@@ -576,13 +578,16 @@ func _build_trees() -> void:
 	while x < float(w.x) + 2.8:
 		for row in 3:
 			var y := -1.1 - row * 1.1 - rng.randf() * 0.5
-			var kind := "cypress" if rng.randf() < 0.25 else "tree"
+			var kind := "cypress" if rng.randf() < 0.4 else "tree"
 			_trees.append({"cell": Vector2(x + rng.randf() * 0.6, y), "kind": kind, "s": rng.randf_range(0.9, 1.3), "back": true})
 		x += rng.randf_range(0.9, 1.5)
-	# davanti, oltre il lato aperto, qualche albero e balle di fieno
-	_trees.append({"cell": Vector2(3.0, float(w.y) + 1.6), "kind": "hay", "s": 1.0, "back": false})
-	_trees.append({"cell": Vector2(8.5, float(w.y) + 2.0), "kind": "tree", "s": 1.0, "back": false})
-	_trees.append({"cell": Vector2(13.0, float(w.y) + 1.4), "kind": "bush", "s": 1.0, "back": false})
+	# davanti, sul prato aperto: il casale del contadino col pozzo, alberi e fieno
+	_trees.append({"cell": Vector2(5.0, float(w.y) + 3.4), "kind": "sprite", "name": "casale", "w": 300.0, "back": false})
+	_trees.append({"cell": Vector2(9.2, float(w.y) + 1.9), "kind": "sprite", "name": "pozzo", "w": 92.0, "back": false})
+	_trees.append({"cell": Vector2(1.6, float(w.y) + 1.7), "kind": "sprite", "name": "balle_fieno", "w": 78.0, "back": false})
+	_trees.append({"cell": Vector2(12.5, float(w.y) + 1.8), "kind": "sprite", "name": "carretto_fieno", "w": 96.0, "back": false})
+	_trees.append({"cell": Vector2(15.5, float(w.y) + 2.2), "kind": "tree", "s": 1.0, "back": false})
+	_trees.append({"cell": Vector2(-0.6, float(w.y) + 3.0), "kind": "bush", "s": 1.0, "back": false})
 	# ordina dal fondo, così si coprono nel modo giusto
 	_trees.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["cell"].x + a["cell"].y < b["cell"].x + b["cell"].y)
 
@@ -590,7 +595,19 @@ func _build_trees() -> void:
 func _draw_tree_decor(t: Dictionary) -> void:
 	var c: Vector2 = t["cell"]
 	var p := cell_to_local(c) + Vector2(0, TILE_H * 0.5)
-	var s: float = t["s"]
+	var s: float = t.get("s", 1.0)
+	# illustrati, se ci sono gli sprite; altrimenti disegnati da codice
+	var illustrated := {"tree": ["ulivo_albero_c"], "cypress": ["cipresso", "cipressi_coppia"], "bush": ["cespuglio_fiori"], "hay": ["balle_fieno"]}
+	var widths := {"tree": 92.0, "cypress": 40.0, "bush": 64.0, "hay": 78.0}
+	if t["kind"] == "sprite":
+		Sprites.draw(self, t["name"], p, t["w"], 0.04)
+		return
+	if illustrated.has(t["kind"]):
+		var options: Array = illustrated[t["kind"]]
+		var pick: String = options[posmod(int(c.x * 7.0 + c.y * 3.0), options.size())]
+		if Sprites.tex(pick) != null:
+			Sprites.draw(self, pick, p, widths[t["kind"]] * s, 0.05, posmod(int(c.x * 5.0), 2) == 0)
+			return
 	match t["kind"]:
 		"tree":
 			_draw_round_tree(p, s, Color(0, 0, 0, 0), 1.0)
@@ -636,11 +653,14 @@ func _load_plant_sprites() -> void:
 	for crop_id in data:
 		var stages: Array = []
 		for st in data[crop_id]:
-			var tex := load("res://assets/graphics/plants/" + str(st["file"])) as Texture2D
+			var path := str(st["file"])
+			if not path.begins_with("res://"):
+				path = "res://assets/graphics/plants/" + path
+			var tex := load(path) as Texture2D
 			if tex == null:
 				stages = []
 				break
-			stages.append({"tex": tex, "anchor": Vector2(st["anchor"][0], st["anchor"][1]), "scale": TILE_W / float(st["tile_w"])})
+			stages.append({"tex": tex, "anchor": Vector2(st["anchor"][0], st["anchor"][1]), "scale": TILE_W * PLANT_SCALE / float(st["tile_w"])})
 		if stages.size() == 3:
 			_plant_sprites[crop_id] = stages
 

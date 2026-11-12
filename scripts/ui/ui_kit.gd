@@ -32,7 +32,17 @@ static func icon(name: String) -> Texture2D:
 
 ## Icona tonda nel colore della pianta, con riflesso: segnaposto finché non
 ## ci sono le illustrazioni di ogni coltura.
+## Prodotto illustrato di ogni coltura, se c'è (assets/graphics/sprites).
+const CROP_ITEMS := {
+	"grano": "item_grano", "pomodoro": "item_pomodori", "ulivo": "item_olive",
+	"vite": "item_uva", "arancio": "item_arance", "peperoncino": "item_peperoncini",
+	"lattuga": "item_lattuga",
+}
+
+
 static func crop_icon(crop_id: String) -> Texture2D:
+	if CROP_ITEMS.has(crop_id) and Sprites.tex(CROP_ITEMS[crop_id]) != null:
+		return Sprites.tex(CROP_ITEMS[crop_id])
 	if _crop_icons.has(crop_id):
 		return _crop_icons[crop_id]
 	var color := Color(GameData.crop(crop_id).get("color", "ffffff"))
@@ -68,6 +78,8 @@ static func crop_icon(crop_id: String) -> Texture2D:
 ## Medaglione per un oggetto antico, nel suo colore (segnaposto finché non
 ## ci sono le illustrazioni).
 static func antique_icon(id: String) -> Texture2D:
+	if id == "anfora" and Sprites.tex("anfora") != null:
+		return Sprites.tex("anfora")
 	var key := "antique_" + id
 	if _crop_icons.has(key):
 		return _crop_icons[key]

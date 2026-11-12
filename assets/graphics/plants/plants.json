@@ -1,0 +1,236 @@
+{
+  "grano": [
+    {
+      "file": "res://assets/graphics/sprites/grano_0.png",
+      "anchor": [
+        55.5,
+        52.0
+      ],
+      "tile_w": 109.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/grano_1.png",
+      "anchor": [
+        56.0,
+        97.0
+      ],
+      "tile_w": 110.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/grano_2.png",
+      "anchor": [
+        57.5,
+        118.5
+      ],
+      "tile_w": 113.0
+    }
+  ],
+  "pomodoro": [
+    {
+      "file": "res://assets/graphics/sprites/pomodoro_0.png",
+      "anchor": [
+        58.5,
+        58.5
+      ],
+      "tile_w": 115.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/pomodoro_1.png",
+      "anchor": [
+        57.5,
+        106.0
+      ],
+      "tile_w": 113.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/pomodoro_2.png",
+      "anchor": [
+        57.5,
+        110.0
+      ],
+      "tile_w": 115.0
+    }
+  ],
+  "ulivo": [
+    {
+      "file": "res://assets/graphics/sprites/ulivo_0.png",
+      "anchor": [
+        58.0,
+        74.0
+      ],
+      "tile_w": 114.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/ulivo_1.png",
+      "anchor": [
+        57.5,
+        108.5
+      ],
+      "tile_w": 113.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/ulivo_2.png",
+      "anchor": [
+        59.0,
+        111.5
+      ],
+      "tile_w": 114.0
+    }
+  ],
+  "vite": [
+    {
+      "file": "res://assets/graphics/sprites/vite_0.png",
+      "anchor": [
+        56.0,
+        63.5
+      ],
+      "tile_w": 110.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/vite_1.png",
+      "anchor": [
+        59.0,
+        84.5
+      ],
+      "tile_w": 116.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/vite_2.png",
+      "anchor": [
+        60.5,
+        111.5
+      ],
+      "tile_w": 119.0
+    }
+  ],
+  "arancio": [
+    {
+      "file": "res://assets/graphics/sprites/arancio_0.png",
+      "anchor": [
+        57.0,
+        70.5
+      ],
+      "tile_w": 112.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/arancio_1.png",
+      "anchor": [
+        58.0,
+        97.0
+      ],
+      "tile_w": 114.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/arancio_2.png",
+      "anchor": [
+        61.5,
+        113.5
+      ],
+      "tile_w": 121.0
+    }
+  ],
+  "peperoncino": [
+    {
+      "file": "res://assets/graphics/sprites/peperoncino_0.png",
+      "anchor": [
+        58.0,
+        66.5
+      ],
+      "tile_w": 114.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/peperoncino_1.png",
+      "anchor": [
+        58.0,
+        87.0
+      ],
+      "tile_w": 114.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/peperoncino_2.png",
+      "anchor": [
+        59.0,
+        96.0
+      ],
+      "tile_w": 116.0
+    }
+  ],
+  "lattuga": [
+    {
+      "file": "res://assets/graphics/sprites/lattuga_0.png",
+      "anchor": [
+        58.0,
+        55.0
+      ],
+      "tile_w": 114.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/lattuga_1.png",
+      "anchor": [
+        57.5,
+        74.5
+      ],
+      "tile_w": 113.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/lattuga_2.png",
+      "anchor": [
+        60.0,
+        85.5
+      ],
+      "tile_w": 118.0
+    }
+  ],
+  "melanzana": [
+    {
+      "file": "res://assets/graphics/sprites/melanzana_0.png",
+      "anchor": [
+        32.0,
+        33.5
+      ],
+      "tile_w": 64.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/melanzana_1.png",
+      "anchor": [
+        33.0,
+        56.0
+      ],
+      "tile_w": 66.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/melanzana_2.png",
+      "anchor": [
+        35.0,
+        71.0
+      ],
+      "tile_w": 68.0
+    }
+  ],
+  "zucchina": [
+    {
+      "file": "res://assets/graphics/sprites/zucchina_0.png",
+      "anchor": [
+        32.5,
+        38.5
+      ],
+      "tile_w": 63.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/zucchina_1.png",
+      "anchor": [
+        34.5,
+        51.5
+      ],
+      "tile_w": 67.0
+    },
+    {
+      "file": "res://assets/graphics/sprites/zucchina_2.png",
+      "anchor": [
+        34.0,
+        61.5
+      ],
+      "tile_w": 66.0
+    }
+  ]
+}

@@ -70,7 +70,7 @@ func _draw_labels(cell: Vector2i) -> void:
 		draw_texture_rect(ICON_FERTILIZER, Rect2(c + Vector2(-46, -6), Vector2(18, 18)), false)
 	if GameState.is_ready(cell):
 		_ready_bubble(c + Vector2(0, top - 4.0 * absf(sin(farm._clock * 3.5 + cell.x))), Color(GameData.crop(plot["crop"])["color"]))
-	elif cell == farm._hover or plot.get("watered", false) or GameState.plot_seconds_left(cell) < 60:
+	elif cell == farm._hover or GameState.plot_seconds_left(cell) < 60:
 		_pill(c + Vector2(0, top + 6), GameData.format_time(GameState.plot_seconds_left(cell)), GameState.plot_progress(cell))
 
 

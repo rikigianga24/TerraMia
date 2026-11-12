@@ -7,7 +7,52 @@ const WOOD := Color("9a6a3e")
 const SHADOW := Color(0.18, 0.12, 0.05, 0.28)
 
 
+const SPRITE := "contadino"
+const SPRITE_W := 44.0
+
+
 static func draw(ci: CanvasItem, p: Vector2, clock: float, walking: bool, action: String, flip: bool, action_t := 0.0) -> void:
+	if Sprites.tex(SPRITE) != null:
+		_draw_sprite(ci, p, clock, walking, action, flip, action_t)
+		return
+	_draw_shapes(ci, p, clock, walking, action, flip, action_t)
+
+
+## Contadino illustrato (foglio C): saltella camminando, si china zappando
+## con le zolle che saltano, lancia i semi seminando.
+static func _draw_sprite(ci: CanvasItem, p: Vector2, clock: float, walking: bool, action: String, flip: bool, action_t: float) -> void:
+	var dir := -1.0 if flip else 1.0
+	ci.draw_set_transform(p + Vector2(0, 2), 0.0, Vector2(1.0, 0.45))
+	ci.draw_circle(Vector2.ZERO, 16.0, SHADOW)
+	ci.draw_set_transform(Vector2.ZERO)
+	var lift := absf(sin(clock * 10.0)) * 3.0 if walking else 0.0
+	var tilt := 0.0
+	var squash := 1.0
+	match action:
+		"hoe":
+			var swing := sin(clock * 5.0) * 0.5 + 0.5
+			tilt = lerpf(-0.05, 0.16, swing) * dir
+			if swing > 0.85:
+				for i in 3:
+					var o := Vector2((i - 1) * 6.0 * dir + 26 * dir, -4 - (swing - 0.85) * 60.0 - i * 2.0)
+					ci.draw_circle(p + o, 2.4, Color("7a5230"))
+		"sow":
+			squash = 1.0 - sin(clampf(action_t, 0.0, 1.0) * PI) * 0.07
+			for i in 6:
+				var k := float(i) / 5.0
+				var fall := clampf(action_t * 1.6 - k * 0.4, 0.0, 1.0)
+				var seed_pos := p + Vector2((k - 0.5) * 34.0 * dir + 22 * dir, -34 + fall * 32.0)
+				ci.draw_circle(seed_pos, 2.0, Color("8a5a2b"))
+	var t := Sprites.tex(SPRITE)
+	var k2 := SPRITE_W / t.get_width()
+	var size := t.get_size() * k2 * Vector2(1.0, squash)
+	# ruota attorno ai piedi
+	ci.draw_set_transform(p + Vector2(0, -lift), tilt, Vector2(dir, 1.0))
+	ci.draw_texture_rect(t, Rect2(Vector2(-size.x * 0.5, -size.y * 0.97), size), false)
+	ci.draw_set_transform(Vector2.ZERO)
+
+
+static func _draw_shapes(ci: CanvasItem, p: Vector2, clock: float, walking: bool, action: String, flip: bool, action_t := 0.0) -> void:
 	var bob := absf(sin(clock * 10.0)) * -3.0 if walking else 0.0
 	var step := sin(clock * 10.0) * 4.0 if walking else 0.0
 	var dir := -1.0 if flip else 1.0

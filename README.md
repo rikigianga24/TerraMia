@@ -63,7 +63,10 @@ tests/test_game_state.gd test delle regole di gioco (senza grafica)
 tools/build_theme.gd     genera il tema dell'interfaccia
 tools/translations_source.py  testi in 4 lingue -> localization/translations.csv
 tools/extract_icons.py   ritaglia le icone dal foglio illustrato
-tools/extract_plants.py  ritaglia gli sprite delle piante (3 stadi) da un foglio
+tools/find_sprites.py    trova i disegni in un foglio trasparente (con anteprima numerata)
+tools/cut_sprites.py     ritaglia gli sprite nominati in assets/graphics/sprites/sprites.json,
+                         prepara piante (3 stadi) e mattonelle di erba e terra
+tools/extract_plants.py  ritaglia le piante da un foglio con sfondo pieno (vecchio metodo)
 tools/paint_tiles.py     dipinge i blocchi di terreno (erba, terra, terra bagnata)
 docs/art_direction.md    prompt e regole per tutte le illustrazioni
 assets/graphics/         blocchi di terreno SVG (tiles/), icone PNG (icons/) ritagliate
