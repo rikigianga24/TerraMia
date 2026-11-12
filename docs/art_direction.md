@@ -82,3 +82,17 @@ decorazioni, prodotti, attrezzi, terreni, personaggi) e `terreno.webp` (le 8
 mattonelle: erba, erba fiorita, erba selvatica, erba secca, terra arata, terra
 bagnata, sterrato, sponda). Le mattonelle vengono riportate sul rombo 3:2 del
 gioco anche se il foglio ha un'angolazione diversa.
+
+## Immagini con la scacchiera disegnata
+
+Se il generatore consegna un JPG con lo "sfondo trasparente" a scacchi
+disegnato dentro l'immagine, l'originale va in `assets/graphics/source/originali/`
+e si pulisce con:
+
+```
+python3 tools/remove_checker.py assets/graphics/source/originali/FOGLIO.jpg assets/graphics/source/FOGLIO.png
+```
+
+Due disegni che si toccano nel foglio si separano in `sprites.json` con
+`above_seam` / `below_seam` (la y approssimativa del punto di contatto): lo
+script taglia lungo la linea dove si toccano meno pixel.

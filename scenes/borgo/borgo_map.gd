@@ -47,6 +47,19 @@ const SPRITES := {
 	"pastificio": "casa_pergola", "pasticceria": "villa",
 }
 ## Larghezza dello sprite rispetto all'ingombro (torri e mulini sono alti e stretti).
+## Edifici disegnati sulla loro base 2x2, in due versioni: [rudere, restaurato]
+## (fogli edifici_conserve e edifici_misti). Hanno la precedenza su SPRITES.
+const PAIRS := {
+	"mulino": ["mulino_rudere", "mulino_restaurato"],
+	"forno": ["forno_rudere", "forno"],
+	"ufficio_postale": ["ufficio_postale_rudere", "ufficio_postale_b"],
+	"frantoio": ["frantoio_rudere", ""],
+	"conserve": ["conserve_rudere", "conserve"],
+	"caseificio": ["caseificio_rudere", "caseificio"],
+	"cantina": ["cantina_rudere", "cantina"],
+	"gelateria": ["gelateria_rudere", "gelateria"],
+	"bocce": ["bocce_rudere", "bocce"],
+}
 const SPRITE_SCALE := {"campanile": 0.62, "mulino": 0.9, "conserve": 0.95, "gelateria": 0.95}
 const PIAZZA := Rect2i(5, 5, 4, 4)
 const FOUNTAIN := Vector2(7.0, 7.0)
@@ -259,6 +272,12 @@ func _draw_building(id: String) -> void:
 	var left := cell_to_local(a + Vector2(0, s.y))
 	# ombra
 	draw_colored_polygon(PackedVector2Array([left, front, front + Vector2(30, 10), left + Vector2(30, 10)]), Color(0.2, 0.15, 0.1, 0.16))
+	if PAIRS.has(id):
+		var sprite: String = PAIRS[id][1 if restored else 0]
+		if sprite != "" and Sprites.tex(sprite) != null:
+			# la base dello sprite riempie l'ingombro: punta davanti sullo spigolo
+			Sprites.draw(self, sprite, front + Vector2(0, 14), TILE_W * float(s.x) * 1.04, 0.0)
+			return
 	match id:
 		"bacheca":
 			_draw_board(cell_center(cell))

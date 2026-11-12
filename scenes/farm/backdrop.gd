@@ -9,11 +9,14 @@ const SKY_BOTTOM := Color("f3e7c8")
 const HILL_FAR := Color("b4cc86")
 const HILL_MID := Color("9cbf62")
 const HILL_NEAR := Color("a2c45c")
-const GROUND_FAR := Color("b9cf88")
-const GROUND_NEAR := Color("93b74e")
+const GROUND_FAR := Color("6c8934")   ## come la banda verde in fondo alle colline
+const GROUND_NEAR := Color("8db347")
 ## Linea dell'orizzonte, in frazione dell'altezza dello schermo: sotto c'è il
 ## prato su cui sta la fattoria.
-const HORIZON := 0.30
+const HORIZON := 0.40
+const SKY_TEX: Texture2D = preload("res://assets/graphics/backdrop/cielo.jpg")
+const HILLS_TEX: Texture2D = preload("res://assets/graphics/backdrop/colline.png")
+const HILLS_BAND := 520.0 / 672.0
 
 ## "farm": colline e cipressi; "borgo": il paese sulla collina.
 var mode := "farm":
@@ -58,26 +61,45 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var s := size
 	var horizon := s.y * HORIZON
+	if SKY_TEX != null and HILLS_TEX != null:
+		_draw_illustrated(s, horizon)
+	else:
+		_draw_painted(s, horizon)
+	# il prato su cui sta la fattoria: dall'orizzonte (più chiaro, velato) a
+	# primo piano (più pieno)
+	draw_texture_rect(_ground, Rect2(0, horizon, s.x, s.y - horizon), false)
+	_meadow_strokes(s, horizon)
+
+
+## Cielo e colline illustrati (assets/graphics/backdrop). Le colline sono
+## larghe quanto lo schermo e la loro banda verde finisce sull'orizzonte.
+func _draw_illustrated(s: Vector2, horizon: float) -> void:
+	var sky_h := horizon + 60.0
+	var sky_k := maxf(s.x / SKY_TEX.get_width(), sky_h / SKY_TEX.get_height())
+	var sky_size := SKY_TEX.get_size() * sky_k
+	draw_texture_rect(SKY_TEX, Rect2(Vector2((s.x - sky_size.x) * 0.5, sky_h - sky_size.y), sky_size), false)
+	var k := s.x / HILLS_TEX.get_width()
+	var hills_size := HILLS_TEX.get_size() * k
+	# la banda verde piatta dell'immagine inizia a HILLS_BAND (frazione dell'altezza)
+	var y := horizon + 6.0 - hills_size.y * HILLS_BAND
+	draw_texture_rect(HILLS_TEX, Rect2(Vector2(0, y), hills_size), false)
+
+
+## Sfondo disegnato da codice, se mancano le illustrazioni.
+func _draw_painted(s: Vector2, horizon: float) -> void:
 	draw_texture_rect(_sky, Rect2(Vector2.ZERO, Vector2(s.x, horizon + 40)), false)
-	# sole
 	var sun := Vector2(s.x * 0.84, s.y * 0.11)
 	draw_circle(sun, 56.0, Color(1, 0.94, 0.8, 0.25))
 	draw_circle(sun, 34.0, Color(0.98, 0.9, 0.68, 0.9))
-	# nuvole
 	for i in 4:
 		var speed := 6.0 + i * 2.5
 		var x := fposmod(i * 360.0 + _clock * speed, s.x + 300.0) - 150.0
 		_cloud(Vector2(x, s.y * (0.05 + 0.04 * (i % 3))), 0.6 + 0.12 * (i % 2))
-	# colline lontane con cipressi e, in fattoria, il paese vicino su un colle
 	_hills(s, horizon - 34.0, 26.0, 0.004, 1.3, HILL_FAR)
 	_cypresses(s, horizon - 34.0)
 	if mode == "farm":
 		_village(s, horizon - 22.0, 0.42, 0.60, 0.86)
 	_hills(s, horizon - 8.0, 14.0, 0.006, 4.0, HILL_MID)
-	# il prato su cui sta la fattoria: dall'orizzonte (più chiaro, velato) a
-	# primo piano (più pieno)
-	draw_texture_rect(_ground, Rect2(0, horizon, s.x, s.y - horizon), false)
-	_meadow_strokes(s, horizon)
 
 
 ## Ciuffi d'erba e fiorellini sparsi, sempre negli stessi posti.

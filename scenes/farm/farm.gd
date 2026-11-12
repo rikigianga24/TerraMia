@@ -31,6 +31,7 @@ const TEX_SOIL_WET := preload("res://assets/graphics/tiles/soil_wet.png")
 const TEX_GRASS_WILD := preload("res://assets/graphics/tiles/grass_wild.png")
 const TEX_GRASS_DRY := preload("res://assets/graphics/tiles/grass_dry.png")
 const TEX_DIRT := preload("res://assets/graphics/tiles/dirt.png")
+const TEX_ROAD := [preload("res://assets/graphics/tiles/road.png"), preload("res://assets/graphics/tiles/road_puddles.png"), preload("res://assets/graphics/tiles/road_flowers.png")]
 const TEX_BANK := preload("res://assets/graphics/tiles/bank.png")
 const TEX_SEEDS := preload("res://assets/graphics/icons/seeds.png")
 
@@ -492,7 +493,8 @@ func _draw_surroundings(w: Vector2i) -> void:
 			if x == -1:
 				_tile(TEX_BANK, cell, Color.WHITE, false)
 			elif x == road_x:
-				_tile(TEX_DIRT, cell, Color.WHITE, false)
+				var r := _rand(cell, 7)
+				_tile(TEX_ROAD[0 if r > 1 else r + 1], cell, Color.WHITE, false)
 			else:
 				var dry := x > road_x   # oltre la strada, stoppie
 				_tile(TEX_GRASS_DRY if dry else TEX_GRASS, cell)
