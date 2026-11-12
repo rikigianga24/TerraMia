@@ -1,8 +1,9 @@
 class_name Borgo
 extends Control
-## Il borgo: bacheca degli ordini in piazza e il mulino da restaurare.
-## Lo sfondo (il paese sulla collina) lo disegna Backdrop; qui ci sono le schede.
+## Finestre del borgo: bacheca degli ordini e mulino. Si aprono quando il
+## contadino arriva all'edificio sulla mappa (BorgoMap), una alla volta.
 
+var _panels: Dictionary = {}         ## "orders" / "mill" -> PanelContainer
 var _orders_box: VBoxContainer
 var _mill_box: VBoxContainer
 var _mill_bar: ProgressBar
@@ -13,22 +14,14 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_theme_constant_override("margin_left", 210)
-	margin.add_theme_constant_override("margin_right", 210)
-	margin.add_theme_constant_override("margin_top", 84)
-	margin.add_theme_constant_override("margin_bottom", 24)
-	add_child(margin)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(center)
 
-	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 20)
-	columns.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(columns)
-
-	_orders_box = _make_panel(columns, tr("BORGO_ORDERS"), tr("BORGO_ORDERS_SUB"), "borgo", 1.3)
-	_mill_box = _make_panel(columns, tr("MILL_TITLE"), GameData.resident_name("mulino"), "farm", 1.0)
+	_orders_box = _make_panel(center, "orders", tr("BORGO_ORDERS"), tr("BORGO_ORDERS_SUB"), "borgo", 560)
+	_mill_box = _make_panel(center, "mill", tr("MILL_TITLE"), GameData.resident_name("mulino"), "farm", 420)
+	close_panels()
 
 	GameState.changed.connect(_refresh)
 	_refresh()
@@ -46,13 +39,31 @@ func _process(_delta: float) -> void:
 		_refresh_mill()
 
 
-func _make_panel(parent: Control, title: String, subtitle: String, icon_name: String, ratio: float) -> VBoxContainer:
+func open_panel(which: String) -> void:
+	for k in _panels:
+		_panels[k].visible = k == which
+	_refresh()
+
+
+func close_panels() -> void:
+	for k in _panels:
+		_panels[k].visible = false
+
+
+func is_open() -> bool:
+	for k in _panels:
+		if _panels[k].visible:
+			return true
+	return false
+
+
+func _make_panel(parent: Control, key: String, title: String, subtitle: String, icon_name: String, width: float) -> VBoxContainer:
 	var panel := PanelContainer.new()
 	panel.theme_type_variation = "Sheet"
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_stretch_ratio = ratio
-	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	panel.custom_minimum_size = Vector2(width, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	parent.add_child(panel)
+	_panels[key] = panel
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 12)
 	panel.add_child(col)
@@ -63,8 +74,12 @@ func _make_panel(parent: Control, title: String, subtitle: String, icon_name: St
 	var titles := VBoxContainer.new()
 	titles.add_theme_constant_override("separation", -4)
 	head.add_child(titles)
+	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	titles.add_child(UiKit.label(title, "Title"))
 	titles.add_child(UiKit.label(subtitle, "Small"))
+	var close := UiKit.button("", "IconButton", "close")
+	close.pressed.connect(close_panels)
+	head.add_child(close)
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 10)
 	col.add_child(body)

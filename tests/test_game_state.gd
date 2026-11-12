@@ -25,6 +25,8 @@ func _initialize() -> void:
 	_test_water()
 	_test_fertilizer_and_harvest()
 	_test_trees_regrow()
+	_test_sectors_and_antiques()
+	_test_v2_save_migration()
 	_test_orders_and_levels()
 	_test_save_roundtrip()
 	_test_v1_save_migration()
@@ -110,12 +112,15 @@ func _test_water() -> void:
 	var cell := Vector2i(2, 2)
 	gs.seeds["pomodoro"] = 1
 	gs.plant(cell, "pomodoro")
-	var left_before: int = gs.plot_seconds_left(cell)
+	check(gs.needs_water(cell), "appena seminato aspetta l'acqua")
+	gs.plots[gs.plot_key(cell)]["planted_at"] -= 99999
+	check(gs.plot_progress(cell) == 0.0 and not gs.is_ready(cell), "senz'acqua non cresce, anche dopo tanto tempo")
+	check(gs.plot_seconds_left(cell) == int(gd.CROPS["pomodoro"]["time"]), "il tempo resta tutto da fare")
 	var w: int = gs.water
 	check(gs.water_plot(cell), "annaffio")
 	check(gs.water == w - 1, "una goccia usata")
-	var expected := int(left_before * (1.0 - gd.WATER_SPEEDUP))
-	check(abs(gs.plot_seconds_left(cell) - expected) <= 1, "tempo ridotto del 30%")
+	check(gs.is_growing(cell) and not gs.needs_water(cell), "ora cresce")
+	check(abs(gs.plot_seconds_left(cell) - int(gd.CROPS["pomodoro"]["time"])) <= 1, "la crescita parte adesso")
 	check(not gs.water_plot(cell), "una volta per ciclo")
 	gs.water = 0
 	gs.plant(Vector2i(3, 2), "grano")
@@ -129,6 +134,12 @@ func _test_water() -> void:
 	check(gs.water == gd.WATER_MAX, "non supera il massimo")
 
 
+func _grow(cell: Vector2i) -> void:
+	gs.water = maxi(gs.water, 1)
+	gs.water_plot(cell)
+	gs.plots[gs.plot_key(cell)]["planted_at"] -= 999999
+
+
 func _test_fertilizer_and_harvest() -> void:
 	print("concime e raccolto")
 	gs.new_game()
@@ -140,11 +151,11 @@ func _test_fertilizer_and_harvest() -> void:
 	gs.level = gd.FERTILIZER_LEVEL
 	gs.coins = 100
 	check(gs.buy_fertilizer(2), "compro concime")
-	check(gs.fertilize_plot(a), "concimo il primo")
+	check(gs.fertilize_plot(a), "concimo il primo (anche prima dell'acqua)")
 	check(not gs.fertilize_plot(a), "una volta per ciclo")
 	check(not gs.harvest(a), "non si raccoglie prima del tempo")
-	gs.plots[gs.plot_key(a)]["planted_at"] -= 1000
-	gs.plots[gs.plot_key(b)]["planted_at"] -= 1000
+	_grow(a)
+	_grow(b)
 	check(gs.harvest(a) and gs.item_count("grano") == 4, "raccolto concimato: 4 grano")
 	check(gs.harvest(b) and gs.item_count("grano") == 6, "raccolto normale: 2 grano")
 	check(gs.get_plot(a).is_empty() and gs.is_tilled(a), "la terra resta lavorata e libera")
@@ -157,11 +168,59 @@ func _test_trees_regrow() -> void:
 	gs.seeds["ulivo"] = 1
 	var cell := Vector2i(2, 2)
 	check(gs.plant(cell, "ulivo"), "pianto un ulivo")
-	gs.plots[gs.plot_key(cell)]["planted_at"] -= gd.CROPS["ulivo"]["time"] + 1
+	_grow(cell)
 	check(gs.harvest(cell), "raccolgo le olive")
 	check(gs.item_count("olive") == 3, "3 olive")
 	check(not gs.get_plot(cell).is_empty(), "l'ulivo resta piantato")
-	check(gs.plot_progress(cell) < 0.01, "e ricomincia il ciclo")
+	check(gs.needs_water(cell), "e per rifare i frutti va annaffiato di nuovo")
+
+
+func _test_sectors_and_antiques() -> void:
+	print("lotti, oggetti antichi e forziere")
+	gs.new_game()
+	check(gs.is_in_grid(Vector2i(5, 5)) and not gs.is_in_grid(Vector2i(6, 0)), "si parte con il lotto 6x6")
+	check(gs.is_in_world(Vector2i(17, 17)) and not gs.is_in_world(Vector2i(18, 0)), "mappa 18x18")
+	check(not gs.queue_plow(Vector2i(7, 1)), "non si zappa fuori dai propri lotti")
+	var east := Vector2i(1, 0)
+	check(gs.is_sector_buyable(east) and not gs.is_sector_buyable(Vector2i(1, 1)), "si compra solo un lotto confinante")
+	check(not gs.can_buy_sector(east), "servono monete, livello e oggetti antichi")
+	gs.level = 3
+	gs.coins = 1000
+	check(not gs.can_buy_sector(east), "mancano ancora gli oggetti antichi")
+	for id in gd.SECTORS["1,0"]["antiques"]:
+		gs.add_antique(id, int(gd.SECTORS["1,0"]["antiques"][id]))
+	check(gs.buy_sector(east), "compro il lotto")
+	check(gs.is_in_grid(Vector2i(7, 1)), "il lotto ora è mio")
+	check(gs.coins == 1000 - int(gd.SECTORS["1,0"]["coins"]), "pagate le monete")
+	check(gs.antique_count("anfora") == 0, "consumati gli oggetti antichi")
+	check(gs.is_sector_buyable(Vector2i(1, 1)), "ora confina anche il lotto centrale")
+	# forziere: uno al giorno
+	gs.last_chest_day = ""
+	gs.tick_chest()
+	check(not gs.chest.is_empty(), "compare il forziere del giorno")
+	var where: Vector2i = gs.chest_cell()
+	check(gs.is_in_grid(where) and gs.get_plot(where).is_empty(), "su un quadrante libero della fattoria")
+	gs.tick_chest()
+	check(gs.chest_cell() == where, "non ne compare un altro lo stesso giorno")
+	var total := 0
+	for id in gd.ANTIQUES:
+		total += gs.antique_count(id)
+	var coins_before: int = gs.coins
+	check(gs.open_chest(where), "apro il forziere")
+	var after := 0
+	for id in gd.ANTIQUES:
+		after += gs.antique_count(id)
+	check(after - total >= 1 and after - total <= 2, "dentro 1 o 2 oggetti antichi")
+	check(gs.coins > coins_before, "e qualche moneta")
+	check(gs.chest.is_empty() and not gs.open_chest(where), "si apre una volta sola")
+
+
+func _test_v2_save_migration() -> void:
+	print("salvataggio v2")
+	var v2 := {"version": 2, "plots": {"2,2": {"crop": "grano", "planted_at": gs.now() - 9999, "watered": false, "fertilized": false}}, "tilled": ["2,2"]}
+	gs.from_dict(v2)
+	check(gs.is_ready(Vector2i(2, 2)), "le piante della v2 continuano a crescere come prima")
+	check(gs.owned_sectors == [gd.sector_key(gd.START_SECTOR)], "si possiede il lotto iniziale")
 
 
 func _test_orders_and_levels() -> void:

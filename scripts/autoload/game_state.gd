@@ -8,8 +8,9 @@ signal changed  ## Qualsiasi modifica: HUD e salvataggio la ascoltano.
 signal leveled_up(level: int)
 signal toast(message: String)
 signal harvested(cell: Vector2i, product: String, qty: int)
-
-const GRID_START := Vector2i(6, 6)
+signal planted(cell: Vector2i)
+signal chest_opened(cell: Vector2i, antiques: Dictionary, coins: int)
+signal sector_bought(sector: Vector2i)
 
 var coins: int = 30
 var lire_oro: int = 0
@@ -25,8 +26,11 @@ var inventory: Dictionary = {}       ## prodotto -> quantità
 var seeds: Dictionary = {}           ## coltura -> semi posseduti
 var tilled: Dictionary = {}          ## "x,y" -> true: terra lavorata con la zappa
 var plow_queue: Array = []           ## [{"cell": "x,y", "start": unix, "end": unix}]
-var plots: Dictionary = {}           ## "x,y" -> {"crop", "planted_at", "watered", "fertilized"}
-var grid_size: Vector2i = GRID_START
+var plots: Dictionary = {}           ## "x,y" -> {"crop", "planted_at", "watered", "fertilized", "harvests"}
+var owned_sectors: Array = []        ## lotti 6×6 posseduti, come "x,y"
+var antiques: Dictionary = {}        ## oggetto antico -> quantità
+var chest: Dictionary = {}           ## forziere di oggi: {"cell": "x,y"}, vuoto se non c'è
+var last_chest_day: String = ""      ## giorno (AAAA-MM-GG) dell'ultimo forziere comparso
 var orders: Array = []               ## [{"giver", "items": {prodotto: qty}, "coins", "xp"}]
 var restored: Array = []             ## id degli edifici restaurati
 var productions: Dictionary = {}     ## edificio -> {"started_at": unix}
@@ -64,7 +68,10 @@ func new_game() -> void:
 		tilled[plot_key(cell)] = true
 	plow_queue = []
 	plots = {}
-	grid_size = GRID_START
+	owned_sectors = [GameData.sector_key(GameData.START_SECTOR)]
+	antiques = {}
+	chest = {}
+	last_chest_day = ""
 	orders = []
 	restored = []
 	productions = {}
@@ -73,12 +80,13 @@ func new_game() -> void:
 
 
 ## Applica in un colpo il tempo passato a gioco chiuso.
-## Le colture non hanno bisogno di nulla (timestamp assoluti); moka, pozzo
-## e zappa sì.
+## Le colture non hanno bisogno di nulla (timestamp assoluti); moka, pozzo,
+## zappa e forziere del giorno sì.
 func apply_offline_progress() -> void:
 	tick_moka()
 	tick_water()
 	update_plowing()
+	tick_chest()
 
 
 func tick_moka() -> void:
@@ -123,8 +131,19 @@ func water_seconds_to_next() -> int:
 
 # --- Terra e zappa ----------------------------------------------------------
 
+## Dentro la mappa (posseduto o no).
+func is_in_world(cell: Vector2i) -> bool:
+	var w := GameData.world_size()
+	return cell.x >= 0 and cell.y >= 0 and cell.x < w.x and cell.y < w.y
+
+
+## Quadrante utilizzabile: dentro un lotto posseduto.
 func is_in_grid(cell: Vector2i) -> bool:
-	return cell.x >= 0 and cell.y >= 0 and cell.x < grid_size.x and cell.y < grid_size.y
+	return is_in_world(cell) and is_sector_owned(GameData.sector_of(cell))
+
+
+func is_sector_owned(sector: Vector2i) -> bool:
+	return GameData.sector_key(sector) in owned_sectors
 
 
 func is_tilled(cell: Vector2i) -> bool:
@@ -256,12 +275,24 @@ func _plot_duration(p: Dictionary) -> float:
 	return float(GameData.crop(p["crop"])["time"])
 
 
-## Avanzamento 0..1 della pianta sul quadrante (0 se vuoto).
+## Avanzamento 0..1 della pianta sul quadrante (0 se vuoto o non annaffiata).
 func plot_progress(cell: Vector2i) -> float:
 	var p := get_plot(cell)
-	if p.is_empty():
+	if p.is_empty() or not p.get("watered", false):
 		return 0.0
 	return clampf((now() - float(p["planted_at"])) / _plot_duration(p), 0.0, 1.0)
+
+
+## La pianta sta crescendo: è stata annaffiata e non è ancora pronta.
+func is_growing(cell: Vector2i) -> bool:
+	var p := get_plot(cell)
+	return not p.is_empty() and p.get("watered", false) and plot_progress(cell) < 1.0
+
+
+## Seminata (o raccolta, se è un albero) e in attesa d'acqua.
+func needs_water(cell: Vector2i) -> bool:
+	var p := get_plot(cell)
+	return not p.is_empty() and not p.get("watered", false)
 
 
 func is_ready(cell: Vector2i) -> bool:
@@ -272,6 +303,8 @@ func plot_seconds_left(cell: Vector2i) -> int:
 	var p := get_plot(cell)
 	if p.is_empty():
 		return 0
+	if not p.get("watered", false):
+		return int(_plot_duration(p))
 	return maxi(0, ceili(float(p["planted_at"]) + _plot_duration(p) - now()))
 
 
@@ -289,15 +322,16 @@ func plant(cell: Vector2i, crop_id: String) -> bool:
 	seeds[crop_id] = seed_count(crop_id) - 1
 	if seeds[crop_id] <= 0:
 		seeds.erase(crop_id)
-	plots[plot_key(cell)] = {"crop": crop_id, "planted_at": now(), "watered": false, "fertilized": false}
+	# Resta un sacchetto di semi finché non viene annaffiato.
+	plots[plot_key(cell)] = {"crop": crop_id, "planted_at": 0.0, "watered": false, "fertilized": false}
+	planted.emit(cell)
 	changed.emit()
 	return true
 
 
-## Annaffiare toglie il 30% del tempo che manca (una volta per ciclo).
+## Annaffiare fa partire la crescita (una goccia, una volta per ciclo).
 func water_plot(cell: Vector2i) -> bool:
-	var p := get_plot(cell)
-	if p.is_empty() or is_ready(cell) or p.get("watered", false):
+	if not needs_water(cell):
 		return false
 	if water <= 0:
 		toast.emit(tr("MSG_WELL_EMPTY"))
@@ -305,8 +339,8 @@ func water_plot(cell: Vector2i) -> bool:
 	if water >= GameData.WATER_MAX:
 		water_last_tick = now()  # da pieno riparte la ricarica
 	water -= 1
-	var left := float(plot_seconds_left(cell))
-	p["planted_at"] = float(p["planted_at"]) - left * GameData.WATER_SPEEDUP
+	var p := get_plot(cell)
+	p["planted_at"] = now()
 	p["watered"] = true
 	changed.emit()
 	return true
@@ -337,8 +371,8 @@ func harvest(cell: Vector2i) -> bool:
 		qty *= GameData.FERTILIZER_MULTIPLIER
 	add_item(c["product"], qty)
 	if GameData.is_perennial(p["crop"]):
-		# Alberi e arbusti restano piantati e ricominciano il ciclo.
-		p["planted_at"] = now()
+		# Alberi e arbusti restano piantati; il nuovo ciclo parte con l'acqua.
+		p["planted_at"] = 0.0
 		p["watered"] = false
 		p["fertilized"] = false
 		p["harvests"] = int(p.get("harvests", 0)) + 1
@@ -474,6 +508,119 @@ func fulfill_order(index: int) -> bool:
 	orders.remove_at(index)
 	refill_orders()
 	toast.emit(tr("MSG_ORDER_THANKS") % [order["giver"], int(order["coins"])])
+	if randf() < GameData.ANTIQUE_ORDER_CHANCE:
+		var found := _random_antique()
+		add_antique(found, 1)
+		toast.emit(tr("MSG_ANTIQUE_FOUND") % [order["giver"], GameData.antique_name(found)])
+	changed.emit()
+	return true
+
+
+# --- Oggetti antichi e forziere --------------------------------------------
+
+func antique_count(id: String) -> int:
+	return int(antiques.get(id, 0))
+
+
+func add_antique(id: String, qty: int) -> void:
+	antiques[id] = antique_count(id) + qty
+
+
+func _random_antique() -> String:
+	return GameData.ANTIQUES.keys().pick_random()
+
+
+static func today() -> String:
+	return Time.get_date_string_from_system()
+
+
+## Ogni giorno compare un forziere in un punto libero della fattoria.
+func tick_chest() -> void:
+	if last_chest_day == today():
+		return
+	var free: Array = []
+	var fallback: Array = []
+	var w := GameData.world_size()
+	for y in w.y:
+		for x in w.x:
+			var cell := Vector2i(x, y)
+			if not is_in_grid(cell) or not get_plot(cell).is_empty() or is_plow_queued(cell):
+				continue
+			fallback.append(cell)
+			if not is_tilled(cell):
+				free.append(cell)
+	var pool := free if not free.is_empty() else fallback
+	last_chest_day = today()
+	if pool.is_empty():
+		return
+	chest = {"cell": plot_key(pool.pick_random())}
+	toast.emit(tr("MSG_CHEST_APPEARED"))
+	changed.emit()
+
+
+func chest_cell() -> Vector2i:
+	return key_to_cell(chest["cell"]) if not chest.is_empty() else Vector2i(-999, -999)
+
+
+func open_chest(cell: Vector2i) -> bool:
+	if chest.is_empty() or chest_cell() != cell:
+		return false
+	var found := {}
+	for i in randi_range(GameData.CHEST_ANTIQUES.x, GameData.CHEST_ANTIQUES.y):
+		var id := _random_antique()
+		found[id] = int(found.get(id, 0)) + 1
+		add_antique(id, 1)
+	var c := randi_range(GameData.CHEST_COINS.x, GameData.CHEST_COINS.y)
+	coins += c
+	chest = {}
+	var names: PackedStringArray = []
+	for id in found:
+		names.append("%d %s" % [found[id], GameData.antique_name(id)])
+	toast.emit(tr("MSG_CHEST_OPENED") % [", ".join(names), c])
+	chest_opened.emit(cell, found, c)
+	changed.emit()
+	return true
+
+
+# --- Lotti di terra ---------------------------------------------------------
+
+func sector_cost(sector: Vector2i) -> Dictionary:
+	return GameData.SECTORS.get(GameData.sector_key(sector), {})
+
+
+## Un lotto si compra se confina con uno già posseduto.
+func is_sector_buyable(sector: Vector2i) -> bool:
+	if is_sector_owned(sector) or sector_cost(sector).is_empty():
+		return false
+	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if is_sector_owned(sector + d):
+			return true
+	return false
+
+
+func can_buy_sector(sector: Vector2i) -> bool:
+	if not is_sector_buyable(sector):
+		return false
+	var cost := sector_cost(sector)
+	if level < int(cost["level"]) or coins < int(cost["coins"]):
+		return false
+	for id in cost["antiques"]:
+		if antique_count(id) < int(cost["antiques"][id]):
+			return false
+	return true
+
+
+func buy_sector(sector: Vector2i) -> bool:
+	if not can_buy_sector(sector):
+		return false
+	var cost := sector_cost(sector)
+	coins -= int(cost["coins"])
+	for id in cost["antiques"]:
+		antiques[id] = antique_count(id) - int(cost["antiques"][id])
+	owned_sectors.append(GameData.sector_key(sector))
+	add_xp(15)
+	toast.emit(tr("MSG_SECTOR_BOUGHT"))
+	sector_bought.emit(sector)
 	changed.emit()
 	return true
 
@@ -542,7 +689,7 @@ func collect_production(building_id: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 2,
+		"version": 3,
 		"saved_at": now(),
 		"coins": coins,
 		"lire_oro": lire_oro,
@@ -558,7 +705,10 @@ func to_dict() -> Dictionary:
 		"tilled": tilled.keys(),
 		"plow_queue": plow_queue,
 		"plots": plots,
-		"grid_size": [grid_size.x, grid_size.y],
+		"owned_sectors": owned_sectors,
+		"antiques": antiques,
+		"chest": chest,
+		"last_chest_day": last_chest_day,
 		"orders": orders,
 		"restored": restored,
 		"productions": productions,
@@ -590,8 +740,14 @@ func from_dict(d: Dictionary) -> void:
 		for key in plots:
 			tilled[key] = true
 	plow_queue = d.get("plow_queue", [])
-	var gs: Array = d.get("grid_size", [GRID_START.x, GRID_START.y])
-	grid_size = Vector2i(int(gs[0]), int(gs[1]))
+	if int(d.get("version", 1)) < 3:
+		# Fino alla v2 le piante crescevano subito: risultano già annaffiate.
+		for key in plots:
+			plots[key]["watered"] = true
+	owned_sectors = d.get("owned_sectors", [GameData.sector_key(GameData.START_SECTOR)])
+	antiques = _int_values(d.get("antiques", {}))
+	chest = d.get("chest", {})
+	last_chest_day = str(d.get("last_chest_day", ""))
 	orders = d.get("orders", [])
 	restored = d.get("restored", [])
 	productions = d.get("productions", {})

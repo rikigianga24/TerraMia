@@ -18,17 +18,26 @@ Il documento di design completo è in [`docs/design.md`](docs/design.md).
 
 ## Come si gioca (prototipo)
 
+- **Mappa:** 18×18 quadranti divisi in 3×3 lotti da 6×6. Si parte dal lotto in
+  fondo, tra il fiume (a sinistra) e il bosco (a destra); davanti passa una
+  strada di pietrisco con carretti e auto d'epoca.
+- **Vista:** rotellina o pizzico per lo zoom; per spostarsi si trascina con la
+  mano, col tasto destro, con due dita sul trackpad o con le frecce.
 - **Zappa:** tocca i quadranti d'erba per metterli in coda. Il contadino li
-  lavora uno alla volta, 15 secondi l'uno, anche a gioco chiuso. Si semina solo
-  sulla terra lavorata; toccando di nuovo un quadrante in coda lo togli.
-- **Negozio:** semi di tutte le piante (ognuna si sblocca al suo livello) e concime.
-- **Semi:** scegli il seme nella barra in basso e tocca la terra lavorata.
-- **Annaffia:** costa una goccia e toglie il 30% del tempo che manca. Il pozzo
-  si riempie di una goccia ogni 90 secondi, fino a 20.
+  lavora uno alla volta, 15 secondi l'uno, anche a gioco chiuso.
+- **Semina:** scegli il seme nella barra in basso e tocca la terra lavorata: il
+  contadino semina subito. Resta un sacchetto di semi finché non lo annaffi.
+- **Annaffia:** l'acqua fa partire la crescita (una goccia). Il pozzo si riempie
+  di una goccia ogni 90 secondi, fino a 20. Alberi e arbusti, dopo il raccolto,
+  vanno annaffiati di nuovo.
 - **Concime:** raddoppia il prossimo raccolto della pianta (dal livello 2).
 - **Raccolto:** le piante pronte si raccolgono con qualsiasi strumento.
-  Tenendo premuto e trascinando si zappa, semina, annaffia o raccoglie su più
-  quadranti in un colpo. Alberi e arbusti restano piantati e rifanno i frutti.
+- **Nuova terra:** tocca un lotto con il cartello "In vendita". Servono monete,
+  un livello minimo e alcuni oggetti antichi (monete romane, anfore, lucerne,
+  tessere di mosaico, fibule, chiavi antiche), che si trovano a caso
+  consegnando gli ordini e nel forziere che compare ogni giorno sulla fattoria.
+- **Borgo:** è una mappa a sé. Tocca un edificio e il contadino ci va a piedi:
+  la bacheca in piazza apre gli ordini, il mulino la sua scheda.
 
 ## Struttura
 
@@ -37,10 +46,13 @@ project.godot            configurazione, autoload, finestra 1280×720
 scenes/
   main.tscn / main.gd    scena principale, HUD, navigazione Fattoria ↔ Borgo
   farm/farm.gd           griglia isometrica 6×6, piantare e raccogliere
-  borgo/borgo.gd         bacheca degli ordini e mulino
+  borgo/borgo_map.gd     il borgo come mappa: piazza, edifici, il contadino che cammina
+  borgo/borgo.gd         finestre del borgo: bacheca degli ordini e mulino
   farm/backdrop.gd       sfondo: cielo, colline, nuvole, il paese
   ui/shop.gd             negozio di semi e concime
   ui/settings_panel.gd   impostazioni: lingua, volumi, informazioni
+  ui/land_panel.gd       acquisto dei lotti di terra
+scripts/world/           telecamera con zoom (world_camera.gd), disegno del contadino
 scripts/ui/ui_kit.gd     pezzi d'interfaccia riusati (pastiglie, icone, pulsanti)
 scripts/autoload/settings.gd  lingua e volumi (impostazioni del dispositivo)
 scripts/autoload/

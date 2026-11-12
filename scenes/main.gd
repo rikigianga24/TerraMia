@@ -40,6 +40,8 @@ var _farm_btn: Button
 var _borgo_btn: Button
 var _shop_btn: Button
 var _shop: Shop
+var _land: LandPanel
+var borgo_map: BorgoMap
 var _settings: SettingsPanel
 ## Dopo un cambio di lingua la scena si ricarica: riapre le impostazioni.
 static var reopen_settings := false
@@ -48,6 +50,13 @@ static var reopen_settings := false
 func _ready() -> void:
 	_build_backdrop()
 	_build_paint_filter()
+	# il borgo è una seconda mappa, accanto alla fattoria
+	borgo_map = BorgoMap.new()
+	borgo_map.visible = false
+	add_child(borgo_map)
+	move_child(borgo_map, farm.get_index() + 1)
+	borgo_map.building_reached.connect(_on_building_reached)
+	farm.sector_tapped.connect(_on_sector_tapped)
 	_build_hud()
 	GameState.changed.connect(_refresh_hud)
 	GameState.toast.connect(show_toast)
@@ -78,7 +87,10 @@ func _on_regen_tick() -> void:
 
 func show_farm() -> void:
 	farm.visible = true
-	borgo.visible = false
+	borgo_map.visible = false
+	borgo.close_panels()
+	borgo_map.camera.active = false
+	farm.camera.activate()
 	_backdrop.mode = "farm"
 	_dock.visible = true
 	_farm_btn.button_pressed = true
@@ -86,11 +98,37 @@ func show_farm() -> void:
 
 func show_borgo() -> void:
 	farm.visible = false
-	borgo.visible = true
+	borgo_map.visible = true
+	farm.camera.active = false
+	borgo_map.camera.activate()
 	_backdrop.mode = "borgo"
 	_dock.visible = false
 	_shop.hide()
+	_land.hide()
 	_borgo_btn.button_pressed = true
+
+
+## Il contadino è arrivato a un edificio del borgo.
+func _on_building_reached(id: String) -> void:
+	match id:
+		"bacheca":
+			borgo.open_panel("orders")
+		"mulino":
+			borgo.open_panel("mill")
+		"caldarroste", "bocce":
+			pass
+		_:
+			var lvl := int(GameData.building(id).get("level", 1))
+			if GameState.level < lvl:
+				show_toast(tr("MSG_BUILDING_LOCKED") % [GameData.building_name(id), lvl])
+			else:
+				show_toast(tr("MSG_BUILDING_SOON") % GameData.building_name(id))
+
+
+func _on_sector_tapped(sector: Vector2i) -> void:
+	_shop.hide()
+	_settings.hide()
+	_land.open(sector)
 
 
 func show_toast(message: String) -> void:
@@ -275,6 +313,10 @@ func _build_hud() -> void:
 	_shop.seed_bought.connect(select_seed)
 	hud.add_child(_shop)
 
+	_land = LandPanel.new()
+	_land.visible = false
+	hud.add_child(_land)
+
 	_settings = SettingsPanel.new()
 	_settings.visible = reopen_settings
 	reopen_settings = false
@@ -283,6 +325,7 @@ func _build_hud() -> void:
 
 func _toggle_settings() -> void:
 	_shop.hide()
+	_land.hide()
 	_settings.visible = not _settings.visible
 
 

@@ -78,8 +78,6 @@ func _draw() -> void:
 	# primo piano (più pieno)
 	draw_texture_rect(_ground, Rect2(0, horizon, s.x, s.y - horizon), false)
 	_meadow_strokes(s, horizon)
-	if mode == "borgo":
-		_village(s, s.y * 0.93, 1.0, 0.16, 0.86)
 
 
 ## Ciuffi d'erba e fiorellini sparsi, sempre negli stessi posti.

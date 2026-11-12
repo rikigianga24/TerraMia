@@ -25,11 +25,26 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	var grid := GameState.grid_size
+	var grid := GameData.world_size()
 	for y in grid.y:
 		for x in grid.x:
-			_draw_labels(Vector2i(x, y))
+			if GameState.is_in_grid(Vector2i(x, y)):
+				_draw_labels(Vector2i(x, y))
+	_draw_sign_labels()
 	_draw_popups()
+
+
+## Scritta "In vendita" sui cartelli dei lotti che si possono comprare.
+func _draw_sign_labels() -> void:
+	var n := GameData.SECTOR_SIZE
+	var text := tr("LAND_SIGN")
+	for sy in GameData.WORLD_SECTORS.y:
+		for sx in GameData.WORLD_SECTORS.x:
+			var sector := Vector2i(sx, sy)
+			if GameState.is_sector_owned(sector) or not GameState.is_sector_buyable(sector):
+				continue
+			var p := farm.cell_to_local(Vector2(sx * n + n * 0.5, sy * n + n * 0.5))
+			draw_string(_font_bold, p + Vector2(-26, -40), text, HORIZONTAL_ALIGNMENT_CENTER, 52, 11, Color("fbf3e2"))
 
 
 func _draw_labels(cell: Vector2i) -> void:
@@ -43,9 +58,14 @@ func _draw_labels(cell: Vector2i) -> void:
 		return
 	var kind: String = GameData.crop(plot["crop"])["kind"]
 	var top := -86.0 if kind == "tree" else (-48.0 if kind == "bush" else -40.0)
-	# icone di stato: annaffiata e concimata
-	if plot.get("watered", false):
-		draw_texture_rect(ICON_DROP, Rect2(c + Vector2(30, -4), Vector2(16, 16)), false)
+	# da annaffiare: goccia che pulsa sopra il sacchetto (o l'albero)
+	if GameState.needs_water(cell):
+		var k := 1.0 + sin(farm._clock * 4.0 + cell.x + cell.y) * 0.12
+		var bubble := c + Vector2(0, top + 4.0)
+		draw_circle(bubble, 13.0 * k, Color("f6eedb"))
+		draw_arc(bubble, 13.0 * k, 0.0, TAU, 32, Color("7fb6d8"), 1.5, true)
+		draw_texture_rect(ICON_DROP, Rect2(bubble - Vector2(9, 9) * k, Vector2(18, 18) * k), false)
+		return
 	if plot.get("fertilized", false):
 		draw_texture_rect(ICON_FERTILIZER, Rect2(c + Vector2(-46, -6), Vector2(18, 18)), false)
 	if GameState.is_ready(cell):

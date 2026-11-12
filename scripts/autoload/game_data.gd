@@ -105,12 +105,12 @@ const START_TILLED := [Vector2i(2, 2), Vector2i(3, 2), Vector2i(2, 3), Vector2i(
 const START_SEEDS := {"grano": 4}
 
 ## Gocce d'acqua: il pozzo ne riempie una ogni 90 secondi, fino a 20.
-## Annaffiare una pianta costa una goccia e toglie il 30% del tempo che manca.
-## Si annaffia una volta per ciclo di crescita.
+## Una pianta seminata resta un sacchetto di semi finché non la annaffi:
+## l'acqua (una goccia) fa partire la crescita. Alberi e arbusti, dopo il
+## raccolto, vanno annaffiati di nuovo per rifare i frutti.
 const WATER_INTERVAL := 90
 const WATER_MAX := 20
 const WATER_START := 10
-const WATER_SPEEDUP := 0.3
 
 ## Concime: raddoppia il raccolto della pianta su cui lo spargi (una volta per ciclo).
 const FERTILIZER_PRICE := 10
@@ -119,6 +119,40 @@ const FERTILIZER_LEVEL := 2
 
 const ORDER_BOARD_SIZE := 3
 const ORDER_GIVERS := ["Gino", "Rosa", "Beppe", "Zia Carmela", "Nonna Pina"]
+
+## Mappa della fattoria: lotti di 6×6 quadranti, 3×3 lotti in tutto.
+## Si parte dal lotto (0,0), in fondo tra il fiume (a sinistra) e il bosco
+## (a destra); ci si allarga verso la strada, davanti.
+const SECTOR_SIZE := 6
+const WORLD_SECTORS := Vector2i(3, 3)
+const START_SECTOR := Vector2i(0, 0)
+## Prezzo dei lotti: monete, livello minimo e oggetti antichi. Si compra solo
+## un lotto confinante con uno già tuo.
+const SECTORS := {
+	"1,0": {"coins": 150, "level": 3, "antiques": {"moneta_romana": 1, "anfora": 1}},
+	"0,1": {"coins": 150, "level": 3, "antiques": {"moneta_romana": 1, "lucerna": 1}},
+	"1,1": {"coins": 400, "level": 5, "antiques": {"anfora": 1, "mosaico": 2}},
+	"2,0": {"coins": 400, "level": 5, "antiques": {"lucerna": 2, "fibula": 1}},
+	"0,2": {"coins": 400, "level": 5, "antiques": {"moneta_romana": 2, "fibula": 1}},
+	"2,1": {"coins": 900, "level": 7, "antiques": {"mosaico": 2, "chiave_antica": 1}},
+	"1,2": {"coins": 900, "level": 7, "antiques": {"anfora": 2, "chiave_antica": 1}},
+	"2,2": {"coins": 1600, "level": 9, "antiques": {"chiave_antica": 2, "mosaico": 2, "fibula": 2}},
+}
+
+## Oggetti antichi: servono a sbloccare i lotti. Si trovano a caso
+## consegnando ordini, o nel forziere che compare ogni giorno sulla fattoria.
+const ANTIQUES := {
+	"moneta_romana": {"color": "d9a441"},
+	"anfora": {"color": "c0603e"},
+	"lucerna": {"color": "b98a5a"},
+	"mosaico": {"color": "4f8fb0"},
+	"fibula": {"color": "9aa6ad"},
+	"chiave_antica": {"color": "7a5a2a"},
+}
+const ANTIQUE_ORDER_CHANCE := 0.3
+## Forziere: uno al giorno, in un punto libero della fattoria.
+const CHEST_ANTIQUES := Vector2i(1, 2)      ## da 1 a 2 oggetti
+const CHEST_COINS := Vector2i(20, 60)
 
 
 func crop(id: String) -> Dictionary:
@@ -190,6 +224,22 @@ func resident_name(id: String) -> String:
 
 func building_line(id: String, n: int) -> String:
 	return tr("LINE_%s_%d" % [id.to_upper(), n])
+
+
+func antique_name(id: String) -> String:
+	return tr("ANT_" + id.to_upper())
+
+
+func world_size() -> Vector2i:
+	return WORLD_SECTORS * SECTOR_SIZE
+
+
+static func sector_of(cell: Vector2i) -> Vector2i:
+	return Vector2i(floori(cell.x / float(SECTOR_SIZE)), floori(cell.y / float(SECTOR_SIZE)))
+
+
+static func sector_key(sector: Vector2i) -> String:
+	return "%d,%d" % [sector.x, sector.y]
 
 
 static func format_time(seconds: int) -> String:

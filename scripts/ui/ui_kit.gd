@@ -65,6 +65,37 @@ static func crop_icon(crop_id: String) -> Texture2D:
 	return tex
 
 
+## Medaglione per un oggetto antico, nel suo colore (segnaposto finché non
+## ci sono le illustrazioni).
+static func antique_icon(id: String) -> Texture2D:
+	var key := "antique_" + id
+	if _crop_icons.has(key):
+		return _crop_icons[key]
+	var color := Color(GameData.ANTIQUES.get(id, {}).get("color", "c0a060"))
+	var size := 64
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var c := Vector2(32, 32)
+	for y in size:
+		for x in size:
+			var p := Vector2(x + 0.5, y + 0.5)
+			var d := p.distance_to(c)
+			var col := Color(0, 0, 0, 0)
+			if d < 28.0:
+				col = Color("e9d6b0").darkened(0.15)
+			if d < 25.0:
+				col = Color("f4e7c8")
+			if d < 17.0:
+				col = color
+				if p.distance_to(c + Vector2(-5, -6)) < 5.0:
+					col = color.lerp(Color.WHITE, 0.45)
+			if d < 28.0 and d > 27.0:
+				col.a = 28.0 - d
+			img.set_pixel(x, y, col)
+	var tex := ImageTexture.create_from_image(img)
+	_crop_icons[key] = tex
+	return tex
+
+
 static func texture_rect(tex: Texture2D, size: float) -> TextureRect:
 	var t := TextureRect.new()
 	t.texture = tex

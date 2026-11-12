@@ -56,7 +56,7 @@ MILL_WORKING,Macina in corso...,Grinding...,Mouture en cours...,Moliendo...
 MILL_GRIND,Macina,Grind,Moudre,Moler
 MSG_HOE_FIRST,Prima lavora la terra con la zappa.,First till the soil with the hoe.,Laboure d'abord la terre avec la houe.,Primero trabaja la tierra con la azada.
 MSG_TAKE_HOE,Prendi la zappa per lavorare la terra.,Pick up the hoe to till the soil.,Prends la houe pour labourer la terre.,Coge la azada para trabajar la tierra.
-MSG_WATER_HINT,Annaffia una pianta che sta crescendo.,Water a plant that is growing.,Arrose une plante qui pousse.,Riega una planta que esté creciendo.
+MSG_WATER_HINT,Annaffia un sacchetto di semi per farlo crescere.,Water a seed bag to make it grow.,Arrose un sachet de graines pour le faire pousser.,Riega una bolsa de semillas para que crezca.
 MSG_FERTILIZER_HINT,Spargi il concime su una pianta che sta crescendo.,Spread fertilizer on a growing plant.,Épands l'engrais sur une plante qui pousse.,Echa abono en una planta que esté creciendo.
 MSG_QUEUE_FULL,Il contadino ha già troppi lavori in coda.,The farmer already has too many jobs queued.,Le fermier a déjà trop de travaux en attente.,El granjero ya tiene demasiadas tareas en cola.
 MSG_NO_COINS,Non hai abbastanza monete.,You don't have enough coins.,Tu n'as pas assez de pièces.,No tienes suficientes monedas.
@@ -69,6 +69,42 @@ MSG_NEW_SEEDS, · Nuovi semi: %s, · New seeds: %s, · Nouvelles graines : %s, �
 MSG_ORDER_THANKS,%s ringrazia: +%d monete,%s says thanks: +%d coins,%s te remercie : +%d pièces,%s te da las gracias: +%d monedas
 MSG_RESTORED,%s è tornato! %s,%s is back! %s,%s est de retour ! %s,¡%s ha vuelto! %s
 MSG_MISSING_INGREDIENTS,Mancano gli ingredienti.,Missing ingredients.,Il manque des ingrédients.,Faltan ingredientes.
+UI_ANTIQUES,Oggetti antichi,Antiques,Objets anciens,Antigüedades
+ANT_MONETA_ROMANA,moneta romana,Roman coin,pièce romaine,moneda romana
+ANT_ANFORA,anfora,amphora,amphore,ánfora
+ANT_LUCERNA,lucerna,oil lamp,lampe à huile,lucerna
+ANT_MOSAICO,tessera di mosaico,mosaic tile,tesselle de mosaïque,tesela de mosaico
+ANT_FIBULA,fibula,brooch,fibule,fíbula
+ANT_CHIAVE_ANTICA,chiave antica,old key,clé ancienne,llave antigua
+MSG_ANTIQUE_FOUND,%s ti regala un oggetto antico: %s!,%s gives you an antique: %s!,%s t'offre un objet ancien : %s !,¡%s te regala una antigüedad: %s!
+MSG_CHEST_APPEARED,Un vecchio forziere è spuntato nella fattoria!,An old chest has turned up on the farm!,Un vieux coffre est apparu à la ferme !,¡Ha aparecido un viejo cofre en la granja!
+MSG_CHEST_OPENED,Nel forziere: %s e %d monete,In the chest: %s and %d coins,Dans le coffre : %s et %d pièces,En el cofre: %s y %d monedas
+MSG_SECTOR_BOUGHT,Nuova terra! Il campo si allarga.,New land! The farm grows.,Nouvelle terre ! La ferme s'agrandit.,¡Tierra nueva! La granja crece.
+LAND_TITLE,Terreno in vendita,Land for sale,Terrain à vendre,Terreno en venta
+LAND_SUB,Un lotto di 6×6 quadranti,A 6×6 plot of land,Une parcelle de 6×6 cases,Una parcela de 6×6 casillas
+LAND_NEED,Per comprarlo servono:,To buy it you need:,Pour l'acheter il faut :,Para comprarlo necesitas:
+LAND_LEVEL,Livello %d,Level %d,Niveau %d,Nivel %d
+LAND_BUY,Compra il terreno,Buy the land,Acheter le terrain,Comprar el terreno
+LAND_NOT_ADJACENT,Prima compra un terreno che confina con questo.,First buy a plot next to this one.,Achète d'abord un terrain voisin.,Primero compra un terreno vecino.
+LAND_HINT,Gli oggetti antichi si trovano consegnando gli ordini e nel forziere che compare ogni giorno.,Antiques turn up when you deliver orders and in the chest that appears every day.,Les objets anciens se trouvent en livrant les commandes et dans le coffre qui apparaît chaque jour.,Las antigüedades aparecen al entregar pedidos y en el cofre que surge cada día.
+LAND_SIGN,In vendita,For sale,À vendre,Se vende
+MSG_BUILDING_LOCKED,%s: si potrà restaurare dal livello %d.,%s: can be restored from level %d.,%s : restaurable à partir du niveau %d.,%s: se podrá restaurar desde el nivel %d.
+MSG_BUILDING_SOON,%s: il restauro arriverà presto.,%s: restoration coming soon.,%s : la restauration arrive bientôt.,%s: la restauración llegará pronto.
+BLD_BACHECA,Bacheca degli ordini,Order board,Tableau des commandes,Tablón de pedidos
+BLD_FORNO,Forno,Bakery,Boulangerie,Horno
+BLD_UFFICIO_POSTALE,Ufficio postale,Post office,Bureau de poste,Correos
+BLD_FRANTOIO,Frantoio,Olive press,Moulin à huile,Almazara
+BLD_CONSERVE,Bottega delle conserve,Preserves shop,Épicerie des conserves,Tienda de conservas
+BLD_CASEIFICIO,Caseificio,Dairy,Fromagerie,Quesería
+BLD_CANTINA,Cantina,Winery,Cave à vin,Bodega
+BLD_GELATERIA,Gelateria,Ice cream shop,Glacier,Heladería
+BLD_PASTIFICIO,Pastificio,Pasta workshop,Fabrique de pâtes,Fábrica de pasta
+BLD_CAMPANILE,Campanile,Bell tower,Clocher,Campanario
+BLD_BAR,Bar della piazza,Square café,Café de la place,Bar de la plaza
+BLD_OSTERIA,Osteria,Tavern,Auberge,Taberna
+BLD_PASTICCERIA,Pasticceria,Pastry shop,Pâtisserie,Pastelería
+BLD_CALDARROSTE,Caldarroste in piazza,Chestnut stand,Marrons chauds,Castañas asadas
+BLD_BOCCE,Campo da bocce,Bocce court,Terrain de boules,Cancha de bochas
 BLD_MULINO,Mulino,Mill,Moulin,Molino
 RES_MULINO,"Gino, il mugnaio","Gino, the miller","Gino, le meunier","Gino, el molinero"
 LINE_MULINO_0,Piove? Non piove? Mamma mia!,Rain? No rain? Mamma mia!,Il pleut ? Il pleut pas ? Mamma mia !,¿Llueve? ¿No llueve? ¡Mamma mia!
