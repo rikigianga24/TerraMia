@@ -16,6 +16,20 @@ Il documento di design completo è in [`docs/design.md`](docs/design.md).
 1. Apri Godot e importa `project.godot`.
 2. Premi **F5**: parte `scenes/main.tscn`.
 
+## Come si gioca (prototipo)
+
+- **Zappa:** tocca i quadranti d'erba per metterli in coda. Il contadino li
+  lavora uno alla volta, 15 secondi l'uno, anche a gioco chiuso. Si semina solo
+  sulla terra lavorata; toccando di nuovo un quadrante in coda lo togli.
+- **Negozio:** semi di tutte le piante (ognuna si sblocca al suo livello) e concime.
+- **Semi:** scegli il seme nella barra in basso e tocca la terra lavorata.
+- **Annaffia:** costa una goccia e toglie il 30% del tempo che manca. Il pozzo
+  si riempie di una goccia ogni 90 secondi, fino a 20.
+- **Concime:** raddoppia il prossimo raccolto della pianta (dal livello 2).
+- **Raccolto:** le piante pronte si raccolgono con qualsiasi strumento.
+  Tenendo premuto e trascinando si zappa, semina, annaffia o raccoglie su più
+  quadranti in un colpo. Alberi e arbusti restano piantati e rifanno i frutti.
+
 ## Struttura
 
 ```
@@ -24,10 +38,12 @@ scenes/
   main.tscn / main.gd    scena principale, HUD, navigazione Fattoria ↔ Borgo
   farm/farm.gd           griglia isometrica 6×6, piantare e raccogliere
   borgo/borgo.gd         bacheca degli ordini e mulino
+  ui/shop.gd             negozio di semi e concime
 scripts/autoload/
   game_data.gd           dati statici: colture, edifici, livelli (dal documento)
   game_state.gd          stato della partita e regole (monete, XP, ordini, restauri)
   save_manager.gd        salvataggio locale in user:// e progresso offline
+tests/test_game_state.gd test delle regole di gioco (senza grafica)
 assets/                  grafica, audio e font (per ora vuoti)
 docs/design.md           documento di design
 ```
@@ -37,12 +53,21 @@ docs/design.md           documento di design
 - **Timer reali.** Ogni coltura salva il timestamp Unix di semina, quindi il
   tempo scorre anche a gioco chiuso senza simulare nulla. La moka recupera gli
   espressi persi al rientro (`GameState.apply_offline_progress`).
-- **Dati in un posto solo.** Tempi, livelli e prezzi stanno in `game_data.gd`;
-  il bilanciamento si fa lì. Solo grano e pomodori hanno già i valori economici.
+- **Dati in un posto solo.** Tempi, livelli, prezzi, zappa, gocce e concime
+  stanno in `game_data.gd`; il bilanciamento si fa lì. I prezzi delle piante
+  vengono da una formula descritta in testa al file.
 - **Grafica provvisoria.** La fattoria si disegna con `_draw()` e il borgo è
   fatto di controlli standard, finché non arrivano gli SVG.
 - **Salvataggi locali** in `user://terramia_save.json` (su web finisce in
   IndexedDB). Supabase arriva solo con gli acquisti in-app.
+
+## Test
+
+```bash
+godot --headless --path . -s tests/test_game_state.gd
+```
+
+Esce con codice 1 se un controllo fallisce.
 
 ## Export web
 
@@ -58,6 +83,8 @@ docs/design.md           documento di design
 ## Roadmap del prototipo
 
 - [x] Griglia isometrica, piantare e raccogliere grano e pomodori
+- [x] Tutte le piante del documento, negozio di semi e concime
+- [x] Zappa con il contadino, gocce d'acqua, raccolto trascinando
 - [x] Timer reali e progresso offline
 - [x] Bacheca ordini, monete, esperienza e livelli 1–3
 - [x] Mulino restaurabile con il mugnaio (prima versione)

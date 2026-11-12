@@ -7,6 +7,7 @@ extends Node
 signal changed  ## Qualsiasi modifica: HUD e salvataggio la ascoltano.
 signal leveled_up(level: int)
 signal toast(message: String)
+signal harvested(cell: Vector2i, product: String, qty: int)
 
 const GRID_START := Vector2i(6, 6)
 
@@ -16,9 +17,15 @@ var xp: int = 0
 var level: int = 1
 var espresso: int = 1
 var moka_last_tick: float = 0.0
+var water: int = GameData.WATER_START
+var water_last_tick: float = 0.0
+var fertilizer: int = 0
 
 var inventory: Dictionary = {}       ## prodotto -> quantità
-var plots: Dictionary = {}           ## "x,y" -> {"crop": id, "planted_at": unix}
+var seeds: Dictionary = {}           ## coltura -> semi posseduti
+var tilled: Dictionary = {}          ## "x,y" -> true: terra lavorata con la zappa
+var plow_queue: Array = []           ## [{"cell": "x,y", "start": unix, "end": unix}]
+var plots: Dictionary = {}           ## "x,y" -> {"crop", "planted_at", "watered", "fertilized"}
 var grid_size: Vector2i = GRID_START
 var orders: Array = []               ## [{"giver", "items": {prodotto: qty}, "coins", "xp"}]
 var restored: Array = []             ## id degli edifici restaurati
@@ -33,6 +40,11 @@ static func plot_key(cell: Vector2i) -> String:
 	return "%d,%d" % [cell.x, cell.y]
 
 
+static func key_to_cell(key: String) -> Vector2i:
+	var parts := key.split(",")
+	return Vector2i(int(parts[0]), int(parts[1]))
+
+
 # --- Avvio e progresso offline ---------------------------------------------
 
 func new_game() -> void:
@@ -42,7 +54,15 @@ func new_game() -> void:
 	level = 1
 	espresso = 1
 	moka_last_tick = now()
+	water = GameData.WATER_START
+	water_last_tick = now()
+	fertilizer = 0
 	inventory = {}
+	seeds = GameData.START_SEEDS.duplicate()
+	tilled = {}
+	for cell in GameData.START_TILLED:
+		tilled[plot_key(cell)] = true
+	plow_queue = []
 	plots = {}
 	grid_size = GRID_START
 	orders = []
@@ -53,78 +73,280 @@ func new_game() -> void:
 
 
 ## Applica in un colpo il tempo passato a gioco chiuso.
-## Le colture non hanno bisogno di nulla (timestamp assoluti); la moka sì.
+## Le colture non hanno bisogno di nulla (timestamp assoluti); moka, pozzo
+## e zappa sì.
 func apply_offline_progress() -> void:
 	tick_moka()
+	tick_water()
+	update_plowing()
 
 
 func tick_moka() -> void:
+	var r := _regen(espresso, moka_last_tick, GameData.MOKA_INTERVAL, GameData.MOKA_MAX)
+	if r[0] != espresso or r[1] != moka_last_tick:
+		var gained: bool = r[0] != espresso
+		espresso = r[0]
+		moka_last_tick = r[1]
+		if gained:
+			changed.emit()
+
+
+func tick_water() -> void:
+	var r := _regen(water, water_last_tick, GameData.WATER_INTERVAL, GameData.WATER_MAX)
+	if r[0] != water or r[1] != water_last_tick:
+		var gained: bool = r[0] != water
+		water = r[0]
+		water_last_tick = r[1]
+		if gained:
+			changed.emit()
+
+
+## Ricarica a tempo: restituisce [nuovo valore, nuovo ultimo tick].
+func _regen(value: int, last_tick: float, interval: float, max_value: int) -> Array:
 	var t := now()
-	if espresso >= GameData.MOKA_MAX:
-		moka_last_tick = t
-		return
-	var elapsed := t - moka_last_tick
-	var made := int(elapsed / GameData.MOKA_INTERVAL)
-	if made > 0:
-		espresso = mini(espresso + made, GameData.MOKA_MAX)
-		moka_last_tick += made * GameData.MOKA_INTERVAL
-		if espresso >= GameData.MOKA_MAX:
-			moka_last_tick = t
-		changed.emit()
+	if value >= max_value:
+		return [value, t]
+	var made := int((t - last_tick) / interval)
+	if made <= 0:
+		return [value, last_tick]
+	value = mini(value + made, max_value)
+	last_tick = t if value >= max_value else last_tick + made * interval
+	return [value, last_tick]
 
 
-# --- Fattoria ---------------------------------------------------------------
+## Secondi alla prossima goccia (0 se il pozzo è pieno).
+func water_seconds_to_next() -> int:
+	if water >= GameData.WATER_MAX:
+		return 0
+	return maxi(0, ceili(water_last_tick + GameData.WATER_INTERVAL - now()))
+
+
+# --- Terra e zappa ----------------------------------------------------------
 
 func is_in_grid(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < grid_size.x and cell.y < grid_size.y
 
 
+func is_tilled(cell: Vector2i) -> bool:
+	return tilled.has(plot_key(cell))
+
+
+func plow_job_index(cell: Vector2i) -> int:
+	var key := plot_key(cell)
+	for i in plow_queue.size():
+		if plow_queue[i]["cell"] == key:
+			return i
+	return -1
+
+
+func is_plow_queued(cell: Vector2i) -> bool:
+	return plow_job_index(cell) >= 0
+
+
+## Mette in coda la zappatura di un quadrante d'erba.
+func queue_plow(cell: Vector2i) -> bool:
+	if not is_in_grid(cell) or is_tilled(cell) or is_plow_queued(cell):
+		return false
+	if plow_queue.size() >= GameData.PLOW_QUEUE_MAX:
+		toast.emit("Il contadino ha già troppi lavori in coda.")
+		return false
+	var start := now()
+	if not plow_queue.is_empty():
+		start = maxf(start, float(plow_queue[-1]["end"]))
+	plow_queue.append({"cell": plot_key(cell), "start": start, "end": start + GameData.PLOW_TIME})
+	changed.emit()
+	return true
+
+
+func cancel_plow(cell: Vector2i) -> bool:
+	var i := plow_job_index(cell)
+	if i < 0:
+		return false
+	plow_queue.remove_at(i)
+	_reschedule_plow_queue()
+	changed.emit()
+	return true
+
+
+## Dopo una cancellazione i lavori successivi slittano in avanti.
+func _reschedule_plow_queue() -> void:
+	var t := now()
+	for job in plow_queue:
+		if float(job["start"]) <= t:
+			t = float(job["end"])  # lavoro già iniziato: resta com'è
+			continue
+		job["start"] = t
+		job["end"] = t + GameData.PLOW_TIME
+		t = float(job["end"])
+
+
+## Sposta tra la terra lavorata i quadranti la cui zappatura è finita.
+func update_plowing() -> void:
+	var t := now()
+	var done := 0
+	while not plow_queue.is_empty() and float(plow_queue[0]["end"]) <= t:
+		tilled[plow_queue[0]["cell"]] = true
+		plow_queue.pop_front()
+		done += 1
+	if done > 0:
+		add_xp(done)  # 1 punto esperienza per quadrante lavorato
+		changed.emit()
+
+
+## Lavoro in corso (o vuoto se il contadino è libero).
+func current_plow_job() -> Dictionary:
+	if plow_queue.is_empty():
+		return {}
+	var job: Dictionary = plow_queue[0]
+	return job if float(job["start"]) <= now() else {}
+
+
+func plow_progress(cell: Vector2i) -> float:
+	var i := plow_job_index(cell)
+	if i < 0:
+		return 0.0
+	var job: Dictionary = plow_queue[i]
+	return clampf((now() - float(job["start"])) / GameData.PLOW_TIME, 0.0, 1.0)
+
+
+# --- Semi e concime ---------------------------------------------------------
+
+func seed_count(crop_id: String) -> int:
+	return int(seeds.get(crop_id, 0))
+
+
+func is_unlocked(crop_id: String) -> bool:
+	return GameData.is_plant(crop_id) and int(GameData.crop(crop_id)["level"]) <= level
+
+
+func buy_seeds(crop_id: String, qty: int) -> bool:
+	if not is_unlocked(crop_id) or qty <= 0:
+		return false
+	var cost := int(GameData.crop(crop_id)["seed_cost"]) * qty
+	if coins < cost:
+		toast.emit("Non hai abbastanza monete.")
+		return false
+	coins -= cost
+	seeds[crop_id] = seed_count(crop_id) + qty
+	changed.emit()
+	return true
+
+
+func buy_fertilizer(qty: int) -> bool:
+	if level < GameData.FERTILIZER_LEVEL:
+		toast.emit("Il concime si sblocca al livello %d." % GameData.FERTILIZER_LEVEL)
+		return false
+	var cost := GameData.FERTILIZER_PRICE * qty
+	if coins < cost:
+		toast.emit("Non hai abbastanza monete.")
+		return false
+	coins -= cost
+	fertilizer += qty
+	changed.emit()
+	return true
+
+
+# --- Coltivazione -----------------------------------------------------------
+
 func get_plot(cell: Vector2i) -> Dictionary:
 	return plots.get(plot_key(cell), {})
 
 
-## Avanzamento 0..1 della coltura sul quadrante (0 se vuoto).
+func _plot_duration(p: Dictionary) -> float:
+	return float(GameData.crop(p["crop"])["time"])
+
+
+## Avanzamento 0..1 della pianta sul quadrante (0 se vuoto).
 func plot_progress(cell: Vector2i) -> float:
 	var p := get_plot(cell)
 	if p.is_empty():
 		return 0.0
-	var duration := float(GameData.crop(p["crop"])["time"])
-	return clampf((now() - float(p["planted_at"])) / duration, 0.0, 1.0)
+	return clampf((now() - float(p["planted_at"])) / _plot_duration(p), 0.0, 1.0)
+
+
+func is_ready(cell: Vector2i) -> bool:
+	return not get_plot(cell).is_empty() and plot_progress(cell) >= 1.0
 
 
 func plot_seconds_left(cell: Vector2i) -> int:
 	var p := get_plot(cell)
 	if p.is_empty():
 		return 0
-	var duration := float(GameData.crop(p["crop"])["time"])
-	return maxi(0, ceili(float(p["planted_at"]) + duration - now()))
-
-
-func can_plant(cell: Vector2i, crop_id: String) -> bool:
-	var c := GameData.crop(crop_id)
-	return is_in_grid(cell) and get_plot(cell).is_empty() and not c.is_empty() \
-		and int(c["level"]) <= level and coins >= int(c.get("seed_cost", 0))
+	return maxi(0, ceili(float(p["planted_at"]) + _plot_duration(p) - now()))
 
 
 func plant(cell: Vector2i, crop_id: String) -> bool:
-	if not can_plant(cell, crop_id):
-		if coins < int(GameData.crop(crop_id).get("seed_cost", 0)):
-			toast.emit("Non hai abbastanza monete per i semi.")
+	if not is_in_grid(cell) or not get_plot(cell).is_empty():
 		return false
-	coins -= int(GameData.crop(crop_id).get("seed_cost", 0))
-	plots[plot_key(cell)] = {"crop": crop_id, "planted_at": now()}
+	if not is_tilled(cell):
+		toast.emit("Prima lavora la terra con la zappa.")
+		return false
+	if not is_unlocked(crop_id):
+		return false
+	if seed_count(crop_id) <= 0:
+		toast.emit("Non hai semi di %s: comprali al negozio." % GameData.crop(crop_id)["name"].to_lower())
+		return false
+	seeds[crop_id] = seed_count(crop_id) - 1
+	if seeds[crop_id] <= 0:
+		seeds.erase(crop_id)
+	plots[plot_key(cell)] = {"crop": crop_id, "planted_at": now(), "watered": false, "fertilized": false}
+	changed.emit()
+	return true
+
+
+## Annaffiare toglie il 30% del tempo che manca (una volta per ciclo).
+func water_plot(cell: Vector2i) -> bool:
+	var p := get_plot(cell)
+	if p.is_empty() or is_ready(cell) or p.get("watered", false):
+		return false
+	if water <= 0:
+		toast.emit("Il pozzo è vuoto: aspetta che si riempia.")
+		return false
+	if water >= GameData.WATER_MAX:
+		water_last_tick = now()  # da pieno riparte la ricarica
+	water -= 1
+	var left := float(plot_seconds_left(cell))
+	p["planted_at"] = float(p["planted_at"]) - left * GameData.WATER_SPEEDUP
+	p["watered"] = true
+	changed.emit()
+	return true
+
+
+## Il concime moltiplica il raccolto (una volta per ciclo).
+func fertilize_plot(cell: Vector2i) -> bool:
+	var p := get_plot(cell)
+	if p.is_empty() or is_ready(cell) or p.get("fertilized", false):
+		return false
+	if fertilizer <= 0:
+		toast.emit("Non hai concime: compralo al negozio.")
+		return false
+	fertilizer -= 1
+	p["fertilized"] = true
 	changed.emit()
 	return true
 
 
 func harvest(cell: Vector2i) -> bool:
-	var p := get_plot(cell)
-	if p.is_empty() or plot_progress(cell) < 1.0:
+	if not is_ready(cell):
 		return false
+	var key := plot_key(cell)
+	var p: Dictionary = plots[key]
 	var c := GameData.crop(p["crop"])
-	add_item(c["product"], int(c.get("yield", 1)))
-	plots.erase(plot_key(cell))
-	add_xp(int(c.get("xp", 1)))
+	var qty := int(c["yield"])
+	if p.get("fertilized", false):
+		qty *= GameData.FERTILIZER_MULTIPLIER
+	add_item(c["product"], qty)
+	if GameData.is_perennial(p["crop"]):
+		# Alberi e arbusti restano piantati e ricominciano il ciclo.
+		p["planted_at"] = now()
+		p["watered"] = false
+		p["fertilized"] = false
+	else:
+		plots.erase(key)
+		if GameData.RETILL_AFTER_HARVEST:
+			tilled.erase(key)
+	add_xp(int(c["xp"]))
+	harvested.emit(cell, c["product"], qty)
 	changed.emit()
 	return true
 
@@ -157,11 +379,18 @@ func remove_items(items: Dictionary) -> void:
 
 func add_xp(amount: int) -> void:
 	xp += amount
-	while level < GameData.MAX_PROTOTYPE_LEVEL and xp >= GameData.xp_for_level(level + 1):
+	while level < GameData.MAX_LEVEL and xp >= GameData.xp_for_level(level + 1):
 		level += 1
 		lire_oro += 1
 		leveled_up.emit(level)
-		toast.emit("Livello %d! +1 Lira d'oro" % level)
+		var unlocked: PackedStringArray = []
+		for id in GameData.all_plants():
+			if int(GameData.crop(id)["level"]) == level:
+				unlocked.append(GameData.crop(id)["name"])
+		var msg := "Livello %d! +1 Lira d'oro" % level
+		if not unlocked.is_empty():
+			msg += " · Nuovi semi: " + ", ".join(unlocked)
+		toast.emit(msg)
 
 
 func xp_progress() -> float:
@@ -191,7 +420,7 @@ func _make_order() -> Dictionary:
 	available.shuffle()
 	for i in n_products:
 		var product: String = available[i]
-		var qty := randi_range(2, 5) if product != "farina" else randi_range(1, 2)
+		var qty := _order_qty(product)
 		items[product] = qty
 		value += qty * _unit_value(product)
 	return {
@@ -202,14 +431,25 @@ func _make_order() -> Dictionary:
 	}
 
 
+## Le piante lente si chiedono in quantità più piccole.
+func _order_qty(product: String) -> int:
+	if product == "farina":
+		return randi_range(1, 2)
+	var t := int(GameData.crop(GameData.crop_for_product(product))["time"])
+	if t <= 15 * GameData.MIN:
+		return randi_range(2, 5)
+	if t <= GameData.HOUR:
+		return randi_range(2, 3)
+	if t <= 4 * GameData.HOUR:
+		return randi_range(1, 2)
+	return 1
+
+
 func _unit_value(product: String) -> int:
 	if product == "farina":
 		return 15
-	for id in GameData.CROPS:
-		var c: Dictionary = GameData.CROPS[id]
-		if c["product"] == product:
-			return int(c.get("sell_price", 1))
-	return 1
+	var id := GameData.crop_for_product(product)
+	return int(GameData.crop(id).get("sell_price", 1)) if id != "" else 1
 
 
 func can_fulfill(index: int) -> bool:
@@ -301,7 +541,7 @@ func collect_production(building_id: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 1,
+		"version": 2,
 		"saved_at": now(),
 		"coins": coins,
 		"lire_oro": lire_oro,
@@ -309,7 +549,13 @@ func to_dict() -> Dictionary:
 		"level": level,
 		"espresso": espresso,
 		"moka_last_tick": moka_last_tick,
+		"water": water,
+		"water_last_tick": water_last_tick,
+		"fertilizer": fertilizer,
 		"inventory": inventory,
+		"seeds": seeds,
+		"tilled": tilled.keys(),
+		"plow_queue": plow_queue,
 		"plots": plots,
 		"grid_size": [grid_size.x, grid_size.y],
 		"orders": orders,
@@ -325,10 +571,24 @@ func from_dict(d: Dictionary) -> void:
 	level = int(d.get("level", 1))
 	espresso = int(d.get("espresso", 1))
 	moka_last_tick = float(d.get("moka_last_tick", now()))
-	inventory = {}
-	for k in d.get("inventory", {}):
-		inventory[k] = int(d["inventory"][k])
+	water = int(d.get("water", GameData.WATER_START))
+	water_last_tick = float(d.get("water_last_tick", now()))
+	fertilizer = int(d.get("fertilizer", 0))
+	inventory = _int_values(d.get("inventory", {}))
+	seeds = _int_values(d.get("seeds", GameData.START_SEEDS))
 	plots = d.get("plots", {})
+	tilled = {}
+	if d.has("tilled"):
+		for key in d["tilled"]:
+			tilled[key] = true
+	else:
+		# Salvataggio v1: niente zappa, la terra lavorata è quella già seminata
+		# più i quadranti iniziali.
+		for cell in GameData.START_TILLED:
+			tilled[plot_key(cell)] = true
+		for key in plots:
+			tilled[key] = true
+	plow_queue = d.get("plow_queue", [])
 	var gs: Array = d.get("grid_size", [GRID_START.x, GRID_START.y])
 	grid_size = Vector2i(int(gs[0]), int(gs[1]))
 	orders = d.get("orders", [])
@@ -336,3 +596,10 @@ func from_dict(d: Dictionary) -> void:
 	productions = d.get("productions", {})
 	refill_orders()
 	changed.emit()
+
+
+static func _int_values(src: Dictionary) -> Dictionary:
+	var out := {}
+	for k in src:
+		out[k] = int(src[k])
+	return out

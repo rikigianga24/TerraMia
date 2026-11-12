@@ -9,3 +9,5 @@
 - Il salvataggio è un dizionario JSON: un campo nuovo va aggiunto sia in `to_dict` sia in
   `from_dict`, con un valore di default per i salvataggi vecchi.
 - Indentazione con tab nei file `.gd`.
+- Dopo ogni modifica alle regole lancia i test: `godot --headless --path . -s tests/test_game_state.gd`.
+  Negli script lanciati con `-s` gli autoload non si vedono per nome: si prendono con `root.get_node("GameState")`.
