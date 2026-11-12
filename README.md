@@ -50,6 +50,9 @@ tests/test_game_state.gd test delle regole di gioco (senza grafica)
 tools/build_theme.gd     genera il tema dell'interfaccia
 tools/translations_source.py  testi in 4 lingue -> localization/translations.csv
 tools/extract_icons.py   ritaglia le icone dal foglio illustrato
+tools/extract_plants.py  ritaglia gli sprite delle piante (3 stadi) da un foglio
+tools/paint_tiles.py     dipinge i blocchi di terreno (erba, terra, terra bagnata)
+docs/art_direction.md    prompt e regole per tutte le illustrazioni
 assets/graphics/         blocchi di terreno SVG (tiles/), icone PNG (icons/) ritagliate
                          da source/icons_sheet.webp con tools/extract_icons.py
 assets/theme/            tema dell'interfaccia (generato, non modificarlo a mano)
@@ -65,9 +68,12 @@ docs/design.md           documento di design
 - **Dati in un posto solo.** Tempi, livelli, prezzi, zappa, gocce e concime
   stanno in `game_data.gd`; il bilanciamento si fa lì. I prezzi delle piante
   vengono da una formula descritta in testa al file.
-- **Grafica 2.5D.** Vista isometrica con blocchi di terra in rilievo (SVG),
-  ombre e piante disegnate da codice in `farm.gd`. Le icone sono SVG in
-  `assets/graphics/icons`.
+- **Grafica 2.5D.** Vista isometrica con blocchi di terra dipinti
+  (`tools/paint_tiles.py`). Le piante con uno sprite illustrato lo usano, le
+  altre si disegnano da codice in `farm.gd`. Ogni quadrante si disegna dal
+  fondo verso lo spettatore, terra e pianta insieme. Sopra il mondo c'è una
+  rifinitura leggera (`assets/shaders/painterly.gdshader`: luce calda e grana
+  della carta); etichette e timer stanno sopra, per restare nitidi.
 - **Tema dell'interfaccia.** È l'equivalente del CSS: colori, bordi, font e
   varianti dei controlli (`PrimaryButton`, `ToolButton`, `Card`, `Pill`...) stanno
   in `tools/build_theme.gd`. Dopo una modifica si rigenera con

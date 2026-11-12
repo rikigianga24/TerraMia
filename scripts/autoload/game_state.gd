@@ -341,6 +341,7 @@ func harvest(cell: Vector2i) -> bool:
 		p["planted_at"] = now()
 		p["watered"] = false
 		p["fertilized"] = false
+		p["harvests"] = int(p.get("harvests", 0)) + 1
 	else:
 		plots.erase(key)
 		if GameData.RETILL_AFTER_HARVEST:

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8u3kbosgyi2w"
-path="res://.godot/imported/soil_wet.svg-65260d3eb2512cadcd48f3cc1b241434.ctex"
+uid="uid://db1v3d217ncag"
+path="res://.godot/imported/soil_wet.png-3997e6e230ed80ad616cbce004a201ad.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/tiles/soil_wet.svg"
-dest_files=["res://.godot/imported/soil_wet.svg-65260d3eb2512cadcd48f3cc1b241434.ctex"]
+source_file="res://assets/graphics/tiles/soil_wet.png"
+dest_files=["res://.godot/imported/soil_wet.png-3997e6e230ed80ad616cbce004a201ad.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

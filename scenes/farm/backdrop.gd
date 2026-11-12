@@ -3,11 +3,11 @@ extends Control
 ## Sfondo della fattoria: cielo sfumato, colline in lontananza con cipressi
 ## e nuvole che scorrono piano. Tutto disegnato da codice.
 
-const SKY_TOP := Color("7fb8e0")
-const SKY_BOTTOM := Color("dcefe6")
-const HILL_FAR := Color("a9c98a")
-const HILL_MID := Color("8fb96a")
-const HILL_NEAR := Color("9cc866")
+const SKY_TOP := Color("86bde0")
+const SKY_BOTTOM := Color("f3e7c8")
+const HILL_FAR := Color("b4cc86")
+const HILL_MID := Color("9cbf62")
+const HILL_NEAR := Color("a2c45c")
 
 ## "farm": colline e cipressi; "borgo": il paese sulla collina.
 var mode := "farm":
@@ -44,8 +44,8 @@ func _draw() -> void:
 	draw_texture_rect(_sky, Rect2(Vector2.ZERO, s), false)
 	# sole
 	var sun := Vector2(s.x * 0.84, s.y * 0.16)
-	draw_circle(sun, 64.0, Color(1, 0.96, 0.75, 0.25))
-	draw_circle(sun, 40.0, Color(1, 0.93, 0.6, 0.9))
+	draw_circle(sun, 64.0, Color(1, 0.94, 0.8, 0.25))
+	draw_circle(sun, 40.0, Color(0.98, 0.9, 0.68, 0.9))
 	# nuvole
 	for i in 4:
 		var speed := 6.0 + i * 2.5
@@ -78,11 +78,11 @@ func _cypresses(s: Vector2, base: float) -> void:
 		var x := s.x * (0.05 + i * 0.11) + (i % 3) * 14.0
 		var y := base - 36.0 * (0.6 * sin(x * 0.004 + 1.3) + 0.4 * sin(x * 0.0092 + 2.21)) + 4.0
 		var h := 34.0 + (i % 3) * 8.0
-		draw_colored_polygon(PackedVector2Array([Vector2(x, y - h), Vector2(x + 6, y - h * 0.4), Vector2(x + 4, y), Vector2(x - 4, y), Vector2(x - 6, y - h * 0.4)]), Color("5e8a4a"))
+		draw_colored_polygon(PackedVector2Array([Vector2(x, y - h), Vector2(x + 6, y - h * 0.4), Vector2(x + 4, y), Vector2(x - 4, y), Vector2(x - 6, y - h * 0.4)]), Color("4f7a3e"))
 
 
 func _cloud(p: Vector2, k: float) -> void:
-	var c := Color(1, 1, 1, 0.85)
+	var c := Color(1, 0.98, 0.93, 0.8)
 	draw_circle(p + Vector2(-30, 6) * k, 22 * k, c)
 	draw_circle(p + Vector2(0, -6) * k, 30 * k, c)
 	draw_circle(p + Vector2(32, 4) * k, 24 * k, c)

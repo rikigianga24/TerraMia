@@ -11,7 +11,7 @@ script = ExtResource("1_main")
 script = ExtResource("2_farm")
 
 [node name="BorgoLayer" type="CanvasLayer" parent="."]
-layer = 1
+layer = 6
 
 [node name="Borgo" type="Control" parent="BorgoLayer"]
 layout_mode = 3

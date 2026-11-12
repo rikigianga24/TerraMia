@@ -44,6 +44,7 @@ var _shop: Shop
 
 func _ready() -> void:
 	_build_backdrop()
+	_build_paint_filter()
 	_build_hud()
 	GameState.changed.connect(_refresh_hud)
 	GameState.toast.connect(show_toast)
@@ -103,6 +104,21 @@ func select_seed(crop_id: String) -> void:
 
 
 # --- Costruzione HUD --------------------------------------------------------
+
+## Filtro "tempera" sopra sfondo e fattoria (livello 5), sotto borgo e HUD.
+func _build_paint_filter() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 5
+	add_child(layer)
+	var rect := ColorRect.new()
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.size = get_viewport().get_visible_rect().size
+	get_viewport().size_changed.connect(func() -> void: rect.size = get_viewport().get_visible_rect().size)
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://assets/shaders/painterly.gdshader")
+	rect.material = mat
+	layer.add_child(rect)
+
 
 func _build_backdrop() -> void:
 	var layer := CanvasLayer.new()

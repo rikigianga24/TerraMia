@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dg3iffh5jft5c"
-path="res://.godot/imported/grass.svg-6e062a5f76adde064953d3693f2f1b2f.ctex"
+uid="uid://d0iw135yyw802"
+path="res://.godot/imported/soil.png-86035c0330d996b3cd3d053243f4b310.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/tiles/grass.svg"
-dest_files=["res://.godot/imported/grass.svg-6e062a5f76adde064953d3693f2f1b2f.ctex"]
+source_file="res://assets/graphics/tiles/soil.png"
+dest_files=["res://.godot/imported/soil.png-86035c0330d996b3cd3d053243f4b310.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

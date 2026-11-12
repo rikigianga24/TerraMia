@@ -21,21 +21,19 @@ const TILE_H := 56.0
 const TILE_DEPTH := 14.0          ## spessore del blocco di terra
 const MEADOW_MARGIN := 2          ## quadranti di prato attorno al campo
 
-const TEX_GRASS := preload("res://assets/graphics/tiles/grass.svg")
-const TEX_GRASS_FLOWERS := preload("res://assets/graphics/tiles/grass_flowers.svg")
-const TEX_SOIL := preload("res://assets/graphics/tiles/soil.svg")
-const TEX_SOIL_WET := preload("res://assets/graphics/tiles/soil_wet.svg")
-const ICON_DROP := preload("res://assets/graphics/icons/drop.png")
-const ICON_FERTILIZER := preload("res://assets/graphics/icons/fertilizer.png")
+const TEX_GRASS := preload("res://assets/graphics/tiles/grass.png")
+const TEX_GRASS_FLOWERS := preload("res://assets/graphics/tiles/grass_flowers.png")
+const TEX_SOIL := preload("res://assets/graphics/tiles/soil.png")
+const TEX_SOIL_WET := preload("res://assets/graphics/tiles/soil_wet.png")
 
-const COLOR_MEADOW := Color("9cc866")
-const COLOR_MEADOW_DARK := Color("86b552")
+const COLOR_MEADOW := Color("a2c45c")
+const COLOR_MEADOW_DARK := Color("93b74e")
 const COLOR_HOVER := Color(1, 1, 1, 0.9)
 const COLOR_QUEUED := Color(1, 0.97, 0.85, 0.95)
 const COLOR_SHADOW := Color(0.18, 0.12, 0.05, 0.28)
-const COLOR_LEAF := Color("5f9a34")
-const COLOR_LEAF_DARK := Color("44782a")
-const COLOR_LEAF_LIGHT := Color("8cc55a")
+const COLOR_LEAF := Color("6a9e35")
+const COLOR_LEAF_DARK := Color("4f7f2a")
+const COLOR_LEAF_LIGHT := Color("93c25a")
 const COLOR_WOOD := Color("9a6a3e")
 const COLOR_WOOD_DARK := Color("6e4626")
 
@@ -70,6 +68,8 @@ var _font: Font
 var _font_bold: Font
 var _clock := 0.0
 var _decor: Array = []             ## alberi e cespugli decorativi nel prato
+var _overlay_layer: CanvasLayer
+var _plant_sprites: Dictionary = {}  ## coltura -> [ {tex, anchor, scale} ×3 stadi ]
 
 
 func _ready() -> void:
@@ -81,10 +81,20 @@ func _ready() -> void:
 	_recenter()
 	_farmer_pos = cell_center(Vector2i(0, GameState.grid_size.y)) + Vector2(-10, 20)
 	_build_decor()
+	_load_plant_sprites()
+	# Etichette, fumetti e scritte del raccolto vanno sopra il filtro "tempera"
+	# (livello 7), così restano nitidi.
+	_overlay_layer = CanvasLayer.new()
+	_overlay_layer.layer = 7
+	add_child(_overlay_layer)
+	var overlay := FarmOverlay.new()
+	overlay.farm = self
+	_overlay_layer.add_child(overlay)
 
 
 func _process(delta: float) -> void:
 	_clock += delta
+	_overlay_layer.visible = visible
 	GameState.update_plowing()
 	_update_farmer(delta)
 	for p in _popups:
@@ -263,16 +273,10 @@ func _draw() -> void:
 	_draw_fence(grid, true)
 	_draw_decor(true)
 
-	# Prima tutti i blocchi di terra dal fondo verso lo spettatore,
-	# poi piante e contadino nello stesso ordine di profondità.
-	for depth in grid.x + grid.y - 1:
-		for x in grid.x:
-			var y := depth - x
-			if y >= 0 and y < grid.y:
-				_draw_ground(Vector2i(x, y))
-	if GameState.is_in_grid(_hover):
-		draw_polyline(_closed(_diamond(_hover, 2.0)), COLOR_HOVER, 2.5, true)
-
+	# Pittore isometrico: un quadrante alla volta, dal fondo verso lo
+	# spettatore, prima la terra e poi la pianta. Così ogni blocco copre i
+	# fianchi di quello dietro, e una pianta illustrata (che ha il suo blocco
+	# di terra) si sovrappone correttamente ai vicini.
 	var farmer_drawn := false
 	for depth in grid.x + grid.y - 1:
 		for x in grid.x:
@@ -283,16 +287,18 @@ func _draw() -> void:
 			if not farmer_drawn and cell_center(cell).y > _farmer_pos.y:
 				_draw_farmer()
 				farmer_drawn = true
-			_draw_plant(cell)
+			if not _draw_plant_sprite(cell):
+				_draw_ground(cell)
+				if cell == _hover:
+					draw_polyline(_closed(_diamond(cell, 2.0)), COLOR_HOVER, 2.5, true)
+				_draw_plant(cell)
 	if not farmer_drawn:
 		_draw_farmer()
+	if GameState.is_in_grid(_hover) and not GameState.get_plot(_hover).is_empty():
+		draw_polyline(_closed(_diamond(_hover, 2.0)), Color(1, 1, 1, 0.5), 2.0, true)
 
 	_draw_fence(grid, false)
 	_draw_decor(false)
-	for y in grid.y:
-		for x in grid.x:
-			_draw_labels(Vector2i(x, y))
-	_draw_popups()
 
 
 func _closed(poly: PackedVector2Array) -> PackedVector2Array:
@@ -309,8 +315,8 @@ func _draw_meadow(grid: Vector2i) -> void:
 	var bottom := cell_to_local(Vector2i(grid.x + m, grid.y + m))
 	var left := cell_to_local(Vector2i(-m, grid.y + m))
 	var d := Vector2(0, TILE_DEPTH + 6)
-	draw_colored_polygon(PackedVector2Array([left, bottom, bottom + d, left + d]), Color("7d5532"))
-	draw_colored_polygon(PackedVector2Array([bottom, right, right + d, bottom + d]), Color("94673f"))
+	draw_colored_polygon(PackedVector2Array([left, bottom, bottom + d, left + d]), Color("8a4122"))
+	draw_colored_polygon(PackedVector2Array([bottom, right, right + d, bottom + d]), Color("9b4a27"))
 	draw_colored_polygon(PackedVector2Array([top, right, bottom, left]), COLOR_MEADOW)
 	# fasce di colore per dare ritmo al prato
 	for i in range(-m, grid.x + m, 2):
@@ -423,8 +429,8 @@ func _draw_decor(back: bool) -> void:
 				_shadow(p, 12.0 * s)
 				draw_line(p, p + Vector2(0, -10 * s), COLOR_WOOD_DARK, 5.0)
 				var pts := PackedVector2Array([p + Vector2(0, -78 * s), p + Vector2(13 * s, -40 * s), p + Vector2(9 * s, -8 * s), p + Vector2(-9 * s, -8 * s), p + Vector2(-13 * s, -40 * s)])
-				draw_colored_polygon(pts, Color("2f5a2a"))
-				draw_colored_polygon(PackedVector2Array([pts[0], pts[1], pts[2], p + Vector2(0, -8 * s)]), Color("3e7034"))
+				draw_colored_polygon(pts, Color("335a2c"))
+				draw_colored_polygon(PackedVector2Array([pts[0], pts[1], pts[2], p + Vector2(0, -8 * s)]), Color("40703a"))
 			"bush":
 				_draw_bush_shape(p, 16.0 * s, Color(0, 0, 0, 0), 0.0)
 			"hay":
@@ -437,6 +443,55 @@ func _draw_decor(back: bool) -> void:
 
 
 # --- Piante -----------------------------------------------------------------
+
+## Sprite illustrati delle piante (assets/graphics/plants), ritagliati dai
+## fogli con tools/extract_plants.py. Ogni sprite comprende il suo blocco di
+## terra; "anchor" è il centro della faccia superiore del blocco, "tile_w" la
+## sua larghezza: servono ad allinearlo al quadrante. Le piante senza sprite
+## si disegnano da codice.
+func _load_plant_sprites() -> void:
+	const MANIFEST := "res://assets/graphics/plants/plants.json"
+	if not FileAccess.file_exists(MANIFEST):
+		return
+	var data = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST))
+	if not (data is Dictionary):
+		return
+	for crop_id in data:
+		var stages: Array = []
+		for st in data[crop_id]:
+			var tex := load("res://assets/graphics/plants/" + str(st["file"])) as Texture2D
+			if tex == null:
+				stages = []
+				break
+			stages.append({"tex": tex, "anchor": Vector2(st["anchor"][0], st["anchor"][1]), "scale": TILE_W / float(st["tile_w"])})
+		if stages.size() == 3:
+			_plant_sprites[crop_id] = stages
+
+
+## Stadio dello sprite: 0 germoglio, 1 crescita, 2 maturazione (pronta).
+## Alberi e arbusti già raccolti ripartono dalla crescita, non dal germoglio.
+func _plant_stage(cell: Vector2i, plot: Dictionary) -> int:
+	if GameState.is_ready(cell):
+		return 2
+	if int(plot.get("harvests", 0)) > 0:
+		return 1
+	return 0 if GameState.plot_progress(cell) < 0.34 else 1
+
+
+func _draw_plant_sprite(cell: Vector2i) -> bool:
+	var plot := GameState.get_plot(cell)
+	if plot.is_empty() or not _plant_sprites.has(plot["crop"]):
+		return false
+	var st: Dictionary = _plant_sprites[plot["crop"]][_plant_stage(cell, plot)]
+	var tex: Texture2D = st["tex"]
+	var k: float = st["scale"]
+	var pos: Vector2 = cell_center(cell) - st["anchor"] * k
+	var tint := Color(0.86, 0.82, 0.8) if plot.get("watered", false) else Color.WHITE
+	draw_texture_rect(tex, Rect2(pos, tex.get_size() * k), false, tint)
+	if cell == _hover:
+		draw_polyline(_closed(_diamond(cell, 2.0)), COLOR_HOVER, 2.5, true)
+	return true
+
 
 func _draw_plant(cell: Vector2i) -> void:
 	var plot := GameState.get_plot(cell)
@@ -549,9 +604,9 @@ func _draw_round_tree(p: Vector2, s: float, fruit_color: Color, progress: float)
 	draw_line(p, trunk_top, COLOR_WOOD_DARK, 9.0 * s)
 	draw_line(p + Vector2(-2 * s, 0), trunk_top + Vector2(-2 * s, 0), COLOR_WOOD, 4.0 * s)
 	var crown := trunk_top + Vector2(0, -14 * s)
-	draw_circle(crown + Vector2(8 * s, 6 * s), 24 * s, Color("3d6f2a"))
-	draw_circle(crown + Vector2(-10 * s, 2 * s), 22 * s, Color("4c8231"))
-	draw_circle(crown + Vector2(0, -10 * s), 22 * s, Color("5f9a3a"))
+	draw_circle(crown + Vector2(8 * s, 6 * s), 24 * s, Color("4a7a2e"))
+	draw_circle(crown + Vector2(-10 * s, 2 * s), 22 * s, Color("5c8f36"))
+	draw_circle(crown + Vector2(0, -10 * s), 22 * s, Color("72a843"))
 	draw_circle(crown + Vector2(-8 * s, -16 * s), 9 * s, Color(1, 1, 1, 0.12))
 	if fruit_color.a > 0.0 and progress >= 0.5:
 		var ripe := progress >= 1.0
@@ -563,74 +618,10 @@ func _draw_round_tree(p: Vector2, s: float, fruit_color: Color, progress: float)
 
 func _draw_bush_shape(p: Vector2, r: float, fruit_color: Color, progress: float) -> void:
 	_shadow(p + Vector2(3, 1), r * 1.3)
-	draw_circle(p + Vector2(r * 0.45, -r * 0.6), r * 0.85, Color("3d6f2a"))
-	draw_circle(p + Vector2(-r * 0.45, -r * 0.65), r * 0.85, Color("4c8231"))
-	draw_circle(p + Vector2(0, -r * 1.1), r * 0.8, Color("5f9a3a"))
+	draw_circle(p + Vector2(r * 0.45, -r * 0.6), r * 0.85, Color("4a7a2e"))
+	draw_circle(p + Vector2(-r * 0.45, -r * 0.65), r * 0.85, Color("5c8f36"))
+	draw_circle(p + Vector2(0, -r * 1.1), r * 0.8, Color("72a843"))
 	if fruit_color.a > 0.0 and progress >= 0.6:
 		var fc := fruit_color if progress >= 1.0 else COLOR_LEAF_LIGHT.lerp(fruit_color, 0.5)
 		for o in [Vector2(-0.5, -0.5), Vector2(0.5, -0.8), Vector2(0.0, -1.4), Vector2(-0.7, -1.1), Vector2(0.7, -0.3)]:
 			_fruit(p + o * r, maxf(2.5, r * 0.18), fc)
-
-
-# --- Etichette e indicatori -------------------------------------------------
-
-func _draw_labels(cell: Vector2i) -> void:
-	var plot := GameState.get_plot(cell)
-	var c := cell_center(cell)
-	if plot.is_empty():
-		var job := GameState.current_plow_job()
-		if not job.is_empty() and job["cell"] == GameState.plot_key(cell):
-			var left := maxi(0, ceili(float(job["end"]) - GameState.now()))
-			_pill(c + Vector2(0, -4), "%ds" % left, GameState.plow_progress(cell))
-		return
-	var kind: String = GameData.crop(plot["crop"])["kind"]
-	var top := -86.0 if kind == "tree" else (-48.0 if kind == "bush" else -40.0)
-	# icone di stato: annaffiata e concimata
-	if plot.get("watered", false):
-		draw_texture_rect(ICON_DROP, Rect2(c + Vector2(30, -4), Vector2(16, 16)), false)
-	if plot.get("fertilized", false):
-		draw_texture_rect(ICON_FERTILIZER, Rect2(c + Vector2(-46, -6), Vector2(18, 18)), false)
-	if GameState.is_ready(cell):
-		_ready_bubble(c + Vector2(0, top - 4.0 * absf(sin(_clock * 3.5 + cell.x))), Color(GameData.crop(plot["crop"])["color"]))
-	elif cell == _hover or plot.get("watered", false) or GameState.plot_seconds_left(cell) < 60:
-		_pill(c + Vector2(0, top + 6), GameData.format_time(GameState.plot_seconds_left(cell)), GameState.plot_progress(cell))
-
-
-## Fumetto bianco con il frutto: la pianta è pronta.
-func _ready_bubble(p: Vector2, color: Color) -> void:
-	draw_circle(p + Vector2(0, 2), 13.0, Color(0, 0, 0, 0.18))
-	draw_colored_polygon(PackedVector2Array([p + Vector2(-5, 9), p + Vector2(5, 9), p + Vector2(0, 17)]), Color.WHITE)
-	draw_circle(p, 13.0, Color.WHITE)
-	_fruit(p, 7.0, color)
-
-
-## Pastiglia scura con il tempo e una barra di avanzamento sotto.
-func _pill(p: Vector2, text: String, progress: float) -> void:
-	var size := 14
-	var w := _font_bold.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x + 16.0
-	var rect := Rect2(p - Vector2(w * 0.5, 11), Vector2(w, 20))
-	draw_style_box(_pill_box(Color(0.24, 0.16, 0.1, 0.85)), rect)
-	draw_string(_font_bold, rect.position + Vector2(8, 15), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color("fbf3e2"))
-	var bar := Rect2(rect.position + Vector2(5, 17), Vector2((w - 10) * clampf(progress, 0.0, 1.0), 3))
-	draw_rect(bar, Color("a8d26a"))
-
-
-var _pill_style: StyleBoxFlat
-func _pill_box(color: Color) -> StyleBoxFlat:
-	if _pill_style == null:
-		_pill_style = StyleBoxFlat.new()
-		_pill_style.set_corner_radius_all(10)
-		_pill_style.anti_aliasing = true
-	_pill_style.bg_color = color
-	return _pill_style
-
-
-func _draw_popups() -> void:
-	for p in _popups:
-		var k: float = p["t"] / POPUP_TIME
-		var col: Color = p["color"].lightened(0.35)
-		col.a = 1.0 - k * k
-		var pos: Vector2 = p["pos"] + Vector2(0, -46.0 * (1.0 - pow(1.0 - k, 2.0)))
-		var w := 160.0
-		draw_string_outline(_font_bold, pos + Vector2(-w * 0.5, 0), p["text"], HORIZONTAL_ALIGNMENT_CENTER, w, 22, 6, Color(0.24, 0.16, 0.1, col.a))
-		draw_string(_font_bold, pos + Vector2(-w * 0.5, 0), p["text"], HORIZONTAL_ALIGNMENT_CENTER, w, 22, col)

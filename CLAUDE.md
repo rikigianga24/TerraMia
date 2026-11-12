@@ -19,3 +19,7 @@
   (it, en, fr, es), si rigenera il CSV e si usa `tr("CHIAVE")`. Nomi di piante, prodotti ed edifici
   con `GameData.crop_name()`, `product_name()`, `building_name()`, `resident_name()`.
   Solo caratteri presenti nel font Fredoka (niente frecce o emoji).
+- Direzione artistica e prompt per le illustrazioni: `docs/art_direction.md`. Ogni nuova grafica
+  deve seguirlo (illustrazione dipinta, sagome pulite, colori mediterranei vivi).
+- Sprite delle piante: `python3 tools/extract_plants.py FOGLIO pianta1 pianta2 ...` (una riga per
+  pianta, tre stadi). Le piante senza sprite si disegnano da codice in `farm.gd`.

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://rcc57wj58ef2"
-path="res://.godot/imported/grass_flowers.svg-9b6239d70401d84c9808f79faba3cf4b.ctex"
+uid="uid://bglb8at0aiqih"
+path="res://.godot/imported/grass.png-326c6c72336aee65a44254c4d3c947f4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/graphics/tiles/grass_flowers.svg"
-dest_files=["res://.godot/imported/grass_flowers.svg-9b6239d70401d84c9808f79faba3cf4b.ctex"]
+source_file="res://assets/graphics/tiles/grass.png"
+dest_files=["res://.godot/imported/grass.png-326c6c72336aee65a44254c4d3c947f4.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
