@@ -28,6 +28,10 @@ const TEX_GRASS := preload("res://assets/graphics/tiles/grass.png")
 const TEX_GRASS_FLOWERS := preload("res://assets/graphics/tiles/grass_flowers.png")
 const TEX_SOIL := preload("res://assets/graphics/tiles/soil.png")
 const TEX_SOIL_WET := preload("res://assets/graphics/tiles/soil_wet.png")
+const TEX_GRASS_WILD := preload("res://assets/graphics/tiles/grass_wild.png")
+const TEX_GRASS_DRY := preload("res://assets/graphics/tiles/grass_dry.png")
+const TEX_DIRT := preload("res://assets/graphics/tiles/dirt.png")
+const TEX_BANK := preload("res://assets/graphics/tiles/bank.png")
 const TEX_SEEDS := preload("res://assets/graphics/icons/seeds.png")
 
 const COLOR_HOVER := Color(1, 1, 1, 0.9)
@@ -42,8 +46,6 @@ const COLOR_LOCKED := Color(0.82, 0.86, 0.74)
 const COLOR_WATER := Color("5aa3c8")
 const COLOR_WATER_DEEP := Color("3f86ad")
 const COLOR_BANK := Color("b89a62")
-const COLOR_ROAD := Color("cbb48a")
-const COLOR_ROAD_DARK := Color("ad9468")
 
 ## Forma della pianta (solo grafica): grano, foglie, radici, frutti, grossi, fiori.
 const SHAPES := {
@@ -64,10 +66,12 @@ const POPUP_TIME := 1.3
 const DRAG_THRESHOLD := 8.0
 ## Fasce attorno alla mappa, in quadranti: fiume (x < 0), bosco (y < 0),
 ## strada (x > lato), prato aperto (y > lato).
-const RIVER_FROM := -3.2
-const RIVER_TO := -0.5
-const ROAD_FROM := 0.6
-const ROAD_TO := 1.8
+const RIVER_FROM := -3.4
+const RIVER_TO := -0.8
+const ROAD_FROM := 1.0       ## la strada è la colonna di mattonelle x = lato + 1
+const ROAD_TO := 2.0
+## Prato di mattonelle attorno alla mappa, in quadranti (oltre c'è lo sfondo).
+const SURROUND := Rect2i(-1, -5, 6, 11)   ## margini: sinistra, alto, destra, basso
 
 var tool: String = "hand":
 	set(value):
@@ -387,7 +391,7 @@ func _draw_vehicle(v: Dictionary) -> void:
 func _draw() -> void:
 	var w := GameData.world_size()
 	_draw_river(w)
-	_draw_road(w)
+	_draw_surroundings(w)
 	for t in _trees:
 		if t["back"]:
 			_draw_tree_decor(t)
@@ -432,15 +436,34 @@ func _closed(poly: PackedVector2Array) -> PackedVector2Array:
 	return out
 
 
+## Numero "a caso" ma sempre uguale per la stessa cella, tra 0 e n-1.
+static func _rand(cell: Vector2i, n: int) -> int:
+	return posmod(hash(cell), n)
+
+
+## Mattonella sul quadrante; specchiata a caso (ma sempre uguale per la
+## stessa cella) perché la ripetizione non si noti.
+func _tile(tex: Texture2D, cell: Vector2i, modulate := Color.WHITE, can_flip := true) -> void:
+	var top := cell_to_local(cell)
+	var flip := can_flip and _rand(cell, 2) == 0
+	if flip:
+		draw_set_transform(top + Vector2(TILE_W * 0.5, 0), 0.0, Vector2(-1, 1))
+		draw_texture_rect(tex, Rect2(Vector2.ZERO, Vector2(TILE_W, TILE_H)), false, modulate)
+		draw_set_transform(Vector2.ZERO)
+	else:
+		draw_texture_rect(tex, Rect2(top - Vector2(TILE_W * 0.5, 0), Vector2(TILE_W, TILE_H)), false, modulate)
+
+
 func _draw_ground(cell: Vector2i) -> void:
 	var rect := Rect2(cell_to_local(cell) - Vector2(TILE_W * 0.5, 0), Vector2(TILE_W, TILE_H))
 	var plot := GameState.get_plot(cell)
 	if GameState.is_tilled(cell):
 		var wet: bool = not plot.is_empty() and plot.get("watered", false)
-		draw_texture_rect(TEX_SOIL_WET if wet else TEX_SOIL, rect, false)
+		# i solchi hanno una direzione: niente specchiatura
+		_tile(TEX_SOIL_WET if wet else TEX_SOIL, cell, Color.WHITE, false)
 		return
-	var flowers := posmod(cell.x * 7 + cell.y * 13, 5) == 0
-	draw_texture_rect(TEX_GRASS_FLOWERS if flowers else TEX_GRASS, rect, false)
+	var flowers := _rand(cell + Vector2i(3, 59), 5) == 0
+	_tile(TEX_GRASS_FLOWERS if flowers else TEX_GRASS, cell)
 	if GameState.is_plow_queued(cell):
 		var prog := GameState.plow_progress(cell)
 		if prog > 0.0:
@@ -450,22 +473,28 @@ func _draw_ground(cell: Vector2i) -> void:
 			draw_dashed_line(poly[i], poly[(i + 1) % 4], COLOR_QUEUED, 2.5, 7.0, true, true)
 
 
-## Terra non ancora tua: erba più selvatica, un po' spenta.
+## Terra non ancora tua: prato un po' più spento, con chiazze d'erba selvatica.
 func _draw_locked_cell(cell: Vector2i) -> void:
-	var rect := Rect2(cell_to_local(cell) - Vector2(TILE_W * 0.5, 0), Vector2(TILE_W, TILE_H))
-	var flowers := posmod(cell.x * 7 + cell.y * 13, 4) == 0
-	draw_texture_rect(TEX_GRASS_FLOWERS if flowers else TEX_GRASS, rect, false, COLOR_LOCKED)
-	# ciuffi d'erba alta e qualche sasso
-	var h := posmod(cell.x * 31 + cell.y * 17, 7)
-	var c := cell_center(cell)
-	if h < 3:
-		for i in 3:
-			var o := Vector2((i - 1) * 9.0 + h * 3.0, (i % 2) * 6.0 - 3.0)
-			draw_line(c + o, c + o + Vector2(-3, -12), Color("6f8f3e"), 2.0)
-			draw_line(c + o, c + o + Vector2(3, -11), Color("7fa840"), 2.0)
-	elif h == 4:
-		draw_circle(c + Vector2(10, 4), 5.0, Color("b9ad98"))
-		draw_circle(c + Vector2(8, 2), 3.0, Color("d8cbb5"))
+	var wild := _rand(cell + Vector2i(101, 7), 6) == 0
+	_tile(TEX_GRASS_WILD if wild else TEX_GRASS, cell, Color(0.93, 0.95, 0.88))
+
+
+## Prato di mattonelle attorno alla mappa: sponda lungo il fiume, sterrato
+## per la strada, erba (a tratti secca) altrove.
+func _draw_surroundings(w: Vector2i) -> void:
+	var road_x := w.x + int(ROAD_FROM)
+	for y in range(SURROUND.position.y, w.y + SURROUND.size.y):
+		for x in range(SURROUND.position.x, w.x + SURROUND.size.x):
+			var cell := Vector2i(x, y)
+			if GameState.is_in_world(cell):
+				continue
+			if x == -1:
+				_tile(TEX_BANK, cell, Color.WHITE, false)
+			elif x == road_x:
+				_tile(TEX_DIRT, cell, Color.WHITE, false)
+			else:
+				var dry := x > road_x   # oltre la strada, stoppie
+				_tile(TEX_GRASS_DRY if dry else TEX_GRASS, cell)
 
 
 func _draw_sector_outline(sector: Vector2i) -> void:
@@ -517,7 +546,7 @@ func _draw_chest(cell: Vector2i) -> void:
 func _draw_river(w: Vector2i) -> void:
 	var y0 := -3.6   # nasce dietro il bosco
 	var y1 := float(w.y) + 10.0
-	draw_colored_polygon(_iso_quad(Vector2(RIVER_FROM - 0.4, y0), Vector2(RIVER_TO + 0.35, y1)), COLOR_BANK)
+	draw_colored_polygon(_iso_quad(Vector2(RIVER_FROM - 0.5, y0), Vector2(RIVER_FROM + 0.4, y1)), COLOR_BANK)
 	# acqua con bordo ondulato
 	var left := PackedVector2Array()
 	var right := PackedVector2Array()
@@ -525,7 +554,7 @@ func _draw_river(w: Vector2i) -> void:
 	while y <= y1:
 		var wob := sin(y * 0.9) * 0.18
 		left.append(cell_to_local(Vector2(RIVER_FROM + wob, y)))
-		right.append(cell_to_local(Vector2(RIVER_TO - 0.05 + wob * 0.6, y)))
+		right.append(cell_to_local(Vector2(RIVER_TO + 0.2, y)))
 		y += 0.5
 	right.reverse()
 	draw_colored_polygon(left + right, COLOR_WATER)
@@ -541,31 +570,7 @@ func _draw_river(w: Vector2i) -> void:
 		var fx := lerpf(RIVER_FROM + 0.4, RIVER_TO - 0.4, fposmod(i * 0.37, 1.0))
 		var p := cell_to_local(Vector2(fx, fy))
 		draw_line(p, p + Vector2(-10, 5), Color(1, 1, 1, 0.45), 2.0, true)
-	# canne lungo la sponda verso il campo
-	for i in int(y1 - y0):
-		var p := cell_to_local(Vector2(RIVER_TO + 0.15, y0 + i + 0.3 * (i % 3)))
-		if i % 2 == 0:
-			for k in 3:
-				draw_line(p + Vector2(k * 4 - 4, 0), p + Vector2(k * 5 - 6, -18 - k * 3), Color("6f8f3e"), 2.0)
-			draw_line(p + Vector2(-2, -16), p + Vector2(-2, -22), Color("8a5a2b"), 4.0)
 
-
-## La strada di pietrisco davanti, lungo il lato destro della mappa.
-func _draw_road(w: Vector2i) -> void:
-	var x0 := float(w.x) + ROAD_FROM
-	var x1 := float(w.x) + ROAD_TO
-	draw_colored_polygon(_iso_quad(Vector2(x0, -3.6), Vector2(x1, float(w.y) + 10.0)), COLOR_ROAD)
-	# bordi d'erba e sassolini
-	draw_line(cell_to_local(Vector2(x0, -3.6)), cell_to_local(Vector2(x0, float(w.y) + 10.0)), COLOR_ROAD_DARK, 3.0)
-	draw_line(cell_to_local(Vector2(x1, -3.6)), cell_to_local(Vector2(x1, float(w.y) + 10.0)), COLOR_ROAD_DARK, 3.0)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 11
-	for i in 260:
-		var p := cell_to_local(Vector2(rng.randf_range(x0 + 0.05, x1 - 0.05), rng.randf_range(-3.6, float(w.y) + 10.0)))
-		draw_circle(p, rng.randf_range(1.2, 2.6), COLOR_ROAD_DARK if rng.randf() < 0.6 else Color("e2d3b2"))
-	# solchi delle ruote
-	for lane in [0.35, 0.85]:
-		draw_line(cell_to_local(Vector2(x0 + lane, -3.6)), cell_to_local(Vector2(x0 + lane, float(w.y) + 10.0)), Color(0.55, 0.45, 0.3, 0.25), 4.0)
 
 
 ## Bosco a destra (oltre il lato in fondo) e qualche albero sparso davanti.

@@ -42,4 +42,7 @@ copiare: personaggi, edifici e oggetti devono essere originali.
    `PLANTS` dentro lo script (coltura -> tre stadi).
 
 Fogli attuali: `sheet_a.webp`, `sheet_b.webp`, `sheet_c.webp` (piante, edifici,
-decorazioni, prodotti, attrezzi, terreni, personaggi).
+decorazioni, prodotti, attrezzi, terreni, personaggi) e `terreno.webp` (le 8
+mattonelle: erba, erba fiorita, erba selvatica, erba secca, terra arata, terra
+bagnata, sterrato, sponda). Le mattonelle vengono riportate sul rombo 2:1 del
+gioco anche se il foglio ha un'angolazione diversa.

@@ -7,8 +7,8 @@ riquadri si trovano con tools/find_sprites.py) e scrive:
   assets/graphics/sprites/<nome>.png    uno sprite per disegno, bordi puliti
   assets/graphics/plants/plants.json    stadi delle piante, allineati al
                                         blocco di terra (vedi farm.gd)
-  assets/graphics/tiles/grass.png,      erba e terra dei fogli, riportate sul
-  soil.png, soil_wet.png                rombo 224x112 della griglia del gioco
+  assets/graphics/tiles/*.png           le mattonelle del foglio del terreno,
+                                        riportate sul rombo 224x112 della griglia
 
 Uso:  python3 tools/cut_sprites.py
 """
@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "assets/graphics/source"
@@ -40,6 +40,18 @@ PLANTS = {
 
 TILE_W, TILE_H = 224, 112
 
+## Mattonelle del gioco (assets/graphics/tiles/<nome>.png) -> sprite del foglio del terreno
+TILES = {
+    "grass": "terreno_erba",
+    "grass_flowers": "terreno_erba_fiori",
+    "grass_wild": "terreno_erba_selvatica",
+    "grass_dry": "terreno_erba_secca",
+    "soil": "terreno_arato",
+    "soil_wet": "terreno_bagnato",
+    "dirt": "terreno_sterrato",
+    "bank": "terreno_sponda",
+}
+
 
 def cut(sheet: Image.Image, box) -> Image.Image:
     pad = 3
@@ -59,14 +71,25 @@ def to_grid_tile(tile: Image.Image) -> Image.Image:
     """Porta la faccia superiore di una mattonella sul rombo 224x112 del gioco."""
     a = np.asarray(tile)[..., 3] > 128
     ys, xs = np.nonzero(a)
-    top_y = ys.min()
-    top_x = int(np.median(xs[ys <= top_y + 1]))
+    # Vertici laterali e inferiore: affidabili (l'erba alta può sporgere
+    # sopra il vertice superiore, che quindi si ricava per simmetria).
     left_x = xs.min()
-    left_y = int(np.median(ys[xs <= left_x + 1]))
+    left_y = float(np.median(ys[xs <= left_x + 1]))
     right_x = xs.max()
-    right_y = int(np.median(ys[xs >= right_x - 1]))
+    right_y = float(np.median(ys[xs >= right_x - 1]))
+    bottom_y = float(ys.max())
+    cx = (left_x + right_x) / 2.0
+    side_y = (left_y + right_y) / 2.0
+    top_y = 2.0 * side_y - bottom_y
+    # un filo verso l'interno, così ai bordi non si campiona il vuoto
+    k = 0.965
+    def inset(x, y):
+        return cx + (x - cx) * k, side_y + (y - side_y) * k
+    tx, ty = inset(cx, top_y)
+    lx, ly = inset(left_x, side_y)
+    rx, ry = inset(right_x, side_y)
     # affine inversa: punto del rombo del gioco -> punto della mattonella
-    src = np.array([[top_x, top_y], [left_x, left_y], [right_x, right_y]], dtype=float)
+    src = np.array([[tx, ty], [lx, ly], [rx, ry]], dtype=float)
     dst = np.array([[112, 0], [0, 56], [224, 56]], dtype=float)
     m = np.linalg.solve(np.c_[dst, np.ones(3)], src)   # 3x2
     coeffs = (m[0, 0], m[1, 0], m[2, 0], m[0, 1], m[1, 1], m[2, 1])
@@ -99,14 +122,13 @@ def main() -> None:
     print(len(plants), "piante in", plants_path)
 
     tiles = ROOT / "assets/graphics/tiles"
-    grass = to_grid_tile(Image.open(OUT / "tile_erba.png"))
-    grass.save(tiles / "grass.png")
-    # variante con meno fiori: la stessa erba specchiata
-    grass.transpose(Image.FLIP_LEFT_RIGHT).save(tiles / "grass_flowers.png")
-    soil = to_grid_tile(Image.open(OUT / "tile_terra.png"))
-    soil.save(tiles / "soil.png")
-    wet = ImageEnhance.Brightness(soil).enhance(0.72)
-    ImageEnhance.Color(wet).enhance(1.1).save(tiles / "soil_wet.png")
+    for out_name, sprite in TILES.items():
+        tile = to_grid_tile(Image.open(OUT / f"{sprite}.png"))
+        if out_name == "bank":
+            # nel foglio l'acqua è in basso a destra; il fiume del gioco sta
+            # in alto a sinistra della sponda: si gira di mezzo giro
+            tile = tile.rotate(180)
+        tile.save(tiles / f"{out_name}.png")
     print("mattonelle riportate sulla griglia in", tiles)
 
 

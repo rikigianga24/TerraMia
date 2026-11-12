@@ -971,6 +971,78 @@
   ],
   "sheet": "sheet_b.webp"
  },
+ "terreno_arato": {
+  "box": [
+   15,
+   591,
+   384,
+   846
+  ],
+  "sheet": "terreno.webp"
+ },
+ "terreno_bagnato": {
+  "box": [
+   396,
+   594,
+   765,
+   846
+  ],
+  "sheet": "terreno.webp"
+ },
+ "terreno_erba": {
+  "box": [
+   15,
+   165,
+   381,
+   414
+  ],
+  "sheet": "terreno.webp"
+ },
+ "terreno_erba_fiori": {
+  "box": [
+   396,
+   165,
+   762,
+   414
+  ],
+  "sheet": "terreno.webp"
+ },
+ "terreno_erba_secca": {
+  "box": [
+   1161,
+   165,
+   1524,
+   414
+  ],
+  "sheet": "terreno.webp"
+ },
+ "terreno_erba_selvatica": {
+  "box": [
+   777,
+   159,
+   1146,
+   414
+  ],
+  "sheet": "terreno.webp"
+ },
+ "terreno_sponda": {
+  "box": [
+   1161,
+   594,
+   1524,
+   849
+  ],
+  "sheet": "terreno.webp"
+ },
+ "terreno_sterrato": {
+  "box": [
+   777,
+   594,
+   1146,
+   846
+  ],
+  "sheet": "terreno.webp"
+ },
  "tile_acqua": {
   "box": [
    645,

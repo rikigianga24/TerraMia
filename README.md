@@ -67,7 +67,8 @@ tools/find_sprites.py    trova i disegni in un foglio trasparente (con anteprima
 tools/cut_sprites.py     ritaglia gli sprite nominati in assets/graphics/sprites/sprites.json,
                          prepara piante (3 stadi) e mattonelle di erba e terra
 tools/extract_plants.py  ritaglia le piante da un foglio con sfondo pieno (vecchio metodo)
-tools/paint_tiles.py     dipinge i blocchi di terreno (erba, terra, terra bagnata)
+tools/paint_tiles.py     dipinge mattonelle di riserva da codice (sovrascrive quelle illustrate:
+                         normalmente le mattonelle vengono da tools/cut_sprites.py)
 docs/art_direction.md    prompt e regole per tutte le illustrazioni
 assets/graphics/         blocchi di terreno SVG (tiles/), icone PNG (icons/) ritagliate
                          da source/icons_sheet.webp con tools/extract_icons.py
