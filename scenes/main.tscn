@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scenes/farm/farm.gd" id="2_farm"]
+[ext_resource type="Script" path="res://scenes/borgo/borgo.gd" id="3_borgo"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_main")
+
+[node name="Farm" type="Node2D" parent="."]
+script = ExtResource("2_farm")
+
+[node name="BorgoLayer" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="Borgo" type="Control" parent="BorgoLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_borgo")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Root" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

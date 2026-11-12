@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#f3e3c3"/>
+  <polygon points="64,30 112,56 64,82 16,56" fill="#8fb35a" stroke="#5c7a33" stroke-width="4"/>
+  <circle cx="52" cy="54" r="9" fill="#d9412b"/>
+  <circle cx="74" cy="58" r="9" fill="#d9412b"/>
+  <rect x="60" y="84" width="8" height="18" fill="#7a5230"/>
+  <text x="64" y="120" font-family="serif" font-size="16" text-anchor="middle" fill="#7a5230">Terra Mia</text>
+</svg>

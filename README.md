@@ -1,0 +1,69 @@
+# Terra Mia
+
+Gioco di fattoria a quadranti: coltivando e allevando riporti in vita un borgo
+italiano abbandonato. Single-player, sessioni da 5–10 minuti, prima su browser
+(CrazyGames, Poki), poi Steam e mobile dallo stesso progetto.
+
+Il documento di design completo è in [`docs/design.md`](docs/design.md).
+
+## Requisiti
+
+- [Godot 4.4](https://godotengine.org/download) (versione standard, non .NET)
+- Renderer **Compatibility**, necessario per l'export HTML5
+
+## Avvio
+
+1. Apri Godot e importa `project.godot`.
+2. Premi **F5**: parte `scenes/main.tscn`.
+
+## Struttura
+
+```
+project.godot            configurazione, autoload, finestra 1280×720
+scenes/
+  main.tscn / main.gd    scena principale, HUD, navigazione Fattoria ↔ Borgo
+  farm/farm.gd           griglia isometrica 6×6, piantare e raccogliere
+  borgo/borgo.gd         bacheca degli ordini e mulino
+scripts/autoload/
+  game_data.gd           dati statici: colture, edifici, livelli (dal documento)
+  game_state.gd          stato della partita e regole (monete, XP, ordini, restauri)
+  save_manager.gd        salvataggio locale in user:// e progresso offline
+assets/                  grafica, audio e font (per ora vuoti)
+docs/design.md           documento di design
+```
+
+### Scelte tecniche
+
+- **Timer reali.** Ogni coltura salva il timestamp Unix di semina, quindi il
+  tempo scorre anche a gioco chiuso senza simulare nulla. La moka recupera gli
+  espressi persi al rientro (`GameState.apply_offline_progress`).
+- **Dati in un posto solo.** Tempi, livelli e prezzi stanno in `game_data.gd`;
+  il bilanciamento si fa lì. Solo grano e pomodori hanno già i valori economici.
+- **Grafica provvisoria.** La fattoria si disegna con `_draw()` e il borgo è
+  fatto di controlli standard, finché non arrivano gli SVG.
+- **Salvataggi locali** in `user://terramia_save.json` (su web finisce in
+  IndexedDB). Supabase arriva solo con gli acquisti in-app.
+
+## Export web
+
+1. *Editor → Manage Export Templates*: installa i template della 4.4.
+2. *Project → Export → Add → Web*, poi esporta in `build/web/`.
+3. Per provarlo in locale serve un server HTTP, non il file aperto da disco:
+   ```bash
+   python3 -m http.server --directory build/web 8000
+   ```
+
+`export_presets.cfg` e `build/` sono esclusi da git.
+
+## Roadmap del prototipo
+
+- [x] Griglia isometrica, piantare e raccogliere grano e pomodori
+- [x] Timer reali e progresso offline
+- [x] Bacheca ordini, monete, esperienza e livelli 1–3
+- [x] Mulino restaurabile con il mugnaio (prima versione)
+- [ ] Tutorial dei primi 15 minuti
+- [ ] Grafica SVG provvisoria e audio di base
+- [ ] SDK CrazyGames con video premio
+- [ ] Pubblicazione su CrazyGames e due settimane di dati
+
+Fuori scopo per ora: multiplayer, visite tra amici, scambi, classifiche, chat.
