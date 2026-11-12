@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+Settings="*res://scripts/autoload/settings.gd"
 GameData="*res://scripts/autoload/game_data.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
@@ -42,7 +43,8 @@ pointing/emulate_mouse_from_touch=true
 
 [internationalization]
 
-locale/fallback="it"
+locale/translations=PackedStringArray("res://localization/translations.it.translation", "res://localization/translations.en.translation", "res://localization/translations.fr.translation", "res://localization/translations.es.translation")
+locale/fallback="en"
 
 [rendering]
 

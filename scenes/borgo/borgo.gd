@@ -27,8 +27,8 @@ func _ready() -> void:
 	columns.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(columns)
 
-	_orders_box = _make_panel(columns, "Bacheca degli ordini", "Gli abitanti chiedono i tuoi prodotti", "borgo", 1.3)
-	_mill_box = _make_panel(columns, "Il mulino", "Gino, il mugnaio", "farm", 1.0)
+	_orders_box = _make_panel(columns, tr("BORGO_ORDERS"), tr("BORGO_ORDERS_SUB"), "borgo", 1.3)
+	_mill_box = _make_panel(columns, tr("MILL_TITLE"), GameData.resident_name("mulino"), "farm", 1.0)
 
 	GameState.changed.connect(_refresh)
 	_refresh()
@@ -99,7 +99,7 @@ func _refresh_orders() -> void:
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		info.add_theme_constant_override("separation", 4)
 		row.add_child(info)
-		info.add_child(UiKit.label("%s chiede:" % order["giver"], "Heading"))
+		info.add_child(UiKit.label(tr("BORGO_ASKS") % order["giver"], "Heading"))
 		var items := HBoxContainer.new()
 		items.add_theme_constant_override("separation", 12)
 		info.add_child(items)
@@ -111,7 +111,7 @@ func _refresh_orders() -> void:
 			var crop_id := GameData.crop_for_product(product)
 			var tex: Texture2D = UiKit.crop_icon(crop_id) if crop_id != "" else UiKit.icon("seeds")
 			item.add_child(UiKit.texture_rect(tex, 24))
-			var l := UiKit.label("%s %d/%d" % [product, mini(have, need), need])
+			var l := UiKit.label("%s %d/%d" % [GameData.product_name(product), mini(have, need), need])
 			l.add_theme_color_override("font_color", Color("5e7a28") if have >= need else Color("a94c2a"))
 			item.add_child(l)
 			items.add_child(item)
@@ -125,7 +125,7 @@ func _refresh_orders() -> void:
 		coin_row.add_child(UiKit.texture_rect(UiKit.icon("star"), 22))
 		coin_row.add_child(UiKit.label(str(int(order["xp"])), "Heading"))
 		reward.add_child(coin_row)
-		var button := UiKit.button("Consegna", "PrimaryButton")
+		var button := UiKit.button(tr("BORGO_DELIVER"), "PrimaryButton")
 		button.disabled = not GameState.can_fulfill(i)
 		button.pressed.connect(GameState.fulfill_order.bind(i))
 		reward.add_child(button)
@@ -143,26 +143,26 @@ func _refresh_mill() -> void:
 
 	if not GameState.is_restored("mulino"):
 		var cost: Dictionary = b["restore"]
-		label.text = "Un rudere coperto d'edera. Restauralo per riportare in paese %s." % b["resident"]
+		label.text = tr("MILL_RUIN") % GameData.resident_name("mulino")
 		var need := HBoxContainer.new()
 		need.add_theme_constant_override("separation", 6)
 		need.add_child(UiKit.texture_rect(UiKit.icon("coin"), 24))
 		need.add_child(UiKit.label("%d" % int(cost["coins"]), "Heading"))
 		need.add_child(UiKit.texture_rect(UiKit.crop_icon("grano"), 24))
-		need.add_child(UiKit.label("grano %d/%d" % [mini(GameState.item_count("grano"), int(cost["items"]["grano"])), int(cost["items"]["grano"])], "Heading"))
+		need.add_child(UiKit.label("%s %d/%d" % [GameData.product_name("grano"), mini(GameState.item_count("grano"), int(cost["items"]["grano"])), int(cost["items"]["grano"])], "Heading"))
 		_mill_box.add_child(need)
 		if GameState.level < int(b["level"]):
-			_mill_box.add_child(UiKit.label("Si sblocca al livello %d." % int(b["level"]), "Small"))
-		var restore_btn := UiKit.button("Restaura il mulino", "PrimaryButton")
+			_mill_box.add_child(UiKit.label(tr("MILL_UNLOCK") % int(b["level"]), "Small"))
+		var restore_btn := UiKit.button(tr("MILL_RESTORE"), "PrimaryButton")
 		restore_btn.disabled = not GameState.can_restore("mulino")
 		restore_btn.pressed.connect(GameState.restore.bind("mulino"))
 		_mill_box.add_child(restore_btn)
 		return
 
 	var recipe: Dictionary = b["recipe"]
-	label.text = "\"%s\"\n%d grano → %d farina in %d minuti." % [
-		b["lines"][1], int(recipe["in"]["grano"]), int(recipe["out"]["farina"]), int(recipe["time"]) / 60]
-	_mill_box.add_child(UiKit.label("Farina in magazzino: %d" % GameState.item_count("farina"), "Heading"))
+	label.text = "\"%s\"\n%s" % [GameData.building_line("mulino", 1),
+		tr("MILL_RECIPE") % [int(recipe["in"]["grano"]), int(recipe["out"]["farina"]), int(recipe["time"]) / 60]]
+	_mill_box.add_child(UiKit.label(tr("MILL_FLOUR") % GameState.item_count("farina"), "Heading"))
 
 	var button: Button
 	if GameState.productions.has("mulino"):
@@ -173,11 +173,11 @@ func _refresh_mill() -> void:
 		_mill_bar.value = progress * 100.0
 		_mill_box.add_child(_mill_bar)
 		_mill_ready_shown = progress >= 1.0
-		button = UiKit.button("Ritira la farina" if progress >= 1.0 else "Macina in corso...", "PrimaryButton")
+		button = UiKit.button(tr("MILL_COLLECT") if progress >= 1.0 else tr("MILL_WORKING"), "PrimaryButton")
 		button.disabled = progress < 1.0
 		button.pressed.connect(GameState.collect_production.bind("mulino"))
 	else:
-		button = UiKit.button("Macina", "PrimaryButton")
+		button = UiKit.button(tr("MILL_GRIND"), "PrimaryButton")
 		button.disabled = not GameState.has_items(recipe["in"])
 		button.pressed.connect(GameState.start_production.bind("mulino"))
 	_mill_box.add_child(button)

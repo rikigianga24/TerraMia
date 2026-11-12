@@ -148,7 +148,7 @@ func queue_plow(cell: Vector2i) -> bool:
 	if not is_in_grid(cell) or is_tilled(cell) or is_plow_queued(cell):
 		return false
 	if plow_queue.size() >= GameData.PLOW_QUEUE_MAX:
-		toast.emit("Il contadino ha già troppi lavori in coda.")
+		toast.emit(tr("MSG_QUEUE_FULL"))
 		return false
 	var start := now()
 	if not plow_queue.is_empty():
@@ -224,7 +224,7 @@ func buy_seeds(crop_id: String, qty: int) -> bool:
 		return false
 	var cost := int(GameData.crop(crop_id)["seed_cost"]) * qty
 	if coins < cost:
-		toast.emit("Non hai abbastanza monete.")
+		toast.emit(tr("MSG_NO_COINS"))
 		return false
 	coins -= cost
 	seeds[crop_id] = seed_count(crop_id) + qty
@@ -234,11 +234,11 @@ func buy_seeds(crop_id: String, qty: int) -> bool:
 
 func buy_fertilizer(qty: int) -> bool:
 	if level < GameData.FERTILIZER_LEVEL:
-		toast.emit("Il concime si sblocca al livello %d." % GameData.FERTILIZER_LEVEL)
+		toast.emit(tr("MSG_FERTILIZER_LOCKED") % GameData.FERTILIZER_LEVEL)
 		return false
 	var cost := GameData.FERTILIZER_PRICE * qty
 	if coins < cost:
-		toast.emit("Non hai abbastanza monete.")
+		toast.emit(tr("MSG_NO_COINS"))
 		return false
 	coins -= cost
 	fertilizer += qty
@@ -279,12 +279,12 @@ func plant(cell: Vector2i, crop_id: String) -> bool:
 	if not is_in_grid(cell) or not get_plot(cell).is_empty():
 		return false
 	if not is_tilled(cell):
-		toast.emit("Prima lavora la terra con la zappa.")
+		toast.emit(tr("MSG_HOE_FIRST"))
 		return false
 	if not is_unlocked(crop_id):
 		return false
 	if seed_count(crop_id) <= 0:
-		toast.emit("Non hai semi di %s: comprali al negozio." % GameData.crop(crop_id)["name"].to_lower())
+		toast.emit(tr("MSG_NO_SEEDS_OF") % GameData.crop_name(crop_id).to_lower())
 		return false
 	seeds[crop_id] = seed_count(crop_id) - 1
 	if seeds[crop_id] <= 0:
@@ -300,7 +300,7 @@ func water_plot(cell: Vector2i) -> bool:
 	if p.is_empty() or is_ready(cell) or p.get("watered", false):
 		return false
 	if water <= 0:
-		toast.emit("Il pozzo è vuoto: aspetta che si riempia.")
+		toast.emit(tr("MSG_WELL_EMPTY"))
 		return false
 	if water >= GameData.WATER_MAX:
 		water_last_tick = now()  # da pieno riparte la ricarica
@@ -318,7 +318,7 @@ func fertilize_plot(cell: Vector2i) -> bool:
 	if p.is_empty() or is_ready(cell) or p.get("fertilized", false):
 		return false
 	if fertilizer <= 0:
-		toast.emit("Non hai concime: compralo al negozio.")
+		toast.emit(tr("MSG_NO_FERTILIZER"))
 		return false
 	fertilizer -= 1
 	p["fertilized"] = true
@@ -386,10 +386,10 @@ func add_xp(amount: int) -> void:
 		var unlocked: PackedStringArray = []
 		for id in GameData.all_plants():
 			if int(GameData.crop(id)["level"]) == level:
-				unlocked.append(GameData.crop(id)["name"])
-		var msg := "Livello %d! +1 Lira d'oro" % level
+				unlocked.append(GameData.crop_name(id))
+		var msg: String = tr("MSG_LEVEL_UP") % level
 		if not unlocked.is_empty():
-			msg += " · Nuovi semi: " + ", ".join(unlocked)
+			msg += tr("MSG_NEW_SEEDS") % ", ".join(unlocked)
 		toast.emit(msg)
 
 
@@ -472,7 +472,7 @@ func fulfill_order(index: int) -> bool:
 	add_xp(int(order["xp"]))
 	orders.remove_at(index)
 	refill_orders()
-	toast.emit("%s ringrazia: +%d monete" % [order["giver"], int(order["coins"])])
+	toast.emit(tr("MSG_ORDER_THANKS") % [order["giver"], int(order["coins"])])
 	changed.emit()
 	return true
 
@@ -499,7 +499,7 @@ func restore(building_id: String) -> bool:
 	remove_items(b["restore"]["items"])
 	restored.append(building_id)
 	add_xp(10)
-	toast.emit("%s è tornato! %s" % [b["resident"], b["lines"][0]])
+	toast.emit(tr("MSG_RESTORED") % [GameData.resident_name(building_id), GameData.building_line(building_id, 0)])
 	changed.emit()
 	return true
 
@@ -517,7 +517,7 @@ func start_production(building_id: String) -> bool:
 	if not is_restored(building_id) or productions.has(building_id):
 		return false
 	if not has_items(b["recipe"]["in"]):
-		toast.emit("Mancano gli ingredienti.")
+		toast.emit(tr("MSG_MISSING_INGREDIENTS"))
 		return false
 	remove_items(b["recipe"]["in"])
 	productions[building_id] = {"started_at": now()}

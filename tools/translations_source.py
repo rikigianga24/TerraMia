@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+"""Fonte delle traduzioni: genera localization/translations.csv.
+
+Ogni voce: chiave -> (italiano, inglese, francese, spagnolo).
+Uso:  python3 tools/translations_source.py
+Poi Godot reimporta il CSV (si apre l'editor o si lancia godot --headless --import).
+"""
+import csv
+from pathlib import Path
+
+LANGS = ["it", "en", "fr", "es"]
+
+T = {
+    # --- Lingue
+    "LANG_NAME": ("Italiano", "English", "Français", "Español"),
+    "UI_LANGUAGE": ("Lingua", "Language", "Langue", "Idioma"),
+    # --- Navigazione e strumenti
+    "UI_FARM": ("Fattoria", "Farm", "Ferme", "Granja"),
+    "UI_BORGO": ("Borgo", "Village", "Village", "Pueblo"),
+    "UI_SHOP": ("Negozio", "Shop", "Boutique", "Tienda"),
+    "TOOL_HAND": ("Raccogli", "Harvest", "Récolter", "Cosechar"),
+    "TOOL_HOE": ("Zappa", "Hoe", "Houe", "Azada"),
+    "TOOL_WATER": ("Annaffia", "Water", "Arroser", "Regar"),
+    "TOOL_FERTILIZER": ("Concime", "Fertilizer", "Engrais", "Abono"),
+    "TOOL_FERTILIZER_N": ("Concime ×%d", "Fertilizer ×%d", "Engrais ×%d", "Abono ×%d"),
+    "UI_NO_SEEDS": ("Niente semi: vai al Negozio", "No seeds: visit the Shop", "Pas de graines : va à la Boutique", "Sin semillas: ve a la Tienda"),
+    "UI_ESPRESSO_TIP": ("Espresso: la moka ne fa uno ogni 2 ore", "Espresso: the moka pot makes one every 2 hours", "Espresso : la cafetière en fait un toutes les 2 heures", "Espresso: la cafetera hace uno cada 2 horas"),
+    "UI_WATER_NEXT": ("+1 tra %s", "+1 in %s", "+1 dans %s", "+1 en %s"),
+    "UI_LEVEL_XP": ("Livello %d · %d/%d esp.", "Level %d · %d/%d XP", "Niveau %d · %d/%d XP", "Nivel %d · %d/%d XP"),
+    "UI_LEVEL_MAX": ("Livello massimo", "Max level", "Niveau max", "Nivel máximo"),
+    # --- Negozio
+    "SHOP_TITLE": ("Consorzio agrario", "Farm Supply Co-op", "Coopérative agricole", "Cooperativa agrícola"),
+    "SHOP_SUBTITLE": ("Semi, piantine e concime per la tua terra", "Seeds, saplings and fertilizer for your land", "Graines, plants et engrais pour ta terre", "Semillas, plantones y abono para tu tierra"),
+    "SHOP_TAB_CROPS": ("Colture", "Crops", "Cultures", "Cultivos"),
+    "SHOP_TAB_TREES": ("Alberi e arbusti", "Trees and bushes", "Arbres et arbustes", "Árboles y arbustos"),
+    "SHOP_TAB_FERTILIZER": ("Concime", "Fertilizer", "Engrais", "Abono"),
+    "SHOP_FERTILIZER_DESC": ("Raddoppia il prossimo raccolto della pianta su cui lo spargi.", "Doubles the next harvest of the plant you spread it on.", "Double la prochaine récolte de la plante sur laquelle tu l'épands.", "Duplica la próxima cosecha de la planta donde lo esparces."),
+    "SHOP_OWNED": ("Ne hai %d", "You have %d", "Tu en as %d", "Tienes %d"),
+    "SHOP_UNLOCK": ("Si sblocca al livello %d", "Unlocks at level %d", "Débloqué au niveau %d", "Se desbloquea en el nivel %d"),
+    "SHOP_DETAIL": ("%s · %s\nResa %d %s · %d monete l'uno", "%s · %s\nYields %d %s · %d coins each", "%s · %s\nDonne %d %s · %d pièces l'unité", "%s · %s\nRinde %d %s · %d monedas cada uno"),
+    "SHOP_PERENNIAL": ("Resta piantato e rifà i frutti", "Stays planted and fruits again", "Reste planté et refait des fruits", "Se queda plantado y vuelve a dar fruto"),
+    "KIND_CROP": ("Coltura", "Crop", "Culture", "Cultivo"),
+    "KIND_TREE": ("Albero", "Tree", "Arbre", "Árbol"),
+    "KIND_BUSH": ("Arbusto", "Bush", "Arbuste", "Arbusto"),
+    # --- Borgo
+    "BORGO_ORDERS": ("Bacheca degli ordini", "Order board", "Tableau des commandes", "Tablón de pedidos"),
+    "BORGO_ORDERS_SUB": ("Gli abitanti chiedono i tuoi prodotti", "The villagers want your produce", "Les habitants veulent tes produits", "Los vecinos quieren tus productos"),
+    "BORGO_ASKS": ("%s chiede:", "%s asks for:", "%s demande :", "%s pide:"),
+    "BORGO_DELIVER": ("Consegna", "Deliver", "Livrer", "Entregar"),
+    "MILL_TITLE": ("Il mulino", "The mill", "Le moulin", "El molino"),
+    "MILL_RUIN": ("Un rudere coperto d'edera. Restauralo per riportare in paese %s.", "A ruin covered in ivy. Restore it to bring %s back to the village.", "Une ruine couverte de lierre. Restaure-la pour ramener %s au village.", "Una ruina cubierta de hiedra. Restáurala para traer de vuelta a %s al pueblo."),
+    "MILL_UNLOCK": ("Si sblocca al livello %d.", "Unlocks at level %d.", "Débloqué au niveau %d.", "Se desbloquea en el nivel %d."),
+    "MILL_RESTORE": ("Restaura il mulino", "Restore the mill", "Restaurer le moulin", "Restaurar el molino"),
+    "MILL_RECIPE": ("%d grano > %d farina in %d minuti.", "%d wheat > %d flour in %d minutes.", "%d blé > %d farine en %d minutes.", "%d trigo > %d harina en %d minutos."),
+    "MILL_FLOUR": ("Farina in magazzino: %d", "Flour in storage: %d", "Farine en réserve : %d", "Harina en el almacén: %d"),
+    "MILL_COLLECT": ("Ritira la farina", "Collect the flour", "Récupérer la farine", "Recoger la harina"),
+    "MILL_WORKING": ("Macina in corso...", "Grinding...", "Mouture en cours...", "Moliendo..."),
+    "MILL_GRIND": ("Macina", "Grind", "Moudre", "Moler"),
+    # --- Messaggi
+    "MSG_HOE_FIRST": ("Prima lavora la terra con la zappa.", "First till the soil with the hoe.", "Laboure d'abord la terre avec la houe.", "Primero trabaja la tierra con la azada."),
+    "MSG_TAKE_HOE": ("Prendi la zappa per lavorare la terra.", "Pick up the hoe to till the soil.", "Prends la houe pour labourer la terre.", "Coge la azada para trabajar la tierra."),
+    "MSG_WATER_HINT": ("Annaffia una pianta che sta crescendo.", "Water a plant that is growing.", "Arrose une plante qui pousse.", "Riega una planta que esté creciendo."),
+    "MSG_FERTILIZER_HINT": ("Spargi il concime su una pianta che sta crescendo.", "Spread fertilizer on a growing plant.", "Épands l'engrais sur une plante qui pousse.", "Echa abono en una planta que esté creciendo."),
+    "MSG_QUEUE_FULL": ("Il contadino ha già troppi lavori in coda.", "The farmer already has too many jobs queued.", "Le fermier a déjà trop de travaux en attente.", "El granjero ya tiene demasiadas tareas en cola."),
+    "MSG_NO_COINS": ("Non hai abbastanza monete.", "You don't have enough coins.", "Tu n'as pas assez de pièces.", "No tienes suficientes monedas."),
+    "MSG_FERTILIZER_LOCKED": ("Il concime si sblocca al livello %d.", "Fertilizer unlocks at level %d.", "L'engrais se débloque au niveau %d.", "El abono se desbloquea en el nivel %d."),
+    "MSG_NO_SEEDS_OF": ("Non hai semi di %s: comprali al negozio.", "No %s seeds: buy some at the shop.", "Pas de graines de %s : achète-en à la boutique.", "No tienes semillas de %s: cómpralas en la tienda."),
+    "MSG_WELL_EMPTY": ("Il pozzo è vuoto: aspetta che si riempia.", "The well is empty: wait for it to refill.", "Le puits est vide : attends qu'il se remplisse.", "El pozo está vacío: espera a que se llene."),
+    "MSG_NO_FERTILIZER": ("Non hai concime: compralo al negozio.", "No fertilizer: buy some at the shop.", "Pas d'engrais : achète-en à la boutique.", "No tienes abono: cómpralo en la tienda."),
+    "MSG_LEVEL_UP": ("Livello %d! +1 Lira d'oro", "Level %d! +1 Gold Lira", "Niveau %d ! +1 Lire d'or", "¡Nivel %d! +1 Lira de oro"),
+    "MSG_NEW_SEEDS": (" · Nuovi semi: %s", " · New seeds: %s", " · Nouvelles graines : %s", " · Semillas nuevas: %s"),
+    "MSG_ORDER_THANKS": ("%s ringrazia: +%d monete", "%s says thanks: +%d coins", "%s te remercie : +%d pièces", "%s te da las gracias: +%d monedas"),
+    "MSG_RESTORED": ("%s è tornato! %s", "%s is back! %s", "%s est de retour ! %s", "¡%s ha vuelto! %s"),
+    "MSG_MISSING_INGREDIENTS": ("Mancano gli ingredienti.", "Missing ingredients.", "Il manque des ingrédients.", "Faltan ingredientes."),
+    # --- Edificio e abitante del prototipo
+    "BLD_MULINO": ("Mulino", "Mill", "Moulin", "Molino"),
+    "RES_MULINO": ("Gino, il mugnaio", "Gino, the miller", "Gino, le meunier", "Gino, el molinero"),
+    "LINE_MULINO_0": ("Piove? Non piove? Mamma mia!", "Rain? No rain? Mamma mia!", "Il pleut ? Il pleut pas ? Mamma mia !", "¿Llueve? ¿No llueve? ¡Mamma mia!"),
+    "LINE_MULINO_1": ("Allora... farina fresca!", "Allora... fresh flour!", "Allora... de la farine fraîche !", "Allora... ¡harina fresca!"),
+}
+
+CROPS = {
+    "GRANO": ("Grano", "Wheat", "Blé", "Trigo"),
+    "LATTUGA": ("Lattuga", "Lettuce", "Laitue", "Lechuga"),
+    "POMODORO": ("Pomodoro", "Tomato", "Tomate", "Tomate"),
+    "CAROTA": ("Carota", "Carrot", "Carotte", "Zanahoria"),
+    "BASILICO": ("Basilico", "Basil", "Basilic", "Albahaca"),
+    "GALLINA": ("Gallina", "Hen", "Poule", "Gallina"),
+    "FRAGOLA": ("Fragola", "Strawberry", "Fraise", "Fresa"),
+    "ZUCCHINA": ("Zucchina", "Zucchini", "Courgette", "Calabacín"),
+    "CIPOLLA": ("Cipolla", "Onion", "Oignon", "Cebolla"),
+    "CARCIOFO": ("Carciofo", "Artichoke", "Artichaut", "Alcachofa"),
+    "ULIVO": ("Ulivo", "Olive tree", "Olivier", "Olivo"),
+    "MUCCA": ("Mucca", "Cow", "Vache", "Vaca"),
+    "PATATA": ("Patata", "Potato", "Pomme de terre", "Patata"),
+    "MELANZANA": ("Melanzana", "Eggplant", "Aubergine", "Berenjena"),
+    "ROVO_MORE": ("Rovo di more", "Blackberry bush", "Ronce à mûres", "Zarzamora"),
+    "AGLIO": ("Aglio", "Garlic", "Ail", "Ajo"),
+    "PEPERONCINO": ("Peperoncino", "Chili pepper", "Piment", "Guindilla"),
+    "VITE": ("Vite", "Grapevine", "Vigne", "Vid"),
+    "RUCOLA": ("Rucola", "Arugula", "Roquette", "Rúcula"),
+    "FAGIOLI": ("Fagioli", "Beans", "Haricots", "Judías"),
+    "FICO": ("Fico", "Fig tree", "Figuier", "Higuera"),
+    "FINOCCHIO": ("Finocchio", "Fennel", "Fenouil", "Hinojo"),
+    "ROSMARINO": ("Rosmarino", "Rosemary", "Romarin", "Romero"),
+    "NOCCIOLO": ("Nocciolo", "Hazel tree", "Noisetier", "Avellano"),
+    "ORIGANO": ("Origano", "Oregano", "Origan", "Orégano"),
+    "ZUCCA": ("Zucca", "Pumpkin", "Citrouille", "Calabaza"),
+    "CASTAGNO": ("Castagno", "Chestnut tree", "Châtaignier", "Castaño"),
+    "CILIEGIO": ("Ciliegio", "Cherry tree", "Cerisier", "Cerezo"),
+    "MANDORLO": ("Mandorlo", "Almond tree", "Amandier", "Almendro"),
+    "ANGURIA": ("Anguria", "Watermelon", "Pastèque", "Sandía"),
+    "PESCO": ("Pesco", "Peach tree", "Pêcher", "Melocotonero"),
+    "ARANCIO": ("Arancio", "Orange tree", "Oranger", "Naranjo"),
+    "ZAFFERANO": ("Zafferano", "Saffron", "Safran", "Azafrán"),
+    "PISTACCHIO": ("Pistacchio", "Pistachio tree", "Pistachier", "Pistachero"),
+}
+
+PRODUCTS = {
+    "GRANO": ("grano", "wheat", "blé", "trigo"),
+    "LATTUGA": ("lattuga", "lettuce", "laitue", "lechuga"),
+    "POMODORI": ("pomodori", "tomatoes", "tomates", "tomates"),
+    "CAROTE": ("carote", "carrots", "carottes", "zanahorias"),
+    "BASILICO": ("basilico", "basil", "basilic", "albahaca"),
+    "UOVA": ("uova", "eggs", "œufs", "huevos"),
+    "FRAGOLE": ("fragole", "strawberries", "fraises", "fresas"),
+    "ZUCCHINE": ("zucchine", "zucchini", "courgettes", "calabacines"),
+    "CIPOLLE": ("cipolle", "onions", "oignons", "cebollas"),
+    "CARCIOFI": ("carciofi", "artichokes", "artichauts", "alcachofas"),
+    "OLIVE": ("olive", "olives", "olives", "aceitunas"),
+    "LATTE": ("latte", "milk", "lait", "leche"),
+    "PATATE": ("patate", "potatoes", "pommes de terre", "patatas"),
+    "MELANZANE": ("melanzane", "eggplants", "aubergines", "berenjenas"),
+    "MORE": ("more", "blackberries", "mûres", "moras"),
+    "AGLIO": ("aglio", "garlic", "ail", "ajo"),
+    "PEPERONCINI": ("peperoncini", "chili peppers", "piments", "guindillas"),
+    "UVA": ("uva", "grapes", "raisin", "uvas"),
+    "RUCOLA": ("rucola", "arugula", "roquette", "rúcula"),
+    "FAGIOLI": ("fagioli", "beans", "haricots", "judías"),
+    "FICHI": ("fichi", "figs", "figues", "higos"),
+    "FINOCCHI": ("finocchi", "fennel", "fenouils", "hinojos"),
+    "ROSMARINO": ("rosmarino", "rosemary", "romarin", "romero"),
+    "NOCCIOLE": ("nocciole", "hazelnuts", "noisettes", "avellanas"),
+    "ORIGANO": ("origano", "oregano", "origan", "orégano"),
+    "ZUCCHE": ("zucche", "pumpkins", "citrouilles", "calabazas"),
+    "CASTAGNE": ("castagne", "chestnuts", "châtaignes", "castañas"),
+    "CILIEGIE": ("ciliegie", "cherries", "cerises", "cerezas"),
+    "MANDORLE": ("mandorle", "almonds", "amandes", "almendras"),
+    "ANGURIE": ("angurie", "watermelons", "pastèques", "sandías"),
+    "PESCHE": ("pesche", "peaches", "pêches", "melocotones"),
+    "ARANCE": ("arance", "oranges", "oranges", "naranjas"),
+    "ZAFFERANO": ("zafferano", "saffron", "safran", "azafrán"),
+    "PISTACCHI": ("pistacchi", "pistachios", "pistaches", "pistachos"),
+    "FARINA": ("farina", "flour", "farine", "harina"),
+}
+
+rows = dict(T)
+rows.update({"CROP_" + k: v for k, v in CROPS.items()})
+rows.update({"PROD_" + k: v for k, v in PRODUCTS.items()})
+
+out = Path(__file__).resolve().parent.parent / "localization/translations.csv"
+with out.open("w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f, lineterminator="\n")
+    w.writerow(["keys"] + LANGS)
+    for k, v in rows.items():
+        assert len(v) == len(LANGS), k
+        w.writerow([k, *v])
+print(f"{len(rows)} voci in {out}")

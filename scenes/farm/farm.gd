@@ -173,13 +173,13 @@ func _use_tool(cell: Vector2i, first: bool) -> void:
 					GameState.plant(cell, selected_crop)
 		"water":
 			if not GameState.water_plot(cell) and first and GameState.get_plot(cell).is_empty():
-				GameState.toast.emit("Annaffia una pianta che sta crescendo.")
+				GameState.toast.emit(tr("MSG_WATER_HINT"))
 		"fertilizer":
 			if not GameState.fertilize_plot(cell) and first and GameState.get_plot(cell).is_empty():
-				GameState.toast.emit("Spargi il concime su una pianta che sta crescendo.")
+				GameState.toast.emit(tr("MSG_FERTILIZER_HINT"))
 		_:
 			if first and not GameState.is_tilled(cell) and not GameState.is_plow_queued(cell):
-				GameState.toast.emit("Prendi la zappa per lavorare la terra.")
+				GameState.toast.emit(tr("MSG_TAKE_HOE"))
 
 
 func _on_harvested(cell: Vector2i, product: String, qty: int) -> void:
@@ -187,7 +187,7 @@ func _on_harvested(cell: Vector2i, product: String, qty: int) -> void:
 	var id := GameData.crop_for_product(product)
 	if id != "":
 		color = Color(GameData.crop(id)["color"])
-	_popups.append({"pos": cell_center(cell) + Vector2(0, -40), "text": "+%d %s" % [qty, product], "color": color, "t": 0.0})
+	_popups.append({"pos": cell_center(cell) + Vector2(0, -40), "text": "+%d %s" % [qty, GameData.product_name(product)], "color": color, "t": 0.0})
 
 
 # --- Contadino --------------------------------------------------------------

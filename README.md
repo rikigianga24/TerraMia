@@ -41,12 +41,15 @@ scenes/
   farm/backdrop.gd       sfondo: cielo, colline, nuvole, il paese
   ui/shop.gd             negozio di semi e concime
 scripts/ui/ui_kit.gd     pezzi d'interfaccia riusati (pastiglie, icone, pulsanti)
+scripts/autoload/settings.gd  lingua scelta (impostazioni del dispositivo)
 scripts/autoload/
   game_data.gd           dati statici: colture, edifici, livelli (dal documento)
   game_state.gd          stato della partita e regole (monete, XP, ordini, restauri)
   save_manager.gd        salvataggio locale in user:// e progresso offline
 tests/test_game_state.gd test delle regole di gioco (senza grafica)
 tools/build_theme.gd     genera il tema dell'interfaccia
+tools/translations_source.py  testi in 4 lingue -> localization/translations.csv
+tools/extract_icons.py   ritaglia le icone dal foglio illustrato
 assets/graphics/         blocchi di terreno SVG (tiles/), icone PNG (icons/) ritagliate
                          da source/icons_sheet.webp con tools/extract_icons.py
 assets/theme/            tema dell'interfaccia (generato, non modificarlo a mano)
@@ -71,6 +74,28 @@ docs/design.md           documento di design
   `godot --headless --path . -s tools/build_theme.gd`.
 - **Salvataggi locali** in `user://terramia_save.json` (su web finisce in
   IndexedDB). Supabase arriva solo con gli acquisti in-app.
+
+## Lingue
+
+Il gioco è in italiano, inglese, francese e spagnolo. All'avvio usa la lingua
+scelta dal giocatore (pulsante sotto il livello, in alto a destra), altrimenti
+quella del dispositivo, altrimenti l'inglese. La scelta sta in
+`user://settings.cfg`, separata dal salvataggio della partita.
+
+I testi stanno in `tools/translations_source.py`: ogni chiave ha le quattro
+versioni. Per aggiungere o cambiare un testo:
+
+```bash
+python3 tools/translations_source.py
+```
+
+```bash
+godot --headless --import
+```
+
+Il primo comando rigenera `localization/translations.csv`, il secondo lo fa
+reimportare a Godot. I test controllano che ogni lingua abbia tutte le chiavi
+e gli stessi segnaposto (`%d`, `%s`) dell'italiano.
 
 ## Test
 

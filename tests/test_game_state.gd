@@ -28,6 +28,7 @@ func _initialize() -> void:
 	_test_orders_and_levels()
 	_test_save_roundtrip()
 	_test_v1_save_migration()
+	_test_translations()
 
 	if _failures == 0:
 		print("TUTTI I TEST OK")
@@ -207,3 +208,33 @@ func _test_v1_save_migration() -> void:
 	check(gs.is_tilled(Vector2i(0, 5)), "i campi già seminati risultano lavorati")
 	check(gs.is_tilled(Vector2i(2, 2)), "più i quadranti iniziali")
 	check(gs.water == gd.WATER_START, "gocce di default")
+
+
+func _test_translations() -> void:
+	print("traduzioni")
+	var it := TranslationServer.get_translation_object("it")
+	check(it != null, "traduzione italiana caricata")
+	if it == null:
+		return
+	var placeholder := RegEx.create_from_string("%[ds]")
+	for code in ["en", "fr", "es"]:
+		var t := TranslationServer.get_translation_object(code)
+		check(t != null and t.locale.begins_with(code), "traduzione %s caricata" % code)
+		if t == null:
+			continue
+		for key in it.get_message_list():
+			var a: String = it.get_message(key)
+			var b: String = t.get_message(key)
+			check(b != "", "%s: manca %s" % [code, key])
+			var pa := placeholder.search_all(a).map(func(m: RegExMatch) -> String: return m.get_string())
+			var pb := placeholder.search_all(b).map(func(m: RegExMatch) -> String: return m.get_string())
+			check(pa == pb, "%s: segnaposto diversi in %s" % [code, key])
+	# ogni pianta e prodotto ha il suo nome tradotto
+	TranslationServer.set_locale("en")
+	for id in gd.CROPS:
+		check(gd.crop_name(id) != "CROP_" + id.to_upper(), "nome tradotto per " + id)
+		var prod: String = gd.CROPS[id]["product"]
+		check(gd.product_name(prod) != "PROD_" + prod.to_upper(), "prodotto tradotto: " + prod)
+	check(gd.crop_name("grano") == "Wheat", "grano in inglese è Wheat")
+	TranslationServer.set_locale("fr")
+	check(gd.product_name("farina") == "farine", "farina in francese è farine")

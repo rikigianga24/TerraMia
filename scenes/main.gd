@@ -9,10 +9,10 @@ extends Node
 ## Il pulsante Borgo mostra un pallino quando c'è qualcosa da fare.
 
 const TOOLS := [
-	{"id": "hand", "label": "Raccogli", "icon": "hand"},
-	{"id": "hoe", "label": "Zappa", "icon": "hoe"},
-	{"id": "water", "label": "Annaffia", "icon": "watering_can"},
-	{"id": "fertilizer", "label": "Concime", "icon": "fertilizer"},
+	{"id": "hand", "label": "TOOL_HAND", "icon": "hand"},
+	{"id": "hoe", "label": "TOOL_HOE", "icon": "hoe"},
+	{"id": "water", "label": "TOOL_WATER", "icon": "watering_can"},
+	{"id": "fertilizer", "label": "TOOL_FERTILIZER", "icon": "fertilizer"},
 ]
 
 @onready var farm: Farm = $Farm
@@ -47,6 +47,8 @@ func _ready() -> void:
 	_build_hud()
 	GameState.changed.connect(_refresh_hud)
 	GameState.toast.connect(show_toast)
+	# Cambiando lingua si ricostruisce la scena; la partita è negli autoload e resta.
+	Settings.language_changed.connect(func(_c: String) -> void: get_tree().reload_current_scene.call_deferred())
 	farm.tool_changed.connect(func(_t: String) -> void: _sync_tool_buttons())
 	show_farm()
 	_refresh_hud()
@@ -129,7 +131,7 @@ func _build_hud() -> void:
 	stats.add_child(p[0]); _water = p[1]; _water_timer = p[2]
 	p = UiKit.stat_pill("espresso")
 	stats.add_child(p[0]); _espresso = p[1]
-	(p[0] as Control).tooltip_text = "Espresso: la moka ne fa uno ogni 2 ore"
+	(p[0] as Control).tooltip_text = tr("UI_ESPRESSO_TIP")
 
 	# In alto a destra: livello
 	var level_box := PanelContainer.new()
@@ -166,6 +168,24 @@ func _build_hud() -> void:
 	xp_col.add_child(_xp_bar)
 	level_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 12)
 
+	# Sotto il livello: scelta della lingua
+	var lang := UiKit.button(Settings.language_name(Settings.language), "SeedButton")
+	lang.tooltip_text = tr("UI_LANGUAGE")
+	lang.custom_minimum_size = Vector2(0, 38)
+	lang.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	hud.add_child(lang)
+	lang.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 12)
+	lang.offset_top = 82
+	lang.offset_bottom = 120
+	var menu := PopupMenu.new()
+	for i in Settings.LANGUAGES.size():
+		var code: String = Settings.LANGUAGES[i]
+		menu.add_radio_check_item(Settings.language_name(code), i)
+		menu.set_item_checked(i, code == Settings.language)
+	menu.id_pressed.connect(func(i: int) -> void: Settings.set_language(Settings.LANGUAGES[i]))
+	lang.add_child(menu)
+	lang.pressed.connect(_open_language_menu.bind(lang, menu))
+
 	# Messaggi brevi, centrati sopra la barra degli strumenti
 	var toast_holder := CenterContainer.new()
 	toast_holder.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
@@ -188,12 +208,12 @@ func _build_hud() -> void:
 	nav.add_theme_constant_override("separation", 8)
 	hud.add_child(nav)
 	var nav_group := ButtonGroup.new()
-	_farm_btn = _nav_button(nav, "Fattoria", "farm", show_farm, nav_group)
-	_borgo_btn = _nav_button(nav, "Borgo", "borgo", show_borgo, nav_group)
+	_farm_btn = _nav_button(nav, tr("UI_FARM"), "farm", show_farm, nav_group)
+	_borgo_btn = _nav_button(nav, tr("UI_BORGO"), "borgo", show_borgo, nav_group)
 	nav.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 14)
 
 	# In basso a destra: Negozio
-	_shop_btn = UiKit.button("Negozio", "NavButton", "shop")
+	_shop_btn = UiKit.button(tr("UI_SHOP"), "NavButton", "shop")
 	_shop_btn.custom_minimum_size = Vector2(170, 58)
 	_shop_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_shop_btn.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -215,7 +235,7 @@ func _build_hud() -> void:
 	dock_row.add_theme_constant_override("separation", 8)
 	_dock.add_child(dock_row)
 	for t in TOOLS:
-		var b := _tool_button(t["label"], t["icon"])
+		var b := _tool_button(tr(t["label"]), t["icon"])
 		var id: String = t["id"]
 		b.pressed.connect(func() -> void: farm.tool = id)
 		dock_row.add_child(b)
@@ -237,6 +257,11 @@ func _build_hud() -> void:
 	_shop.visible = false
 	_shop.seed_bought.connect(select_seed)
 	hud.add_child(_shop)
+
+
+func _open_language_menu(button: Button, menu: PopupMenu) -> void:
+	menu.position = Vector2i(button.get_screen_position() + Vector2(0, button.size.y + 4))
+	menu.popup()
 
 
 func _tool_button(text: String, icon_name: String) -> Button:
@@ -277,14 +302,14 @@ func _rebuild_seed_row() -> void:
 			owned.append(id)
 	if owned == _seed_buttons.keys():
 		for id in owned:
-			_seed_buttons[id].text = "%s\n×%d" % [GameData.crop(id)["name"], GameState.seed_count(id)]
+			_seed_buttons[id].text = "%s\n×%d" % [GameData.crop_name(id), GameState.seed_count(id)]
 		return
 	for child in _seed_row.get_children():
 		child.queue_free()
 	_seed_buttons = {}
 	if owned.is_empty():
 		var hint := Button.new()
-		hint.text = "Niente semi: vai al Negozio"
+		hint.text = tr("UI_NO_SEEDS")
 		hint.icon = UiKit.icon("seeds")
 		hint.theme_type_variation = "SeedButton"
 		hint.pressed.connect(_toggle_shop)
@@ -295,7 +320,7 @@ func _rebuild_seed_row() -> void:
 	for id in owned:
 		var b := UiKit.button("", "SeedButton")
 		b.icon = UiKit.crop_icon(id)
-		b.text = "%s\n×%d" % [GameData.crop(id)["name"], GameState.seed_count(id)]
+		b.text = "%s\n×%d" % [GameData.crop_name(id), GameState.seed_count(id)]
 		b.toggle_mode = true
 		b.button_group = _tool_group
 		b.custom_minimum_size = Vector2(0, 66)
@@ -322,7 +347,7 @@ func _refresh_stats() -> void:
 	_water.text = "%d/%d" % [GameState.water, GameData.WATER_MAX]
 	var next := GameState.water_seconds_to_next()
 	_water_timer.visible = next > 0
-	_water_timer.text = "+1 tra %s" % GameData.format_time(next)
+	_water_timer.text = tr("UI_WATER_NEXT") % GameData.format_time(next)
 	_espresso.text = "%d/%d" % [GameState.espresso, GameData.MOKA_MAX]
 
 
@@ -330,8 +355,8 @@ func _refresh_hud() -> void:
 	_refresh_stats()
 	_level.text = str(GameState.level)
 	var next_xp := GameData.xp_for_level(GameState.level + 1)
-	_xp_text.text = "Livello %d · %d/%d esp." % [GameState.level, GameState.xp, next_xp] if GameState.level < GameData.MAX_LEVEL else "Livello massimo"
+	_xp_text.text = tr("UI_LEVEL_XP") % [GameState.level, GameState.xp, next_xp] if GameState.level < GameData.MAX_LEVEL else tr("UI_LEVEL_MAX")
 	_xp_bar.value = GameState.xp_progress() * 100.0
-	_tool_buttons["fertilizer"].text = "Concime ×%d" % GameState.fertilizer
+	_tool_buttons["fertilizer"].text = tr("TOOL_FERTILIZER_N") % GameState.fertilizer
 	_rebuild_seed_row()
-	_borgo_btn.text = "Borgo  •" if GameState.any_order_ready() or GameState.can_restore("mulino") else "Borgo"
+	_borgo_btn.text = tr("UI_BORGO") + ("  •" if GameState.any_order_ready() or GameState.can_restore("mulino") else "")

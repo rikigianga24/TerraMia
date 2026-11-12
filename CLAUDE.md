@@ -2,7 +2,7 @@
 
 - Progetto Godot 4.4, GDScript, renderer Compatibility (serve per l'export HTML5).
 - Il design è in `docs/design.md`; la fonte aggiornata è il documento Claude Docs
-  "Terra Mia — Documento di design". Testi del gioco, commenti e documentazione in italiano.
+  "Terra Mia — Documento di design". Commenti e documentazione in italiano.
 - Dati statici solo in `scripts/autoload/game_data.gd`; le regole in `game_state.gd`.
   Le scene leggono e modificano lo stato solo tramite `GameState` e ascoltano `GameState.changed`.
 - Timer = timestamp Unix assoluti (`GameState.now()`), mai contatori che avanzano con `_process`.
@@ -15,3 +15,7 @@
   `assets/theme/terramia_theme.tres`; nei controlli si usa `theme_type_variation`, non override sparsi.
 - Per controllare la grafica: avvio con `xvfb-run -a godot --path . --rendering-driver opengl3`
   e screenshot con `get_viewport().get_texture().get_image().save_png(...)`.
+- Nessun testo visibile scritto nel codice: si aggiunge una chiave in `tools/translations_source.py`
+  (it, en, fr, es), si rigenera il CSV e si usa `tr("CHIAVE")`. Nomi di piante, prodotti ed edifici
+  con `GameData.crop_name()`, `product_name()`, `building_name()`, `resident_name()`.
+  Solo caratteri presenti nel font Fredoka (niente frecce o emoji).

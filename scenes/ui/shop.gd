@@ -5,7 +5,7 @@ extends PanelContainer
 
 signal seed_bought(crop_id: String)
 
-const KIND_LABEL := {"crop": "Coltura", "tree": "Albero", "bush": "Arbusto"}
+const KIND_LABEL := {"crop": "KIND_CROP", "tree": "KIND_TREE", "bush": "KIND_BUSH"}
 const COLUMNS := 3
 
 var _grid: GridContainer
@@ -39,8 +39,8 @@ func _ready() -> void:
 	titles.add_theme_constant_override("separation", -4)
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(titles)
-	titles.add_child(UiKit.label("Consorzio agrario", "Title"))
-	titles.add_child(UiKit.label("Semi, piantine e concime per la tua terra", "Small"))
+	titles.add_child(UiKit.label(tr("SHOP_TITLE"), "Title"))
+	titles.add_child(UiKit.label(tr("SHOP_SUBTITLE"), "Small"))
 	var coins := UiKit.stat_pill("coin")
 	_coins = coins[1]
 	top.add_child(coins[0])
@@ -53,8 +53,8 @@ func _ready() -> void:
 	tabs.add_theme_constant_override("separation", 8)
 	col.add_child(tabs)
 	var group := ButtonGroup.new()
-	for t in [["crop", "Colture", "seeds"], ["tree", "Alberi e arbusti", "farm"], ["extra", "Concime", "fertilizer"]]:
-		var b := UiKit.button(t[1], "ToolButton", t[2])
+	for t in [["crop", "SHOP_TAB_CROPS", "seeds"], ["tree", "SHOP_TAB_TREES", "farm"], ["extra", "SHOP_TAB_FERTILIZER", "fertilizer"]]:
+		var b := UiKit.button(tr(t[1]), "ToolButton", t[2])
 		b.toggle_mode = true
 		b.button_group = group
 		b.custom_minimum_size = Vector2(0, 46)
@@ -94,9 +94,9 @@ func _refresh() -> void:
 	for child in _grid.get_children():
 		child.queue_free()
 	if _tab == "extra":
-		_add_card(UiKit.icon("fertilizer"), "Concime",
-			"Raddoppia il prossimo raccolto della pianta su cui lo spargi.",
-			"Ne hai %d" % GameState.fertilizer, GameData.FERTILIZER_LEVEL, GameData.FERTILIZER_PRICE,
+		_add_card(UiKit.icon("fertilizer"), tr("TOOL_FERTILIZER"),
+			tr("SHOP_FERTILIZER_DESC"),
+			tr("SHOP_OWNED") % GameState.fertilizer, GameData.FERTILIZER_LEVEL, GameData.FERTILIZER_PRICE,
 			func(qty: int) -> void: GameState.buy_fertilizer(qty))
 		return
 	for id in GameData.all_plants():
@@ -104,15 +104,15 @@ func _refresh() -> void:
 		if perennial != (_tab == "tree"):
 			continue
 		var c := GameData.crop(id)
-		var detail := "%s · %s\nResa %d %s · %d monete l'uno" % [
-			KIND_LABEL.get(c["kind"], c["kind"]), GameData.format_time(int(c["time"])),
-			int(c["yield"]), c["product"], int(c["sell_price"])]
+		var detail: String = tr("SHOP_DETAIL") % [
+			tr(KIND_LABEL.get(c["kind"], c["kind"])), GameData.format_time(int(c["time"])),
+			int(c["yield"]), GameData.product_name(c["product"]), int(c["sell_price"])]
 		if perennial:
-			detail += "\nResta piantato e rifà i frutti"
+			detail += "\n" + tr("SHOP_PERENNIAL")
 		var buy := func(qty: int) -> void:
 			if GameState.buy_seeds(id, qty):
 				seed_bought.emit(id)
-		_add_card(UiKit.crop_icon(id), c["name"], detail, "Ne hai %d" % GameState.seed_count(id),
+		_add_card(UiKit.crop_icon(id), GameData.crop_name(id), detail, tr("SHOP_OWNED") % GameState.seed_count(id),
 			int(c["level"]), int(c["seed_cost"]), buy)
 
 
@@ -138,7 +138,7 @@ func _add_card(icon: Texture2D, title: String, detail: String, owned: String,
 	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(names)
 	names.add_child(UiKit.label(title, "Heading"))
-	names.add_child(UiKit.label("Si sblocca al livello %d" % unlock_level if locked else owned, "Small"))
+	names.add_child(UiKit.label(tr("SHOP_UNLOCK") % unlock_level if locked else owned, "Small"))
 
 	var info := UiKit.label(detail, "Small")
 	info.add_theme_font_size_override("font_size", 13)

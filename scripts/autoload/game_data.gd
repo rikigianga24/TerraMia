@@ -167,8 +167,26 @@ func xp_for_level(level: int) -> int:
 	return XP_FOR_LEVEL[-1]
 
 
-func product_label(product: String) -> String:
-	return product.capitalize()
+## Testi tradotti (le chiavi stanno in localization/translations.csv,
+## generato da tools/translations_source.py).
+func crop_name(id: String) -> String:
+	return tr("CROP_" + id.to_upper())
+
+
+func product_name(product: String) -> String:
+	return tr("PROD_" + product.to_upper())
+
+
+func building_name(id: String) -> String:
+	return tr("BLD_" + id.to_upper())
+
+
+func resident_name(id: String) -> String:
+	return tr("RES_" + id.to_upper())
+
+
+func building_line(id: String, n: int) -> String:
+	return tr("LINE_%s_%d" % [id.to_upper(), n])
 
 
 static func format_time(seconds: int) -> String:

@@ -19,9 +19,8 @@ var _sky: GradientTexture2D
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Il genitore è un CanvasLayer: niente ancore, la dimensione segue la viewport.
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Il genitore è un CanvasLayer: la dimensione va presa dalla viewport.
 	size = get_viewport_rect().size
 	get_viewport().size_changed.connect(func() -> void: size = get_viewport_rect().size)
 	var g := Gradient.new()
