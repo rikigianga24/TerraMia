@@ -19,7 +19,8 @@ copiare: personaggi, edifici e oggetti devono essere originali.
   Se ci sono etichette, devono stare ben staccate (a sinistra o in alto).
 - **Piante:** una riga per pianta e tre colonne per gli stadi: germoglio,
   crescita, maturazione. Ogni stadio sta sopra il proprio blocco di terra,
-  nella stessa vista isometrica dei quadranti del gioco (rombo 2:1).
+  nella stessa vista isometrica dei quadranti del gioco: rombo 3:2, alto due
+  terzi della larghezza (circa 34 gradi), come le mattonelle di `terreno.webp`.
 - **Icone:** una per cella, ben distanziate.
 - **Sorgenti:** i fogli originali vanno in `assets/graphics/source/`; gli
   script in `tools/` ne ritagliano gli sprite.
@@ -44,5 +45,5 @@ copiare: personaggi, edifici e oggetti devono essere originali.
 Fogli attuali: `sheet_a.webp`, `sheet_b.webp`, `sheet_c.webp` (piante, edifici,
 decorazioni, prodotti, attrezzi, terreni, personaggi) e `terreno.webp` (le 8
 mattonelle: erba, erba fiorita, erba selvatica, erba secca, terra arata, terra
-bagnata, sterrato, sponda). Le mattonelle vengono riportate sul rombo 2:1 del
+bagnata, sterrato, sponda). Le mattonelle vengono riportate sul rombo 3:2 del
 gioco anche se il foglio ha un'angolazione diversa.

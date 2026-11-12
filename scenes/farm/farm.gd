@@ -6,7 +6,7 @@ extends Node2D
 ##
 ## Attorno: il fiume a sinistra, il bosco a destra, una strada di pietrisco
 ## davanti dove ogni tanto passa un carretto o un'auto d'epoca.
-## I blocchi di terra sono PNG dipinti (tools/paint_tiles.py); piante,
+## Le mattonelle sono illustrate (tools/cut_sprites.py), quadranti 3:2 (Iso); piante,
 ## contadino, fiume, alberi e veicoli sono disegnati da codice.
 ##
 ## Strumenti (barra in basso):
@@ -21,8 +21,8 @@ extends Node2D
 signal tool_changed(tool: String)
 signal sector_tapped(sector: Vector2i)
 
-const TILE_W := 112.0
-const TILE_H := 56.0
+const TILE_W := Iso.TILE_W
+const TILE_H := Iso.TILE_H
 
 const TEX_GRASS := preload("res://assets/graphics/tiles/grass.png")
 const TEX_GRASS_FLOWERS := preload("res://assets/graphics/tiles/grass_flowers.png")
@@ -119,7 +119,7 @@ func _ready() -> void:
 	var right := cell_to_local(Vector2i(w.x + int(ROAD_TO) + 1, 0))
 	var bottom := cell_to_local(w)
 	camera.bounds = Rect2(left.x - 40, top.y - 220, right.x - left.x + 80, bottom.y - top.y + 300)
-	camera.zoom = Vector2(1.2, 1.2)
+	camera.zoom = Vector2(1.0, 1.0)
 	camera.center_on(cell_center(Vector2i(3, 3)))
 
 	# Etichette, fumetti e scritte del raccolto vanno sopra il filtro (livello
@@ -411,8 +411,9 @@ func _draw() -> void:
 			if not GameState.is_in_grid(cell):
 				_draw_locked_cell(cell)
 				continue
+			# la terra sempre sotto: tra un blocco illustrato e l'altro si vede terra
+			_draw_ground(cell)
 			if not _draw_plant_sprite(cell):
-				_draw_ground(cell)
 				if cell == _hover:
 					draw_polyline(_closed(_diamond(cell, 2.0)), COLOR_HOVER, 2.5, true)
 				_draw_plant(cell)

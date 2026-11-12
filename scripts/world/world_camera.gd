@@ -11,7 +11,7 @@ extends Camera2D
 ## esce dai bordi, e la parte alta della mappa resta sotto l'orizzonte dello
 ## sfondo (Backdrop.HORIZON), che è disegnato a schermo.
 
-const ZOOM_MIN := 0.55
+const ZOOM_MIN := 0.4
 const ZOOM_MAX := 2.2
 const ZOOM_STEP := 1.12
 const KEY_SPEED := 600.0

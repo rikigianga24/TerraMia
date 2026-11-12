@@ -10,8 +10,8 @@ extends Node2D
 
 signal building_reached(id: String)
 
-const TILE_W := 112.0
-const TILE_H := 56.0
+const TILE_W := Iso.TILE_W
+const TILE_H := Iso.TILE_H
 const SIZE := Vector2i(14, 14)
 const WALK_SPEED := 240.0
 const DRAG_THRESHOLD := 8.0

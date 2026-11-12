@@ -67,8 +67,6 @@ tools/find_sprites.py    trova i disegni in un foglio trasparente (con anteprima
 tools/cut_sprites.py     ritaglia gli sprite nominati in assets/graphics/sprites/sprites.json,
                          prepara piante (3 stadi) e mattonelle di erba e terra
 tools/extract_plants.py  ritaglia le piante da un foglio con sfondo pieno (vecchio metodo)
-tools/paint_tiles.py     dipinge mattonelle di riserva da codice (sovrascrive quelle illustrate:
-                         normalmente le mattonelle vengono da tools/cut_sprites.py)
 docs/art_direction.md    prompt e regole per tutte le illustrazioni
 assets/graphics/         blocchi di terreno SVG (tiles/), icone PNG (icons/) ritagliate
                          da source/icons_sheet.webp con tools/extract_icons.py
@@ -86,8 +84,6 @@ docs/design.md           documento di design
   stanno in `game_data.gd`; il bilanciamento si fa lì. I prezzi delle piante
   vengono da una formula descritta in testa al file.
 - **Grafica 2.5D.** Vista isometrica con blocchi di terra dipinti
-  (`tools/paint_tiles.py`). Le piante con uno sprite illustrato lo usano, le
-  altre si disegnano da codice in `farm.gd`. Ogni quadrante si disegna dal
   fondo verso lo spettatore, terra e pianta insieme. Sopra il mondo c'è una
   rifinitura leggera (`assets/shaders/painterly.gdshader`: luce calda e grana
   della carta); etichette e timer stanno sopra, per restare nitidi.

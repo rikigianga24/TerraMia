@@ -8,7 +8,7 @@ riquadri si trovano con tools/find_sprites.py) e scrive:
   assets/graphics/plants/plants.json    stadi delle piante, allineati al
                                         blocco di terra (vedi farm.gd)
   assets/graphics/tiles/*.png           le mattonelle del foglio del terreno,
-                                        riportate sul rombo 224x112 della griglia
+                                        riportate sul rombo 240x160 della griglia (3:2)
 
 Uso:  python3 tools/cut_sprites.py
 """
@@ -38,7 +38,7 @@ PLANTS = {
     "zucchina": ["zucchina_0", "zucchina_1", "zucchina_2"],
 }
 
-TILE_W, TILE_H = 224, 112
+TILE_W, TILE_H = 240, 160   # doppio di Iso.TILE_W / Iso.TILE_H (scripts/world/iso.gd)
 
 ## Mattonelle del gioco (assets/graphics/tiles/<nome>.png) -> sprite del foglio del terreno
 TILES = {
@@ -68,7 +68,7 @@ def cut(sheet: Image.Image, box) -> Image.Image:
 
 
 def to_grid_tile(tile: Image.Image) -> Image.Image:
-    """Porta la faccia superiore di una mattonella sul rombo 224x112 del gioco."""
+    """Porta la faccia superiore di una mattonella sul rombo 240x160 del gioco."""
     a = np.asarray(tile)[..., 3] > 128
     ys, xs = np.nonzero(a)
     # Vertici laterali e inferiore: affidabili (l'erba alta può sporgere
@@ -90,12 +90,12 @@ def to_grid_tile(tile: Image.Image) -> Image.Image:
     rx, ry = inset(right_x, side_y)
     # affine inversa: punto del rombo del gioco -> punto della mattonella
     src = np.array([[tx, ty], [lx, ly], [rx, ry]], dtype=float)
-    dst = np.array([[112, 0], [0, 56], [224, 56]], dtype=float)
+    dst = np.array([[TILE_W / 2, 0], [0, TILE_H / 2], [TILE_W, TILE_H / 2]], dtype=float)
     m = np.linalg.solve(np.c_[dst, np.ones(3)], src)   # 3x2
     coeffs = (m[0, 0], m[1, 0], m[2, 0], m[0, 1], m[1, 1], m[2, 1])
     out = tile.transform((TILE_W, TILE_H), Image.AFFINE, coeffs, resample=Image.BICUBIC)
     mask = Image.new("L", (TILE_W, TILE_H), 0)
-    ImageDraw.Draw(mask).polygon([(112, 0), (224, 56), (112, 112), (0, 56)], fill=255)
+    ImageDraw.Draw(mask).polygon([(TILE_W / 2, 0), (TILE_W, TILE_H / 2), (TILE_W / 2, TILE_H), (0, TILE_H / 2)], fill=255)
     out.putalpha(mask)
     return out
 
