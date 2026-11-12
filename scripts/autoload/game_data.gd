@@ -9,6 +9,9 @@ extends Node
 ##   esperienza = 0,9·√minuti
 ## Gli animali restano fuori finché non ci sono i recinti.
 
+## Crediti mostrati nelle impostazioni.
+const CREATOR := "Riccardo"
+
 const MIN := 60
 const HOUR := 3600
 const DAY := 86400

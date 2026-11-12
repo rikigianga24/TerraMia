@@ -1,13 +1,19 @@
 class_name Backdrop
 extends Control
-## Sfondo della fattoria: cielo sfumato, colline in lontananza con cipressi
-## e nuvole che scorrono piano. Tutto disegnato da codice.
+## Sfondo: cielo sfumato, colline in lontananza con cipressi e il paese su un
+## colle, nuvole che scorrono piano, e il prato fino in primo piano, sullo
+## stesso piano della fattoria. Tutto disegnato da codice.
 
 const SKY_TOP := Color("86bde0")
 const SKY_BOTTOM := Color("f3e7c8")
 const HILL_FAR := Color("b4cc86")
 const HILL_MID := Color("9cbf62")
 const HILL_NEAR := Color("a2c45c")
+const GROUND_FAR := Color("b9cf88")
+const GROUND_NEAR := Color("93b74e")
+## Linea dell'orizzonte, in frazione dell'altezza dello schermo: sotto c'è il
+## prato su cui sta la fattoria.
+const HORIZON := 0.30
 
 ## "farm": colline e cipressi; "borgo": il paese sulla collina.
 var mode := "farm":
@@ -16,6 +22,7 @@ var mode := "farm":
 		queue_redraw()
 var _clock := 0.0
 var _sky: GradientTexture2D
+var _ground: GradientTexture2D
 
 
 func _ready() -> void:
@@ -32,6 +39,15 @@ func _ready() -> void:
 	_sky.fill_to = Vector2(0, 1)
 	_sky.width = 4
 	_sky.height = 256
+	var gg := Gradient.new()
+	gg.set_color(0, GROUND_FAR)
+	gg.set_color(1, GROUND_NEAR)
+	_ground = GradientTexture2D.new()
+	_ground.gradient = gg
+	_ground.fill_from = Vector2(0, 0)
+	_ground.fill_to = Vector2(0, 1)
+	_ground.width = 4
+	_ground.height = 256
 
 
 func _process(delta: float) -> void:
@@ -41,24 +57,45 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var s := size
-	draw_texture_rect(_sky, Rect2(Vector2.ZERO, s), false)
+	var horizon := s.y * HORIZON
+	draw_texture_rect(_sky, Rect2(Vector2.ZERO, Vector2(s.x, horizon + 40)), false)
 	# sole
-	var sun := Vector2(s.x * 0.84, s.y * 0.16)
-	draw_circle(sun, 64.0, Color(1, 0.94, 0.8, 0.25))
-	draw_circle(sun, 40.0, Color(0.98, 0.9, 0.68, 0.9))
+	var sun := Vector2(s.x * 0.84, s.y * 0.11)
+	draw_circle(sun, 56.0, Color(1, 0.94, 0.8, 0.25))
+	draw_circle(sun, 34.0, Color(0.98, 0.9, 0.68, 0.9))
 	# nuvole
 	for i in 4:
 		var speed := 6.0 + i * 2.5
 		var x := fposmod(i * 360.0 + _clock * speed, s.x + 300.0) - 150.0
-		_cloud(Vector2(x, s.y * (0.1 + 0.07 * (i % 3))), 0.7 + 0.15 * (i % 2))
-	# colline: tre fasce dalla più lontana
-	_hills(s, s.y * 0.40, 36.0, 0.004, 1.3, HILL_FAR)
-	_cypresses(s, s.y * 0.40)
-	_hills(s, s.y * 0.50, 30.0, 0.006, 4.0, HILL_MID)
-	_hills(s, s.y * 0.60, 20.0, 0.005, 2.2, HILL_NEAR)
-	draw_rect(Rect2(0, s.y * 0.62, s.x, s.y * 0.38), HILL_NEAR)
+		_cloud(Vector2(x, s.y * (0.05 + 0.04 * (i % 3))), 0.6 + 0.12 * (i % 2))
+	# colline lontane con cipressi e, in fattoria, il paese vicino su un colle
+	_hills(s, horizon - 34.0, 26.0, 0.004, 1.3, HILL_FAR)
+	_cypresses(s, horizon - 34.0)
+	if mode == "farm":
+		_village(s, horizon - 22.0, 0.42, 0.60, 0.86)
+	_hills(s, horizon - 8.0, 14.0, 0.006, 4.0, HILL_MID)
+	# il prato su cui sta la fattoria: dall'orizzonte (più chiaro, velato) a
+	# primo piano (più pieno)
+	draw_texture_rect(_ground, Rect2(0, horizon, s.x, s.y - horizon), false)
+	_meadow_strokes(s, horizon)
 	if mode == "borgo":
-		_village(s, s.y * 0.93)
+		_village(s, s.y * 0.93, 1.0, 0.16, 0.86)
+
+
+## Ciuffi d'erba e fiorellini sparsi, sempre negli stessi posti.
+func _meadow_strokes(s: Vector2, horizon: float) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for i in 260:
+		var t := rng.randf()
+		var y := horizon + 6.0 + (s.y - horizon) * t * t
+		var x := rng.randf() * s.x
+		var k := 0.5 + t * 1.2  # più grandi in primo piano
+		var c := HILL_NEAR.darkened(0.12) if rng.randf() < 0.7 else HILL_NEAR.lightened(0.12)
+		draw_line(Vector2(x, y), Vector2(x - 2 * k, y - 6 * k), c, 1.6 * k)
+		draw_line(Vector2(x, y), Vector2(x + 2.5 * k, y - 5 * k), c, 1.6 * k)
+		if rng.randf() < 0.08:
+			draw_circle(Vector2(x + 4 * k, y - 4 * k), 1.8 * k, [Color("f4ecd8"), Color("e9c46a"), Color("e8a7a0")][rng.randi() % 3])
 
 
 func _hills(s: Vector2, base: float, amp: float, freq: float, phase: float, color: Color) -> void:
@@ -90,25 +127,27 @@ func _cloud(p: Vector2, k: float) -> void:
 
 
 ## Il borgo sulla collina: case color sabbia con tetti in coppi e un campanile.
-func _village(s: Vector2, base: float) -> void:
+func _village(s: Vector2, base: float, k: float, from: float, to: float) -> void:
 	var walls := [Color("f0d2a6"), Color("e8c08f"), Color("f6e0bd"), Color("e2b07c")]
-	var x := s.x * 0.16
+	var x := s.x * from
 	var i := 0
-	while x < s.x * 0.86:
-		var w := 54.0 + (i * 37) % 40
-		var h := 48.0 + (i * 53) % 46
-		var y := base - absf(x - s.x * 0.5) * 0.08
+	var mid := s.x * (from + to) * 0.5
+	draw_set_transform(Vector2.ZERO)
+	while x < s.x * to:
+		var w := (54.0 + (i * 37) % 40) * k
+		var h := (48.0 + (i * 53) % 46) * k
+		var y := base - absf(x - mid) * 0.08 * k
 		if i == 4:
 			# campanile
-			draw_rect(Rect2(x, y - 150, 34, 150), Color("e2b07c"))
-			draw_rect(Rect2(x + 9, y - 132, 16, 22), Color("6b4a2b"))
-			draw_colored_polygon(PackedVector2Array([Vector2(x - 4, y - 150), Vector2(x + 17, y - 176), Vector2(x + 38, y - 150)]), Color("b8573a"))
-			x += 40.0
+			draw_rect(Rect2(x, y - 150 * k, 34 * k, 150 * k), Color("e2b07c"))
+			draw_rect(Rect2(x + 9 * k, y - 132 * k, 16 * k, 22 * k), Color("6b4a2b"))
+			draw_colored_polygon(PackedVector2Array([Vector2(x - 4 * k, y - 150 * k), Vector2(x + 17 * k, y - 176 * k), Vector2(x + 38 * k, y - 150 * k)]), Color("b8573a"))
+			x += 40.0 * k
 		draw_rect(Rect2(x, y - h, w, h), walls[i % walls.size()])
 		draw_rect(Rect2(x + w * 0.62, y - h, w * 0.38, h), Color(0, 0, 0, 0.07))
-		draw_colored_polygon(PackedVector2Array([Vector2(x - 5, y - h), Vector2(x + w * 0.5, y - h - 18), Vector2(x + w + 5, y - h)]), Color("c0603e"))
-		for k in int(w / 22.0):
-			draw_rect(Rect2(x + 8 + k * 20, y - h + 14, 9, 12), Color("6e8fa8"))
-			draw_rect(Rect2(x + 6 + k * 20, y - h + 14, 3, 12), Color("5e7a3a"))
-		x += w + 4.0
+		draw_colored_polygon(PackedVector2Array([Vector2(x - 5 * k, y - h), Vector2(x + w * 0.5, y - h - 18 * k), Vector2(x + w + 5 * k, y - h)]), Color("c0603e"))
+		for j in int(w / (22.0 * k)):
+			draw_rect(Rect2(x + (8 + j * 20) * k, y - h + 14 * k, 9 * k, 12 * k), Color("6e8fa8"))
+			draw_rect(Rect2(x + (6 + j * 20) * k, y - h + 14 * k, 3 * k, 12 * k), Color("5e7a3a"))
+		x += w + 4.0 * k
 		i += 1

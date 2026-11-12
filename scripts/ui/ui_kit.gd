@@ -20,6 +20,7 @@ const ICONS := {
 	"borgo": preload("res://assets/graphics/icons/borgo.png"),
 	"close": preload("res://assets/graphics/icons/close.png"),
 	"lock": preload("res://assets/graphics/icons/lock.png"),
+	"settings": preload("res://assets/graphics/icons/settings.svg"),
 }
 
 static var _crop_icons: Dictionary = {}

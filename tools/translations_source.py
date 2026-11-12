@@ -14,6 +14,16 @@ T = {
     # --- Lingue
     "LANG_NAME": ("Italiano", "English", "Français", "Español"),
     "UI_LANGUAGE": ("Lingua", "Language", "Langue", "Idioma"),
+    "UI_SETTINGS": ("Impostazioni", "Settings", "Paramètres", "Ajustes"),
+    "SET_AUDIO": ("Audio", "Audio", "Audio", "Audio"),
+    "SET_MUSIC": ("Musica", "Music", "Musique", "Música"),
+    "SET_SFX": ("Effetti", "Sound effects", "Effets", "Efectos"),
+    "SET_INFO": ("Informazioni", "About", "À propos", "Información"),
+    "SET_VERSION": ("versione %s", "version %s", "version %s", "versión %s"),
+    "SET_TAGLINE": ("Coltiva la terra e riporta in vita un borgo italiano abbandonato.", "Farm the land and bring an abandoned Italian village back to life.", "Cultive la terre et redonne vie à un village italien abandonné.", "Cultiva la tierra y devuelve la vida a un pueblo italiano abandonado."),
+    "SET_CREATOR": ("Creato da %s", "Created by %s", "Créé par %s", "Creado por %s"),
+    "SET_ENGINE": ("Realizzato con Godot Engine", "Made with Godot Engine", "Réalisé avec Godot Engine", "Hecho con Godot Engine"),
+    "SET_FONT": ("Font Fredoka, SIL Open Font License", "Fredoka font, SIL Open Font License", "Police Fredoka, SIL Open Font License", "Fuente Fredoka, SIL Open Font License"),
     # --- Navigazione e strumenti
     "UI_FARM": ("Fattoria", "Farm", "Ferme", "Granja"),
     "UI_BORGO": ("Borgo", "Village", "Village", "Pueblo"),

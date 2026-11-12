@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Dipinge i blocchi di terreno a pennellate: assets/graphics/tiles/*.png.
 
-Ogni blocco è un rombo isometrico 224x112 con 28 px di spessore (disegnato a
-metà dimensione nel gioco). Su un colore di base si stendono centinaia di
+Ogni quadrante è un rombo isometrico 224x112 a filo del terreno (disegnato a
+metà dimensione nel gioco); con flat=False si ottiene un blocco con 28 px di
+fianchi, per eventuali aiuole rialzate. Su un colore di base si stendono centinaia di
 pennellate ellittiche con tono e trasparenza variabili, poi la grana della
 carta. Il risultato imita la tempera stesa a mano.
 
@@ -67,10 +68,15 @@ def paper(img: Image.Image, strength=14):
     return Image.fromarray(arr.astype(np.uint8), "RGBA")
 
 
-def block(top_base, top_palette, side_l, side_r, lip=None, extra=None, top_angle=-26.6, top_size=22, n=420):
+def block(top_base, top_palette, side_l, side_r, lip=None, extra=None, top_angle=-26.6, top_size=22, n=420, flat=True):
     img = Image.new("RGBA", (W, H + D), (0, 0, 0, 0))
+    if flat:
+        # quadrante a filo del terreno: niente fianchi
+        side_l = side_r = None
+        lip = None
     # fianchi: terra, pennellate quasi orizzontali, più scure in basso
-    for poly, base, pal in [(LEFT, side_l, [side_l, "#73351b", "#8f4524"]), (RIGHT, side_r, [side_r, "#a85a34", "#8c4424"])]:
+    sides = [] if flat else [(LEFT, side_l, [side_l, "#73351b", "#8f4524"]), (RIGHT, side_r, [side_r, "#a85a34", "#8c4424"])]
+    for poly, base, pal in sides:
         m = mask(poly)
         layer = Image.new("RGBA", img.size, hexc(base) + (255,))
         layer.putalpha(m)
@@ -112,7 +118,8 @@ def block(top_base, top_palette, side_l, side_r, lip=None, extra=None, top_angle
     edge = Image.new("RGBA", img.size, (0, 0, 0, 0))
     ImageDraw.Draw(edge).line(TOP + [TOP[0]], fill=(70, 50, 30, 60), width=2)
     img.alpha_composite(edge.filter(ImageFilter.GaussianBlur(0.8)))
-    return paper(img)
+    img = paper(img)
+    return img.crop((0, 0, W, H)) if flat else img
 
 
 def furrows(dark, light):

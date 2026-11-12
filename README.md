@@ -40,8 +40,9 @@ scenes/
   borgo/borgo.gd         bacheca degli ordini e mulino
   farm/backdrop.gd       sfondo: cielo, colline, nuvole, il paese
   ui/shop.gd             negozio di semi e concime
+  ui/settings_panel.gd   impostazioni: lingua, volumi, informazioni
 scripts/ui/ui_kit.gd     pezzi d'interfaccia riusati (pastiglie, icone, pulsanti)
-scripts/autoload/settings.gd  lingua scelta (impostazioni del dispositivo)
+scripts/autoload/settings.gd  lingua e volumi (impostazioni del dispositivo)
 scripts/autoload/
   game_data.gd           dati statici: colture, edifici, livelli (dal documento)
   game_state.gd          stato della partita e regole (monete, XP, ordini, restauri)
@@ -84,9 +85,16 @@ docs/design.md           documento di design
 ## Lingue
 
 Il gioco è in italiano, inglese, francese e spagnolo. All'avvio usa la lingua
-scelta dal giocatore (pulsante sotto il livello, in alto a destra), altrimenti
-quella del dispositivo, altrimenti l'inglese. La scelta sta in
-`user://settings.cfg`, separata dal salvataggio della partita.
+scelta dal giocatore nelle Impostazioni (l'ingranaggio in alto a destra),
+altrimenti quella del dispositivo, altrimenti l'inglese.
+
+## Impostazioni
+
+L'ingranaggio in alto a destra apre lingua, volume di musica ed effetti e
+informazioni sul gioco (versione, creatore, crediti). Tutto sta in
+`user://settings.cfg`, separato dal salvataggio della partita. I volumi
+regolano i bus audio `Music` e `SFX`: musica ed effetti, quando ci saranno,
+vanno suonati su quei bus. Il nome del creatore è `GameData.CREATOR`.
 
 I testi stanno in `tools/translations_source.py`: ogni chiave ha le quattro
 versioni. Per aggiungere o cambiare un testo:

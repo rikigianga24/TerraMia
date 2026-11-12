@@ -1,6 +1,6 @@
 class_name Farm
 extends Node2D
-## La fattoria in 2.5D: griglia isometrica di blocchi di terra (6×6 all'inizio).
+## La fattoria in 2.5D: griglia isometrica di quadranti a filo del prato (6×6 all'inizio).
 ## I blocchi sono SVG (assets/graphics/tiles); piante, contadino e staccionata
 ## sono disegnati da codice in _draw() con ombre e luci, finché non arrivano
 ## sprite definitivi.
@@ -18,16 +18,12 @@ signal tool_changed(tool: String)
 
 const TILE_W := 112.0
 const TILE_H := 56.0
-const TILE_DEPTH := 14.0          ## spessore del blocco di terra
-const MEADOW_MARGIN := 2          ## quadranti di prato attorno al campo
 
 const TEX_GRASS := preload("res://assets/graphics/tiles/grass.png")
 const TEX_GRASS_FLOWERS := preload("res://assets/graphics/tiles/grass_flowers.png")
 const TEX_SOIL := preload("res://assets/graphics/tiles/soil.png")
 const TEX_SOIL_WET := preload("res://assets/graphics/tiles/soil_wet.png")
 
-const COLOR_MEADOW := Color("a2c45c")
-const COLOR_MEADOW_DARK := Color("93b74e")
 const COLOR_HOVER := Color(1, 1, 1, 0.9)
 const COLOR_QUEUED := Color(1, 0.97, 0.85, 0.95)
 const COLOR_SHADOW := Color(0.18, 0.12, 0.05, 0.28)
@@ -107,7 +103,8 @@ func _process(delta: float) -> void:
 func _recenter() -> void:
 	var vp := get_viewport_rect().size
 	var grid_h := (GameState.grid_size.x + GameState.grid_size.y) * TILE_H * 0.5
-	position = Vector2(vp.x * 0.5, (vp.y - grid_h) * 0.5 - 30.0)
+	# Il campo sta sul prato, sotto l'orizzonte (Backdrop.HORIZON).
+	position = Vector2(vp.x * 0.5, maxf(vp.y * (Backdrop.HORIZON + 0.035), vp.y - grid_h - 150.0))
 
 
 # --- Coordinate isometriche -------------------------------------------------
@@ -269,7 +266,6 @@ func _draw_farmer() -> void:
 
 func _draw() -> void:
 	var grid := GameState.grid_size
-	_draw_meadow(grid)
 	_draw_fence(grid, true)
 	_draw_decor(true)
 
@@ -307,34 +303,8 @@ func _closed(poly: PackedVector2Array) -> PackedVector2Array:
 	return out
 
 
-## Prato piatto attorno al campo, con un bordo di terra per l'effetto zolla.
-func _draw_meadow(grid: Vector2i) -> void:
-	var m := MEADOW_MARGIN
-	var top := cell_to_local(Vector2i(-m, -m))
-	var right := cell_to_local(Vector2i(grid.x + m, -m))
-	var bottom := cell_to_local(Vector2i(grid.x + m, grid.y + m))
-	var left := cell_to_local(Vector2i(-m, grid.y + m))
-	var d := Vector2(0, TILE_DEPTH + 6)
-	draw_colored_polygon(PackedVector2Array([left, bottom, bottom + d, left + d]), Color("8a4122"))
-	draw_colored_polygon(PackedVector2Array([bottom, right, right + d, bottom + d]), Color("9b4a27"))
-	draw_colored_polygon(PackedVector2Array([top, right, bottom, left]), COLOR_MEADOW)
-	# fasce di colore per dare ritmo al prato
-	for i in range(-m, grid.x + m, 2):
-		var a := cell_to_local(Vector2i(i, -m))
-		var b := cell_to_local(Vector2i(i + 1, -m))
-		var c := cell_to_local(Vector2i(i + 1, grid.y + m))
-		var e := cell_to_local(Vector2i(i, grid.y + m))
-		draw_colored_polygon(PackedVector2Array([a, b, c, e]), COLOR_MEADOW_DARK.lerp(COLOR_MEADOW, 0.55))
-	# ombra morbida del campo rialzato sul prato
-	var s := Vector2(10, 10)
-	draw_colored_polygon(PackedVector2Array([
-		cell_to_local(Vector2i(0, 0)) + s, cell_to_local(Vector2i(grid.x, 0)) + s,
-		cell_to_local(Vector2i(grid.x, grid.y)) + s + Vector2(0, TILE_DEPTH),
-		cell_to_local(Vector2i(0, grid.y)) + s + Vector2(0, TILE_DEPTH)]), Color(0.2, 0.3, 0.1, 0.18))
-
-
 func _draw_ground(cell: Vector2i) -> void:
-	var rect := Rect2(cell_to_local(cell) - Vector2(TILE_W * 0.5, 0), Vector2(TILE_W, TILE_H + TILE_DEPTH))
+	var rect := Rect2(cell_to_local(cell) - Vector2(TILE_W * 0.5, 0), Vector2(TILE_W, TILE_H))
 	var plot := GameState.get_plot(cell)
 	if GameState.is_tilled(cell):
 		var wet: bool = not plot.is_empty() and plot.get("watered", false)
@@ -356,7 +326,7 @@ func _draw_fence(grid: Vector2i, back: bool) -> void:
 	var o := 0.6  # distanza dal campo, in quadranti
 	var tl := cell_to_local(Vector2i(0, 0)) + Vector2(0, -o * TILE_H)
 	var tr := cell_to_local(Vector2i(grid.x, 0)) + Vector2(o * TILE_W, 0)
-	var br := cell_to_local(Vector2i(grid.x, grid.y)) + Vector2(0, o * TILE_H + TILE_DEPTH)
+	var br := cell_to_local(Vector2i(grid.x, grid.y)) + Vector2(0, o * TILE_H)
 	var bl := cell_to_local(Vector2i(0, grid.y)) + Vector2(-o * TILE_W, 0)
 	if back:
 		_fence_side(bl, tl, grid.y)

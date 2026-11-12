@@ -193,6 +193,22 @@ func _misc(t: Theme) -> void:
 	t.set_stylebox("fill", "ProgressBar", box(OLIVE_LIGHT, 99, OLIVE_DARK, 2, 0, Vector4(0, 0, 0, 0), 3))
 	t.set_color("font_color", "ProgressBar", INK)
 
+	# Slider del volume: binario crema, parte piena verde oliva
+	t.set_stylebox("slider", "HSlider", box(Color(0.29, 0.2, 0.14, 0.15), 99, Color.TRANSPARENT, 0, 0, Vector4(0, 5, 0, 5)))
+	t.set_stylebox("grabber_area", "HSlider", box(OLIVE_LIGHT, 99, Color.TRANSPARENT, 0, 0, Vector4(0, 5, 0, 5)))
+	t.set_stylebox("grabber_area_highlight", "HSlider", box(OLIVE, 99, Color.TRANSPARENT, 0, 0, Vector4(0, 5, 0, 5)))
+	var knob := Image.create(28, 28, false, Image.FORMAT_RGBA8)
+	for y in 28:
+		for x in 28:
+			var d := Vector2(x + 0.5, y + 0.5).distance_to(Vector2(14, 14))
+			if d < 12.5:
+				knob.set_pixel(x, y, TERRACOTTA if d < 10.0 else TERRACOTTA_DARK)
+			elif d < 13.5:
+				knob.set_pixel(x, y, Color(TERRACOTTA_DARK, 13.5 - d))
+	var knob_tex := ImageTexture.create_from_image(knob)
+	t.set_icon("grabber", "HSlider", knob_tex)
+	t.set_icon("grabber_highlight", "HSlider", knob_tex)
+
 	# Barre di scorrimento sottili
 	for sb in ["VScrollBar", "HScrollBar"]:
 		t.set_stylebox("scroll", sb, box(Color(0.29, 0.2, 0.14, 0.08), 99, Color.TRANSPARENT, 0, 0, Vector4(4, 4, 4, 4)))

@@ -40,6 +40,9 @@ var _farm_btn: Button
 var _borgo_btn: Button
 var _shop_btn: Button
 var _shop: Shop
+var _settings: SettingsPanel
+## Dopo un cambio di lingua la scena si ricarica: riapre le impostazioni.
+static var reopen_settings := false
 
 
 func _ready() -> void:
@@ -49,7 +52,7 @@ func _ready() -> void:
 	GameState.changed.connect(_refresh_hud)
 	GameState.toast.connect(show_toast)
 	# Cambiando lingua si ricostruisce la scena; la partita è negli autoload e resta.
-	Settings.language_changed.connect(func(_c: String) -> void: get_tree().reload_current_scene.call_deferred())
+	Settings.language_changed.connect(_on_language_changed)
 	farm.tool_changed.connect(func(_t: String) -> void: _sync_tool_buttons())
 	show_farm()
 	_refresh_hud()
@@ -60,6 +63,11 @@ func _ready() -> void:
 	regen.autostart = true
 	regen.timeout.connect(_on_regen_tick)
 	add_child(regen)
+
+
+func _on_language_changed(_code: String) -> void:
+	reopen_settings = true
+	get_tree().reload_current_scene.call_deferred()
 
 
 func _on_regen_tick() -> void:
@@ -184,23 +192,16 @@ func _build_hud() -> void:
 	xp_col.add_child(_xp_bar)
 	level_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 12)
 
-	# Sotto il livello: scelta della lingua
-	var lang := UiKit.button(Settings.language_name(Settings.language), "SeedButton")
-	lang.tooltip_text = tr("UI_LANGUAGE")
-	lang.custom_minimum_size = Vector2(0, 38)
-	lang.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	hud.add_child(lang)
-	lang.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 12)
-	lang.offset_top = 82
-	lang.offset_bottom = 120
-	var menu := PopupMenu.new()
-	for i in Settings.LANGUAGES.size():
-		var code: String = Settings.LANGUAGES[i]
-		menu.add_radio_check_item(Settings.language_name(code), i)
-		menu.set_item_checked(i, code == Settings.language)
-	menu.id_pressed.connect(func(i: int) -> void: Settings.set_language(Settings.LANGUAGES[i]))
-	lang.add_child(menu)
-	lang.pressed.connect(_open_language_menu.bind(lang, menu))
+	# Accanto al livello: impostazioni (lingua, volumi, informazioni)
+	var gear := UiKit.button("", "IconButton", "settings")
+	gear.tooltip_text = tr("UI_SETTINGS")
+	gear.add_theme_constant_override("icon_max_width", 48)
+	gear.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	hud.add_child(gear)
+	gear.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 12)
+	gear.offset_top = 80
+	gear.offset_bottom = 132
+	gear.pressed.connect(_toggle_settings)
 
 	# Messaggi brevi, centrati sopra la barra degli strumenti
 	var toast_holder := CenterContainer.new()
@@ -274,10 +275,15 @@ func _build_hud() -> void:
 	_shop.seed_bought.connect(select_seed)
 	hud.add_child(_shop)
 
+	_settings = SettingsPanel.new()
+	_settings.visible = reopen_settings
+	reopen_settings = false
+	hud.add_child(_settings)
 
-func _open_language_menu(button: Button, menu: PopupMenu) -> void:
-	menu.position = Vector2i(button.get_screen_position() + Vector2(0, button.size.y + 4))
-	menu.popup()
+
+func _toggle_settings() -> void:
+	_shop.hide()
+	_settings.visible = not _settings.visible
 
 
 func _tool_button(text: String, icon_name: String) -> Button:
@@ -307,6 +313,7 @@ func _toggle_shop() -> void:
 		_shop.hide()
 	else:
 		show_farm()
+		_settings.hide()
 		_shop.show()
 
 
