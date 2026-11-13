@@ -18,7 +18,7 @@ signal building_reached(id: String)
 const TILE_W := Iso.TILE_W
 const TILE_H := Iso.TILE_H
 const SIZE := BorgoLayout.SIZE
-const LEVEL_H := 58.0               ## pixel di un livello d'altezza
+const LEVEL_H := 52.0               ## pixel di un livello d'altezza
 const WALL_EXTRA := 0.85            ## altezza delle mura (in livelli)
 const FOUNTAIN := Vector2(23.0, 21.5)
 const WALK_SPEED := 3.2             ## celle al secondo
@@ -63,7 +63,7 @@ var _trees: Array = []             ## [punto, tipo: sprite o "albero", scala]
 var _objects: Node2D               ## strato che si ridisegna ogni fotogramma
 var _ci: CanvasItem                ## dove disegnano le funzioni degli oggetti
 var _astar := AStarGrid2D.new()
-var _farmer := Vector2(BorgoLayout.GATE) + Vector2(0.5, 0.5)
+var _farmer := Vector2(BorgoLayout.ENTRY) + Vector2(0.5, 0.5)
 var _route: Array = []
 var _farmer_flip := false
 var _target_building := ""
@@ -86,7 +86,8 @@ func _ready() -> void:
 	var left := world(Vector2(0, SIZE.y), 0.0)
 	var right := world(Vector2(SIZE.x, 0), 0.0)
 	var bottom := world(Vector2(SIZE), 0.0)
-	camera.bounds = Rect2(left.x - 80, top.y - 300, right.x - left.x + 160, bottom.y - top.y + 360)
+	# la cima della collina sale di molto sopra la griglia: si allarga verso l'alto
+	camera.bounds = Rect2(left.x - 80, top.y - 300 - 13.0 * LEVEL_H, right.x - left.x + 160, bottom.y - top.y + 360 + 13.0 * LEVEL_H)
 	camera.zoom = Vector2(0.7, 0.7)
 	camera.center_on(world(Vector2(22, 26)))
 	_objects = Node2D.new()
@@ -176,7 +177,7 @@ func _process(delta: float) -> void:
 
 ## Il contadino arriva dalla fattoria: entra dalla porta delle mura.
 func arrive() -> void:
-	_farmer = Vector2(BorgoLayout.GATE) + Vector2(0.5, 0.5)
+	_farmer = Vector2(BorgoLayout.ENTRY) + Vector2(0.5, 0.5)
 	_route = []
 	_target_building = ""
 	camera.center_on(world(Vector2(22, 30)))
@@ -196,7 +197,7 @@ func terrain(cell: Vector2i) -> String:
 func vh(v: Vector2i) -> float:
 	var x := clampi(v.x, 0, SIZE.x)
 	var y := clampi(v.y, 0, SIZE.y)
-	return float(BorgoLayout.VHEIGHT[y].unicode_at(x) - 48) * 0.1
+	return float(BorgoLayout.VHEIGHT[y].unicode_at(x) - 48) * 0.2
 
 
 ## Altezza media di una cella (per gli edifici, che stanno su lotti spianati).
@@ -246,7 +247,7 @@ func pick_cell(local: Vector2) -> Vector2i:
 				continue
 			var cell := Vector2i(x, y)
 			var base := cell_to_local(Vector2(cell) + Vector2(0.5, 0.5))
-			if absf(base.x - local.x) > TILE_W or local.y > base.y + TILE_H or local.y < base.y - TILE_H - 9.0 * LEVEL_H:
+			if absf(base.x - local.x) > TILE_W or local.y > base.y + TILE_H or local.y < base.y - TILE_H - 16.0 * LEVEL_H:
 				continue
 			if Geometry2D.is_point_in_polygon(local, cell_poly(cell)):
 				return cell

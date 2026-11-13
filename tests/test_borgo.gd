@@ -10,7 +10,7 @@ func _initialize() -> void:
 	await process_frame
 	var failures := 0
 	for id in m.buildings:
-		var path: Array = m._astar.get_id_path(BorgoLayout.GATE, m.door_cell(id))
+		var path: Array = m._astar.get_id_path(BorgoLayout.ENTRY, m.door_cell(id))
 		if path.is_empty():
 			print("  FALLITO: irraggiungibile ", id)
 			failures += 1

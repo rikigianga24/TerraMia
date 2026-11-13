@@ -29,6 +29,7 @@ OX, OY = 10, 8                      # spostamento del borgo dentro la mappa
 CENTER = (12.0 + OX, 13.0 + OY)     # centro dell'ovale delle mura
 HILL_TOP = (13.0 + OX, 9.0 + OY)    # cima della collina (verso la chiesa)
 GATE = (12 + OX, 27 + OY)
+HILL_HEIGHT = 12.0                  # altezza del pianoro, in livelli
 CHURCH = (12 + OX, -1 + OY)         # lotto della chiesa: 3 di larghezza, 4 di profondità
 CHURCH_SIZE = (3, 4)
 SAGRATO = [(x, y) for x in range(10 + OX, 16 + OX) for y in range(3 + OY, 5 + OY)]
@@ -44,11 +45,16 @@ def inside_walls(x, y):
     return dx * dx + dy * dy < 1.0 + wob
 
 
-def hill(x, y):
-    """Altezza (in livelli) della collina in un punto: dolce, con la cima al borgo."""
-    d = math.hypot((x - HILL_TOP[0]) / 1.15, (y - HILL_TOP[1]) / 1.0)
-    h = 7.5 * max(0.0, 1.0 - (d / 27.0) ** 1.7)
-    h += 0.35 * math.sin(x * 0.31 + y * 0.17) + 0.25 * math.cos(y * 0.29 - x * 0.11)
+def hill(x, y, inside=False):
+    """Altezza (in livelli) della collina in un punto: un pianoro alto dove sta il
+    borgo, fianchi ripidi subito fuori dalle mura, pendii lunghi in basso."""
+    dn = math.hypot((x - CENTER[0]) / 10.6, (y - CENTER[1]) / 13.2)
+    if inside:
+        dn = min(dn, 0.92)      # dentro le mura: tutto sul pianoro
+    h = HILL_HEIGHT / (1.0 + (dn / 1.3) ** 10)
+    h += 0.9 * max(0.0, 1.0 - dn) * (CENTER[1] - y) / 13.2          # sale un po' verso la chiesa
+    # ondulazioni solo in campagna: dentro le mura le vie restano camminabili
+    h += min(1.0, max(0.0, dn - 0.95) * 4.0) * (0.3 * math.sin(x * 0.31 + y * 0.17) + 0.25 * math.cos(y * 0.29 - x * 0.11))
     return max(0.0, h)
 
 
@@ -138,7 +144,10 @@ def main():
             terrain[y][x] = kind
 
     # altezza ai vertici: collina continua
-    vh = [[hill(x, y) for x in range(W + 1)] for y in range(H + 1)]
+    def vertex_inside(vx, vy):
+        return any(0 <= vx - i < W and 0 <= vy - j < H and terrain[vy - j][vx - i] in ".#pcw"
+                   for i in (0, 1) for j in (0, 1))
+    vh = [[hill(x, y, vertex_inside(x, y)) for x in range(W + 1)] for y in range(H + 1)]
 
     def flatten(cells, level=None):
         verts = {(x + i, y + j) for x, y in cells for i in (0, 1) for j in (0, 1)}
@@ -200,7 +209,7 @@ def main():
         new = [row[:] for row in vh]
         for vy in range(1, H):
             for vx in range(1, W):
-                if (vx, vy) in fixed:
+                if (vx, vy) in fixed or vertex_inside(vx, vy):
                     continue
                 new[vy][vx] = (vh[vy][vx] * 2 + vh[vy - 1][vx] + vh[vy + 1][vx] + vh[vy][vx - 1] + vh[vy][vx + 1]) / 6.0
         vh = new
@@ -216,7 +225,7 @@ def main():
         ("ufficio_postale", (12, 18)), ("bar", (14, 15)), ("osteria", (10, 15)),
         ("forno", (8, 18)), ("pasticceria", (16, 11)), ("gelateria", (13, 21)), ("pastificio", (7, 21)),
         ("conserve", (16, 20)), ("cantina", (18, 15)), ("caseificio", (5, 14)), ("frantoio", (5, 10)),
-        ("bocce", (19, 10)),
+        ("bocce", (19, 10)), ("mulino", (6, 6)),
     ]
     assigned = {}
     free = [l for l in lots if faces_street(l)]
@@ -225,24 +234,19 @@ def main():
         best = min(free, key=lambda l: dist(l, near))
         assigned[best] = name
         free.remove(best)
-    # mulino fuori dalle mura, sul prato a sinistra
-    mulino = (1 + OX - 1, 6 + OY)
-    for i in range(2):
-        for j in range(2):
-            terrain[mulino[1] + j][mulino[0] + i] = " "
-    flatten([(mulino[0], mulino[1]), (mulino[0] + 1, mulino[1]), (mulino[0], mulino[1] + 1), (mulino[0] + 1, mulino[1] + 1)])
-
     # scrittura: altezze dei vertici in decimi di livello, una lettera ciascuna
     def enc(v):
-        return chr(48 + max(0, min(74, int(round(v * 10)))))
+        return chr(48 + max(0, min(78, int(round(v * 5)))))
     lines = ["# File generato da tools/gen_borgo.py: non modificarlo a mano.",
              "class_name BorgoLayout", "extends RefCounted", "",
              "## Pianta del borgo e della collina. TERRAIN: ' ' prato, 'v' vigna, 'o' uliveto,",
              "## 'b' bosco, 'r' strada bianca, '.' cortile, 'w' mura, '#' via, 'p' piazza,",
-             "## 'c' sagrato. VHEIGHT: altezza dei vertici delle celle in decimi di livello",
+             "## 'c' sagrato. VHEIGHT: altezza dei vertici delle celle in quinti di livello",
              "## (carattere - 48), (SIZE.x + 1) x (SIZE.y + 1).", "",
              "const SIZE := Vector2i(%d, %d)" % (W, H),
              "const GATE := Vector2i(%d, %d)" % GATE,
+             "## Dove entra il contadino: la prima via dentro le mura.",
+             "const ENTRY := Vector2i(%d, %d)" % (GATE[0], GATE[1] - 2),
              "const TERRAIN := ["]
     lines += ['\t"%s",' % "".join(r) for r in terrain]
     lines += ["]", "const VHEIGHT := ["]
@@ -251,7 +255,6 @@ def main():
     lines.append('\t[Vector2i(%d, %d), "campanile", Vector2i(%d, %d)],' % (CHURCH[0], CHURCH[1], CHURCH_SIZE[0], CHURCH_SIZE[1]))
     for l in lots:
         lines.append('\t[Vector2i(%d, %d), "%s", Vector2i(2, 2)],' % (l[0], l[1], assigned.get(l, "")))
-    lines.append('\t[Vector2i(%d, %d), "mulino", Vector2i(2, 2)],' % mulino)
     lines += ["]", ""]
     OUT.write_text("\n".join(lines))
     print(f"{len(lots)} lotti, chiesa al livello {church_level:.1f} -> {OUT}")
