@@ -42,6 +42,8 @@ var _shop_btn: Button
 var _shop: Shop
 var _land: LandPanel
 var borgo_map: BorgoMap
+var _travel: TravelOverlay
+var _travel_dest := ""
 var _settings: SettingsPanel
 ## Dopo un cambio di lingua la scena si ricarica: riapre le impostazioni.
 static var reopen_settings := false
@@ -63,7 +65,7 @@ func _ready() -> void:
 	# Cambiando lingua si ricostruisce la scena; la partita è negli autoload e resta.
 	Settings.language_changed.connect(_on_language_changed)
 	farm.tool_changed.connect(func(_t: String) -> void: _sync_tool_buttons())
-	show_farm()
+	_show_farm_now()
 	_refresh_hud()
 
 	# Moka e pozzo si ricaricano anche mentre si gioca.
@@ -85,7 +87,35 @@ func _on_regen_tick() -> void:
 	_refresh_stats()
 
 
+## Fattoria e borgo: il passaggio fa vedere il viaggio tra le nuvole.
 func show_farm() -> void:
+	_travel_to("farm")
+
+
+func show_borgo() -> void:
+	_travel_to("borgo")
+
+
+func _travel_to(place: String) -> void:
+	var here := "farm" if farm.visible else "borgo"
+	if place == here or _travel.is_playing():
+		(_farm_btn if here == "farm" else _borgo_btn).button_pressed = true
+		return
+	_shop.hide()
+	_land.hide()
+	_settings.hide()
+	_travel_dest = place
+	_travel.play()
+
+
+func _on_travel_covered() -> void:
+	if _travel_dest == "farm":
+		_show_farm_now()
+	else:
+		_show_borgo_now()
+
+
+func _show_farm_now() -> void:
 	farm.visible = true
 	borgo_map.visible = false
 	borgo.close_panels()
@@ -96,7 +126,7 @@ func show_farm() -> void:
 	_farm_btn.button_pressed = true
 
 
-func show_borgo() -> void:
+func _show_borgo_now() -> void:
 	farm.visible = false
 	borgo_map.visible = true
 	farm.camera.active = false
@@ -317,6 +347,13 @@ func _build_hud() -> void:
 	_land.visible = false
 	hud.add_child(_land)
 
+	var travel_layer := CanvasLayer.new()
+	travel_layer.layer = 30
+	add_child(travel_layer)
+	_travel = TravelOverlay.new()
+	_travel.covered.connect(_on_travel_covered)
+	travel_layer.add_child(_travel)
+
 	_settings = SettingsPanel.new()
 	_settings.visible = reopen_settings
 	reopen_settings = false
@@ -355,8 +392,8 @@ func _toggle_shop() -> void:
 	if _shop.visible:
 		_shop.hide()
 	else:
-		show_farm()
 		_settings.hide()
+		_land.hide()
 		_shop.show()
 
 

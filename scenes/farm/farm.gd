@@ -61,8 +61,9 @@ const SHAPES := {
 
 ## Le piante illustrate occupano un po' meno del quadrante: resta un filo di terra.
 const PLANT_SCALE := 0.88
-const FARMER_SPEED := 220.0
-const SOW_TIME := 0.7
+const FARMER_SPEED := 300.0
+const ACT_TIME := 0.7            ## durata di un'azione sul posto (semina, acqua...)
+const TASK_MAX := 40
 const POPUP_TIME := 1.3
 const DRAG_THRESHOLD := 8.0
 ## Fasce attorno alla mappa, in quadranti: fiume (x < 0), bosco (y < 0),
@@ -90,7 +91,9 @@ var _stroke: Dictionary = {}       ## celle già toccate nel trascinamento
 var _popups: Array = []            ## [{"pos", "text", "color", "t"}]
 var _farmer_pos := Vector2.ZERO
 var _farmer_flip := false
-var _sow_t := -1.0                 ## animazione di semina in corso (0..1), -1 se no
+var _tasks: Array = []             ## lavori in coda: [{"cell", "kind", "crop"}]
+var _task: Dictionary = {}         ## lavoro in corso
+var _act_t := -1.0                 ## animazione dell'azione sul posto (0..1), -1 se in cammino
 var _font: Font
 var _font_bold: Font
 var _clock := 0.0
@@ -106,7 +109,6 @@ func _ready() -> void:
 	_font_bold = load("res://assets/fonts/Fredoka-SemiBold.ttf")
 	GameState.changed.connect(queue_redraw)
 	GameState.harvested.connect(_on_harvested)
-	GameState.planted.connect(_on_planted)
 	GameState.chest_opened.connect(_on_chest_opened)
 	_build_trees()
 	_load_plant_sprites()
@@ -214,11 +216,11 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Tocco semplice con la mano (o su un forziere / terreno in vendita).
 func _tap(cell: Vector2i) -> void:
 	if GameState.chest_cell() == cell:
-		GameState.open_chest(cell)
+		_enqueue(cell, "chest")
 	elif GameState.is_in_world(cell) and not GameState.is_in_grid(cell):
 		sector_tapped.emit(GameData.sector_of(cell))
 	elif GameState.is_ready(cell):
-		GameState.harvest(cell)
+		_enqueue(cell, "harvest")
 	elif GameState.is_in_grid(cell) and not GameState.is_tilled(cell) and not GameState.is_plow_queued(cell):
 		GameState.toast.emit(tr("MSG_TAKE_HOE"))
 
@@ -235,10 +237,13 @@ func _apply_at(local: Vector2, first: bool) -> void:
 		_use_tool(cell, first)
 
 
+## Lo strumento non agisce subito: mette in coda un lavoro per il contadino,
+## che cammina fino al quadrante e lo fa lì. La zappa resta a parte (coda a
+## tempo in GameState, va avanti anche a gioco chiuso).
 func _use_tool(cell: Vector2i, first: bool) -> void:
 	# Le piante pronte si raccolgono sempre, qualunque strumento sia in mano.
 	if GameState.is_ready(cell):
-		GameState.harvest(cell)
+		_enqueue(cell, "harvest")
 		return
 	match tool:
 		"hoe":
@@ -248,15 +253,80 @@ func _use_tool(cell: Vector2i, first: bool) -> void:
 			elif not GameState.is_tilled(cell):
 				GameState.queue_plow(cell)
 		"seed":
-			if GameState.get_plot(cell).is_empty():
-				if GameState.is_tilled(cell) or first:
-					GameState.plant(cell, selected_crop)
+			if GameState.get_plot(cell).is_empty() and (GameState.is_tilled(cell) or first):
+				if not GameState.is_tilled(cell):
+					GameState.toast.emit(tr("MSG_HOE_FIRST"))
+				elif GameState.seed_count(selected_crop) - _pending("plant", selected_crop) <= 0:
+					if first:
+						GameState.toast.emit(tr("MSG_NO_SEEDS_OF") % GameData.crop_name(selected_crop).to_lower())
+				else:
+					_enqueue(cell, "plant", selected_crop)
 		"water":
-			if not GameState.water_plot(cell) and first and not GameState.needs_water(cell):
-				GameState.toast.emit(tr("MSG_WATER_HINT"))
+			var will_need := GameState.needs_water(cell) or _has_task(cell, "plant")
+			if not will_need:
+				if first:
+					GameState.toast.emit(tr("MSG_WATER_HINT"))
+			elif GameState.water - _pending("water") <= 0:
+				if first:
+					GameState.toast.emit(tr("MSG_WELL_EMPTY"))
+			else:
+				_enqueue(cell, "water")
 		"fertilizer":
-			if not GameState.fertilize_plot(cell) and first and GameState.get_plot(cell).is_empty():
-				GameState.toast.emit(tr("MSG_FERTILIZER_HINT"))
+			var has_plant := not GameState.get_plot(cell).is_empty() or _has_task(cell, "plant")
+			if not has_plant:
+				if first:
+					GameState.toast.emit(tr("MSG_FERTILIZER_HINT"))
+			elif GameState.fertilizer - _pending("fertilize") <= 0:
+				if first:
+					GameState.toast.emit(tr("MSG_NO_FERTILIZER"))
+			elif not GameState.get_plot(cell).get("fertilized", false):
+				_enqueue(cell, "fertilize")
+
+
+# --- Lavori del contadino ---------------------------------------------------
+
+func _enqueue(cell: Vector2i, kind: String, crop := "") -> void:
+	if _has_task(cell, kind) or _tasks.size() >= TASK_MAX:
+		return
+	_tasks.append({"cell": cell, "kind": kind, "crop": crop})
+
+
+func _has_task(cell: Vector2i, kind: String) -> bool:
+	for t in _tasks:
+		if t["cell"] == cell and t["kind"] == kind:
+			return true
+	return not _task.is_empty() and _task["cell"] == cell and _task["kind"] == kind
+
+
+## Lavori in coda di un tipo (per non promettere più semi o gocce di quanti ce ne sono).
+func _pending(kind: String, crop := "") -> int:
+	var n := 0
+	for t in _tasks + ([_task] if not _task.is_empty() else []):
+		if t["kind"] == kind and (crop == "" or t["crop"] == crop):
+			n += 1
+	return n
+
+
+## Lavori in attesa, per gli indicatori sopra i quadranti (FarmOverlay).
+func pending_tasks() -> Array:
+	return _tasks + ([_task] if not _task.is_empty() else [])
+
+
+## Fa il lavoro arrivato sul posto. Se nel frattempo non è più possibile
+## (pianta già raccolta, semi finiti) GameState lo dice con un messaggio.
+func _perform(t: Dictionary) -> void:
+	var cell: Vector2i = t["cell"]
+	match t["kind"]:
+		"plant":
+			GameState.plant(cell, t["crop"])
+		"water":
+			GameState.water_plot(cell)
+		"fertilize":
+			GameState.fertilize_plot(cell)
+		"harvest":
+			GameState.harvest(cell)
+		"chest":
+			GameState.open_chest(cell)
 
 
 func _on_harvested(cell: Vector2i, product: String, qty: int) -> void:
@@ -265,13 +335,6 @@ func _on_harvested(cell: Vector2i, product: String, qty: int) -> void:
 	if id != "":
 		color = Color(GameData.crop(id)["color"])
 	_popups.append({"pos": cell_center(cell) + Vector2(0, -40), "text": "+%d %s" % [qty, GameData.product_name(product)], "color": color, "t": 0.0})
-
-
-## Il contadino semina subito: compare sul quadrante e lancia i semi.
-func _on_planted(cell: Vector2i) -> void:
-	_farmer_pos = cell_center(cell) + Vector2(-22, 4)
-	_farmer_flip = false
-	_sow_t = 0.0
 
 
 func _on_chest_opened(cell: Vector2i, found: Dictionary, coins: int) -> void:
@@ -284,38 +347,57 @@ func _on_chest_opened(cell: Vector2i, found: Dictionary, coins: int) -> void:
 
 # --- Contadino --------------------------------------------------------------
 
+## Dove si mette il contadino per lavorare un quadrante: sul bordo sinistro.
+func _work_spot(cell: Vector2i) -> Vector2:
+	return cell_center(cell) + Vector2(-TILE_W * 0.24, 6)
+
+
 func _farmer_target() -> Vector2:
-	if _sow_t >= 0.0:
-		return _farmer_pos
+	if not _task.is_empty():
+		return _work_spot(_task["cell"])
 	var job := GameState.current_plow_job()
 	if job.is_empty() and not GameState.plow_queue.is_empty():
 		job = GameState.plow_queue[0]
 	if job.is_empty():
 		return _farmer_pos
-	return cell_center(GameState.key_to_cell(job["cell"])) + Vector2(-24, 2)
+	return _work_spot(GameState.key_to_cell(job["cell"]))
 
 
+## Ciclo del contadino: prende il prossimo lavoro, ci cammina, lo fa
+## (breve animazione) e passa al successivo. Senza lavori va a zappare.
 func _update_farmer(delta: float) -> void:
-	if _sow_t >= 0.0:
-		_sow_t += delta / SOW_TIME
-		if _sow_t >= 1.0:
-			_sow_t = -1.0
-		return
+	if _task.is_empty() and not _tasks.is_empty():
+		_task = _tasks.pop_front()
+		_act_t = -1.0
 	var target := _farmer_target()
 	var d := target - _farmer_pos
 	if d.length() > 1.0:
 		_farmer_flip = d.x < 0.0
 		_farmer_pos += d.limit_length(FARMER_SPEED * delta)
+		return
+	if _task.is_empty():
+		return
+	if _act_t < 0.0:
+		_act_t = 0.0
+		_farmer_flip = false
+	_act_t += delta / ACT_TIME
+	if _act_t >= 1.0:
+		_perform(_task)
+		_task = {}
+		_act_t = -1.0
+
+
+const ACTIONS := {"plant": "sow", "water": "water", "fertilize": "sow", "harvest": "pick", "chest": "pick"}
 
 
 func _draw_farmer() -> void:
 	var walking := _farmer_pos.distance_to(_farmer_target()) >= 2.0
 	var action := ""
-	if _sow_t >= 0.0:
-		action = "sow"
-	elif not walking and not GameState.current_plow_job().is_empty():
+	if not _task.is_empty() and _act_t >= 0.0:
+		action = ACTIONS.get(_task["kind"], "pick")
+	elif not walking and _task.is_empty() and not GameState.current_plow_job().is_empty():
 		action = "hoe"
-	FarmerDrawer.draw(self, _farmer_pos, _clock, walking, action, _farmer_flip, maxf(_sow_t, 0.0))
+	FarmerDrawer.draw(self, _farmer_pos, _clock, walking, action, _farmer_flip, maxf(_act_t, 0.0))
 
 
 # --- Veicoli sulla strada ----------------------------------------------------

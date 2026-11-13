@@ -36,6 +36,18 @@ static func _draw_sprite(ci: CanvasItem, p: Vector2, clock: float, walking: bool
 				for i in 3:
 					var o := Vector2((i - 1) * 6.0 * dir + 26 * dir, -4 - (swing - 0.85) * 60.0 - i * 2.0)
 					ci.draw_circle(p + o, 2.4, Color("7a5230"))
+		"water":
+			# annaffiatoio inclinato e gocce che cadono sul quadrante
+			tilt = 0.08 * dir
+			var spout := p + Vector2(24 * dir, -26)
+			ci.draw_line(p + Vector2(10 * dir, -24), spout + Vector2(-4 * dir, 4), Color("3fa36b"), 9.0)
+			ci.draw_line(spout + Vector2(-4 * dir, 4), spout + Vector2(8 * dir, 0), Color("2f8556"), 3.0)
+			for i in 5:
+				var f := fposmod(action_t * 3.0 + i * 0.2, 1.0)
+				ci.draw_circle(spout + Vector2((10 + i % 3 * 3) * dir, f * 28.0), 1.8, Color("6cc4ef"))
+		"pick":
+			# si china a raccogliere
+			squash = 1.0 - sin(clampf(action_t, 0.0, 1.0) * PI) * 0.12
 		"sow":
 			squash = 1.0 - sin(clampf(action_t, 0.0, 1.0) * PI) * 0.07
 			for i in 6:

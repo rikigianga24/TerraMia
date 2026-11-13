@@ -31,7 +31,21 @@ func _draw() -> void:
 			if GameState.is_in_grid(Vector2i(x, y)):
 				_draw_labels(Vector2i(x, y))
 	_draw_sign_labels()
+	_draw_task_marks()
 	_draw_popups()
+
+
+const TASK_ICONS := {"plant": "seeds", "water": "drop", "fertilize": "fertilizer", "harvest": "hand", "chest": "coin"}
+
+
+## Lavori in coda: un'icona trasparente sul quadrante, finché il contadino
+## non ci arriva.
+func _draw_task_marks() -> void:
+	for t in farm.pending_tasks():
+		var c := farm.cell_center(t["cell"])
+		var icon := UiKit.icon(TASK_ICONS.get(t["kind"], "hand"))
+		draw_circle(c + Vector2(0, -8), 15.0, Color(1, 0.97, 0.9, 0.55))
+		draw_texture_rect(icon, Rect2(c + Vector2(-12, -20), Vector2(24, 24)), false, Color(1, 1, 1, 0.8))
 
 
 ## Scritta "In vendita" sui cartelli dei lotti che si possono comprare.
