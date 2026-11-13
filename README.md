@@ -1,7 +1,8 @@
 # Terra Mia
 
-Gioco di fattoria a quadranti: coltivando e allevando riporti in vita un borgo
-italiano abbandonato. Single-player, sessioni da 5–10 minuti, prima su browser
+**Ricostruisci un borgo italiano abbandonato.** Coltivi e allevi in fattoria
+per riaprire una a una le botteghe del paese: tornano gli abitanti, si
+riaccendono le luci, arrivano i turisti. Single-player, sessioni da 5–10 minuti, prima su browser
 (CrazyGames, Poki), poi Steam e mobile dallo stesso progetto.
 
 Il documento di design completo è in [`docs/design.md`](docs/design.md).
@@ -45,6 +46,15 @@ Il documento di design completo è in [`docs/design.md`](docs/design.md).
   staccionate, secchi, barili e panchine da posizionare; la cucina prepara
   insalata, passata, marmellata, pane e formaggio (un espresso a ricetta) e li
   vende.
+- **Il borgo protagonista:** ogni edificio ha un abitante che racconta cosa
+  serve per riaprirlo. Il restauro è una piccola scena (polvere, l'edificio
+  rinasce, torna l'abitante, luci e fumo, arrivano visitatori) e riporta in
+  paese abitanti, un commerciante e una famiglia: il contatore "Abitanti del
+  borgo" in alto è il vero progresso. Le botteghe restaurate producono
+  prodotti tipici (olio, pecorino, Chianti, cantucci, limoncello...).
+- **Turismo:** dopo due restauri arrivano visitatori che chiedono prodotti,
+  pagano e lasciano recensioni (valutazione in stelle, visitatori di oggi).
+- **Nostalgie:** la valuta speciale, guadagnata riportando in vita il borgo.
 - **Borgo:** un paese medievale in cima a una collina, con vie tortuose,
   vicoli, una piazza irregolare, case addossate, il sagrato con la chiesa e il
   campanile di Don Peppino, e le mura attorno. Scendendo dalla collina:

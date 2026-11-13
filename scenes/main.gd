@@ -2,7 +2,8 @@ extends Node
 ## Scena principale: tiene insieme sfondo, Fattoria, Borgo, Negozio e HUD.
 ##
 ## HUD:
-##   in alto a sinistra  monete, Lire d'oro, gocce, espresso
+##   in alto a sinistra  monete, Nostalgie, gocce, espresso
+##   in alto al centro   abitanti del borgo; valutazione e visitatori
 ##   in alto a destra    livello ed esperienza
 ##   in basso al centro  strumenti e semi (solo in fattoria)
 ##   in basso ai lati    Fattoria / Borgo e Negozio
@@ -22,6 +23,11 @@ const TOOLS := [
 var _backdrop: Backdrop
 var _coins: Label
 var _lire: Label
+var _pop_label: Label
+var _pop_bar: ProgressBar
+var _rating_row: HBoxContainer
+var _stars: Array = []
+var _visitors: Label
 var _water: Label
 var _water_timer: Label
 var _espresso: Label
@@ -143,19 +149,10 @@ func _show_borgo_now() -> void:
 
 ## Il contadino è arrivato a un edificio del borgo.
 func _on_building_reached(id: String) -> void:
-	match id:
-		"bacheca":
-			borgo.open_panel("orders")
-		"mulino":
-			borgo.open_panel("mill")
-		"caldarroste", "bocce":
-			pass
-		_:
-			var lvl := int(GameData.building(id).get("level", 1))
-			if GameState.level < lvl:
-				show_toast(tr("MSG_BUILDING_LOCKED") % [GameData.building_name(id), lvl])
-			else:
-				show_toast(tr("MSG_BUILDING_SOON") % GameData.building_name(id))
+	if id == "bacheca":
+		borgo.open_orders()
+	elif GameData.BUILDINGS.has(id):
+		borgo.open_building(id)
 
 
 ## Barra in alto durante il posizionamento: cosa fare e "Annulla".
@@ -259,8 +256,10 @@ func _build_hud() -> void:
 	hud.add_child(stats)
 	var p := UiKit.stat_pill("coin")
 	stats.add_child(p[0]); _coins = p[1]
-	p = UiKit.stat_pill("lira")
+	p = UiKit.stat_pill("nostalgia")
 	stats.add_child(p[0]); _lire = p[1]
+	(p[0] as Control).tooltip_text = tr("UI_NOSTALGIA")
+	(p[0] as Control).mouse_filter = Control.MOUSE_FILTER_PASS
 	p = UiKit.stat_pill("drop")
 	stats.add_child(p[0]); _water = p[1]; _water_timer = p[2]
 	p = UiKit.stat_pill("espresso")
@@ -301,6 +300,44 @@ func _build_hud() -> void:
 	_xp_bar.show_percentage = false
 	xp_col.add_child(_xp_bar)
 	level_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 12)
+
+	# In alto al centro: gli abitanti del borgo, il vero progresso del gioco
+	var pop_holder := CenterContainer.new()
+	pop_holder.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	pop_holder.offset_top = 8
+	pop_holder.offset_bottom = 96
+	pop_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(pop_holder)
+	var pop_box := PanelContainer.new()
+	pop_box.theme_type_variation = "Pill"
+	pop_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pop_holder.add_child(pop_box)
+	var pop_row := HBoxContainer.new()
+	pop_row.add_theme_constant_override("separation", 8)
+	pop_box.add_child(pop_row)
+	pop_row.add_child(UiKit.texture_rect(UiKit.icon("borgo"), 40))
+	var pop_col := VBoxContainer.new()
+	pop_col.add_theme_constant_override("separation", 1)
+	pop_row.add_child(pop_col)
+	_pop_label = UiKit.label("", "Heading")
+	_pop_label.add_theme_font_size_override("font_size", 16)
+	pop_col.add_child(_pop_label)
+	_pop_bar = ProgressBar.new()
+	_pop_bar.custom_minimum_size = Vector2(250, 14)
+	_pop_bar.show_percentage = false
+	pop_col.add_child(_pop_bar)
+	_rating_row = HBoxContainer.new()
+	_rating_row.add_theme_constant_override("separation", 2)
+	pop_col.add_child(_rating_row)
+	for i in 5:
+		var st := UiKit.texture_rect(UiKit.icon("star"), 16)
+		_rating_row.add_child(st)
+		_stars.append(st)
+	_visitors = UiKit.label("", "Small")
+	_visitors.add_theme_font_size_override("font_size", 12)
+	_rating_row.add_child(Control.new())
+	_rating_row.get_child(-1).custom_minimum_size = Vector2(8, 0)
+	_rating_row.add_child(_visitors)
 
 	# Accanto al livello: impostazioni (lingua, volumi, informazioni)
 	var gear := UiKit.button("", "IconButton", "settings")
@@ -497,7 +534,7 @@ func _sync_tool_buttons() -> void:
 
 func _refresh_stats() -> void:
 	_coins.text = str(GameState.coins)
-	_lire.text = str(GameState.lire_oro)
+	_lire.text = str(GameState.nostalgie)
 	_water.text = "%d/%d" % [GameState.water, GameData.WATER_MAX]
 	var next := GameState.water_seconds_to_next()
 	_water_timer.visible = next > 0
@@ -513,4 +550,16 @@ func _refresh_hud() -> void:
 	_xp_bar.value = GameState.xp_progress() * 100.0
 	_tool_buttons["fertilizer"].text = tr("TOOL_FERTILIZER_N") % GameState.fertilizer
 	_rebuild_seed_row()
-	_borgo_btn.text = tr("UI_BORGO") + ("  •" if GameState.any_order_ready() or GameState.can_restore("mulino") else "")
+	var todo := GameState.any_order_ready() or GameState.any_restorable()
+	for i in GameState.tourists.size():
+		todo = todo or GameState.can_serve_tourist(i)
+	_borgo_btn.text = tr("UI_BORGO") + ("  •" if todo else "")
+	# abitanti del borgo, valutazione e visitatori
+	var pop := GameState.population()
+	_pop_label.text = "%s  %d / %d" % [tr("UI_POPULATION"), pop, GameData.max_population()]
+	_pop_bar.value = 100.0 * pop / GameData.max_population()
+	_rating_row.visible = GameState.tourism_active()
+	var r := GameState.rating()
+	for i in _stars.size():
+		_stars[i].modulate = Color.WHITE if r >= i + 0.75 else (Color(1, 1, 1, 0.55) if r >= i + 0.25 else Color(0.3, 0.3, 0.3, 0.35))
+	_visitors.text = tr("UI_VISITORS") % GameState.visitors_today

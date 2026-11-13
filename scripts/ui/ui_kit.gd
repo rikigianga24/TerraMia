@@ -7,6 +7,7 @@ extends RefCounted
 const ICONS := {
 	"coin": preload("res://assets/graphics/icons/coin.png"),
 	"lira": preload("res://assets/graphics/icons/lira.png"),
+	"nostalgia": preload("res://assets/graphics/icons/nostalgia.svg"),
 	"drop": preload("res://assets/graphics/icons/drop.png"),
 	"espresso": preload("res://assets/graphics/icons/espresso.png"),
 	"fertilizer": preload("res://assets/graphics/icons/fertilizer.png"),

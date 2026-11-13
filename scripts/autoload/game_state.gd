@@ -11,9 +11,10 @@ signal harvested(cell: Vector2i, product: String, qty: int)
 signal planted(cell: Vector2i)
 signal chest_opened(cell: Vector2i, antiques: Dictionary, coins: int)
 signal sector_bought(sector: Vector2i)
+signal building_restored(id: String)
 
 var coins: int = 30
-var lire_oro: int = 0
+var nostalgie: int = 0
 var xp: int = 0
 var level: int = 1
 var espresso: int = 1
@@ -38,6 +39,12 @@ var placed: Array = []               ## oggetti sulla fattoria (vedi "Oggetti su
 var next_uid: int = 1
 var decor_inv: Dictionary = {}       ## decorazione -> quante da posizionare
 var biberon: int = 0
+var tourists: Array = []             ## [{"type", "size", "items", "coins", "arrived", "leaves"}]
+var next_tourist_at: float = 0.0
+var reviews: Array = []              ## ultime recensioni, da 1 a 5 stelle
+var visitors_today: int = 0
+var visitors_day: String = ""
+var last_bocce_day: String = ""
 
 
 static func now() -> float:
@@ -57,7 +64,7 @@ static func key_to_cell(key: String) -> Vector2i:
 
 func new_game() -> void:
 	coins = 30
-	lire_oro = 0
+	nostalgie = 0
 	xp = 0
 	level = 1
 	espresso = 1
@@ -80,6 +87,12 @@ func new_game() -> void:
 	next_uid = 1
 	decor_inv = {}
 	biberon = 0
+	tourists = []
+	next_tourist_at = 0.0
+	reviews = []
+	visitors_today = 0
+	visitors_day = ""
+	last_bocce_day = ""
 	orders = []
 	restored = []
 	productions = {}
@@ -95,6 +108,7 @@ func apply_offline_progress() -> void:
 	tick_water()
 	update_plowing()
 	tick_chest()
+	tick_tourism()
 
 
 func tick_moka() -> void:
@@ -424,7 +438,7 @@ func add_xp(amount: int) -> void:
 	xp += amount
 	while level < GameData.MAX_LEVEL and xp >= GameData.xp_for_level(level + 1):
 		level += 1
-		lire_oro += 1
+		nostalgie += 1
 		leveled_up.emit(level)
 		var unlocked: PackedStringArray = []
 		for id in GameData.all_plants():
@@ -455,8 +469,10 @@ func _make_order() -> Dictionary:
 	var available: Array = []
 	for id in GameData.plantable_crops(level):
 		available.append(GameData.crop(id)["product"])
-	if "mulino" in restored:
-		available.append("farina")
+	for id in restored:
+		var prod := GameData.building_product(id)
+		if prod != "":
+			available.append(prod)
 	var items := {}
 	var value := 0
 	var n_products := 1 if randf() < 0.6 or available.size() < 2 else 2
@@ -468,15 +484,20 @@ func _make_order() -> Dictionary:
 		value += qty * _unit_value(product)
 	return {
 		"giver": GameData.ORDER_GIVERS.pick_random(),
+		"why": randi() % ORDER_REASONS,
 		"items": items,
 		"coins": int(value * 1.3),
 		"xp": maxi(2, int(value / 4.0)),
 	}
 
 
+## Quante ragioni diverse ha un ordine (ORDER_WHY_0.. nelle traduzioni).
+const ORDER_REASONS := 6
+
+
 ## Le piante lente si chiedono in quantità più piccole.
 func _order_qty(product: String) -> int:
-	if product == "farina":
+	if GameData.crop_for_product(product) == "":
 		return randi_range(1, 2)
 	var t := int(GameData.crop(GameData.crop_for_product(product))["time"])
 	if t <= 15 * GameData.MIN:
@@ -489,8 +510,8 @@ func _order_qty(product: String) -> int:
 
 
 func _unit_value(product: String) -> int:
-	if product == "farina":
-		return 15
+	if GameData.SELL_PRICES.has(product):
+		return int(GameData.SELL_PRICES[product])
 	var id := GameData.crop_for_product(product)
 	return int(GameData.crop(id).get("sell_price", 1)) if id != "" else 1
 
@@ -647,6 +668,14 @@ func can_restore(building_id: String) -> bool:
 		and has_items(b["restore"]["items"])
 
 
+## Edificio che si può già restaurare (per il pallino sul pulsante Borgo).
+func any_restorable() -> bool:
+	for id in GameData.BUILDINGS:
+		if can_restore(id):
+			return true
+	return false
+
+
 func restore(building_id: String) -> bool:
 	if not can_restore(building_id):
 		return false
@@ -654,10 +683,139 @@ func restore(building_id: String) -> bool:
 	coins -= int(b["restore"]["coins"])
 	remove_items(b["restore"]["items"])
 	restored.append(building_id)
-	add_xp(10)
-	toast.emit(tr("MSG_RESTORED") % [GameData.resident_name(building_id), GameData.building_line(building_id, 0)])
+	nostalgie += 2
+	add_xp(10 + 5 * restored.size())
+	var pop: Array = b["pop"]
+	toast.emit(tr("MSG_RESTORED_POP") % [int(pop[0]), int(pop[1]), int(pop[2])])
+	if restored.size() == GameData.TOURISM_FROM:
+		next_tourist_at = now() + 60.0
+		toast.emit(tr("MSG_TOURISM_START"))
+	building_restored.emit(building_id)
 	changed.emit()
 	return true
+
+
+## Abitanti del borgo: quelli rimasti più quelli tornati con i restauri.
+func population() -> int:
+	var n := GameData.START_POPULATION
+	for id in restored:
+		for v in GameData.BUILDINGS.get(id, {}).get("pop", []):
+			n += int(v)
+	return n
+
+
+# --- Turismo ----------------------------------------------------------------
+
+func tourism_active() -> bool:
+	return restored.size() >= GameData.TOURISM_FROM
+
+
+func tourist_interval() -> float:
+	var k := 1.0 + 0.15 * restored.size()
+	if is_restored("ufficio_postale"):
+		k += 0.5
+	return GameData.TOURIST_INTERVAL / k
+
+
+func max_tourists() -> int:
+	return mini(GameData.TOURIST_MAX, 1 + restored.size() / 3)
+
+
+## Valutazione del borgo: media delle recensioni (3 se non ce ne sono), più
+## il campanile restaurato; da 1 a 5.
+func rating() -> float:
+	var r := 3.0
+	if not reviews.is_empty():
+		var sum := 0.0
+		for v in reviews:
+			sum += float(v)
+		r = sum / reviews.size()
+	if is_restored("campanile"):
+		r += 0.5
+	return clampf(r, 1.0, 5.0)
+
+
+## Arrivi e partenze dei visitatori (anche per il tempo passato a gioco chiuso)
+## e il premio giornaliero delle bocce.
+func tick_tourism() -> void:
+	var t := now()
+	var dirty := false
+	if visitors_day != today():
+		visitors_day = today()
+		visitors_today = 0
+		dirty = true
+	if is_restored("bocce") and last_bocce_day != today():
+		last_bocce_day = today()
+		coins += GameData.BOCCE_DAILY
+		toast.emit(tr("MSG_BOCCE") % GameData.BOCCE_DAILY)
+		dirty = true
+	# chi ha aspettato troppo se ne va, deluso
+	for i in range(tourists.size() - 1, -1, -1):
+		if float(tourists[i]["leaves"]) <= t:
+			tourists.remove_at(i)
+			_add_review(2)
+			dirty = true
+	if tourism_active():
+		if next_tourist_at <= 0.0:
+			next_tourist_at = t + 60.0
+		var guard := 0
+		while next_tourist_at <= t and guard < 20:
+			guard += 1
+			if tourists.size() < max_tourists():
+				tourists.append(_make_tourist(next_tourist_at))
+				dirty = true
+			next_tourist_at += tourist_interval()
+	if dirty:
+		changed.emit()
+
+
+func _make_tourist(arrived: float) -> Dictionary:
+	var wanted: Array = []
+	for id in restored:
+		var prod := GameData.building_product(id)
+		if prod != "":
+			wanted.append(prod)
+	for o in placed:
+		if o["kind"] == "structure" and o["type"] == "cucina":
+			for rid in GameData.STRUCTURES["cucina"]["recipes"]:
+				wanted.append(GameData.RECIPES[rid]["out"])
+			break
+	if wanted.is_empty():
+		wanted = ["pomodori", "grano"]
+	var prod: String = wanted.pick_random()
+	var qty := randi_range(1, 2)
+	var size := randi_range(1, 4)
+	visitors_today += size
+	var pay := float(_unit_value(prod)) * qty * GameData.TOURIST_PAY
+	if is_restored("osteria"):
+		pay *= 1.25
+	return {"type": GameData.TOURIST_TYPES.pick_random(), "size": size, "items": {prod: qty},
+		"coins": int(pay), "arrived": arrived, "leaves": arrived + GameData.TOURIST_PATIENCE}
+
+
+func can_serve_tourist(i: int) -> bool:
+	return i >= 0 and i < tourists.size() and has_items(tourists[i]["items"])
+
+
+func serve_tourist(i: int) -> bool:
+	if not can_serve_tourist(i):
+		return false
+	var tr_: Dictionary = tourists[i]
+	remove_items(tr_["items"])
+	coins += int(tr_["coins"])
+	nostalgie += 1
+	add_xp(5)
+	tourists.remove_at(i)
+	_add_review(5 if randf() < 0.7 else 4)
+	toast.emit(tr("MSG_TOURIST_THANKS") % [tr("TOURIST_" + str(tr_["type"]).to_upper()), int(tr_["coins"])])
+	changed.emit()
+	return true
+
+
+func _add_review(stars: int) -> void:
+	reviews.append(stars)
+	while reviews.size() > GameData.REVIEWS_KEPT:
+		reviews.pop_front()
 
 
 func production_progress(building_id: String) -> float:
@@ -953,10 +1111,10 @@ func sell(product: String, qty: int) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 4,
+		"version": 5,
 		"saved_at": now(),
 		"coins": coins,
-		"lire_oro": lire_oro,
+		"nostalgie": nostalgie,
 		"xp": xp,
 		"level": level,
 		"espresso": espresso,
@@ -977,6 +1135,12 @@ func to_dict() -> Dictionary:
 		"next_uid": next_uid,
 		"decor_inv": decor_inv,
 		"biberon": biberon,
+		"tourists": tourists,
+		"next_tourist_at": next_tourist_at,
+		"reviews": reviews,
+		"visitors_today": visitors_today,
+		"visitors_day": visitors_day,
+		"last_bocce_day": last_bocce_day,
 		"orders": orders,
 		"restored": restored,
 		"productions": productions,
@@ -985,7 +1149,8 @@ func to_dict() -> Dictionary:
 
 func from_dict(d: Dictionary) -> void:
 	coins = int(d.get("coins", 30))
-	lire_oro = int(d.get("lire_oro", 0))
+	# le Lire d'oro dei salvataggi fino alla v4 diventano Nostalgie
+	nostalgie = int(d.get("nostalgie", d.get("lire_oro", 0)))
 	xp = int(d.get("xp", 0))
 	level = int(d.get("level", 1))
 	espresso = int(d.get("espresso", 1))
@@ -1022,6 +1187,12 @@ func from_dict(d: Dictionary) -> void:
 	next_uid = int(d.get("next_uid", 1))
 	decor_inv = _int_values(d.get("decor_inv", {}))
 	biberon = int(d.get("biberon", 0))
+	tourists = d.get("tourists", [])
+	next_tourist_at = float(d.get("next_tourist_at", 0.0))
+	reviews = d.get("reviews", [])
+	visitors_today = int(d.get("visitors_today", 0))
+	visitors_day = str(d.get("visitors_day", ""))
+	last_bocce_day = str(d.get("last_bocce_day", ""))
 	orders = d.get("orders", [])
 	restored = d.get("restored", [])
 	productions = d.get("productions", {})

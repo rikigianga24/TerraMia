@@ -28,6 +28,7 @@ func _initialize() -> void:
 	_test_sectors_and_antiques()
 	_test_animals()
 	_test_structures()
+	_test_borgo_and_tourism()
 	_test_v2_save_migration()
 	_test_orders_and_levels()
 	_test_save_roundtrip()
@@ -343,17 +344,17 @@ func _test_structures() -> void:
 	check(not gs.can_place("decor", "secchio", Vector2i(1, 1)), "occupa 2x2")
 	var uid: int = gs.object_at(Vector2i(1, 1))["uid"]
 	gs.espresso = 0
-	gs.add_item("pomodori", 4)
-	check(not gs.start_recipe(uid, "passata"), "senza espresso non si cucina")
+	gs.inventory = {"pane": 1, "pomodori": 2, "olio": 1}
+	check(not gs.start_recipe(uid, "bruschetta"), "senza espresso non si cucina")
 	gs.espresso = 1
 	check(not gs.start_recipe(uid, "staccionata"), "la cucina non fa staccionate")
-	check(gs.start_recipe(uid, "passata"), "cucino la passata")
-	check(gs.espresso == 0 and gs.item_count("pomodori") == 0, "consumati espresso e pomodori")
-	check(not gs.start_recipe(uid, "insalata"), "una ricetta alla volta")
+	check(gs.start_recipe(uid, "bruschetta"), "preparo la bruschetta")
+	check(gs.espresso == 0 and gs.item_count("pomodori") == 0, "consumati espresso e ingredienti")
+	check(not gs.start_recipe(uid, "pesto"), "una ricetta alla volta")
 	gs.get_object(uid)["started_at"] = gs.now() - 99999
-	check(gs.collect_recipe(uid) and gs.item_count("passata") == 1, "passata pronta")
+	check(gs.collect_recipe(uid) and gs.item_count("bruschetta") == 1, "bruschetta pronta")
 	var c: int = gs.coins
-	check(gs.sell("passata", 1) and gs.coins == c + int(gd.SELL_PRICES["passata"]), "venduta")
+	check(gs.sell("bruschetta", 1) and gs.coins == c + int(gd.SELL_PRICES["bruschetta"]), "venduta")
 	# falegnameria e decorazioni
 	gs.buy_and_place("structure", "falegnameria", Vector2i(3, 0))
 	var f: int = gs.object_at(Vector2i(3, 0))["uid"]
@@ -367,3 +368,44 @@ func _test_structures() -> void:
 	gs.new_game()
 	gs.from_dict(d)
 	check(gs.placed.size() == 3 and gs.object_at(Vector2i(5, 5))["type"] == "staccionata", "oggetti salvati")
+
+
+func _test_borgo_and_tourism() -> void:
+	print("borgo, abitanti e turismo")
+	gs.new_game()
+	check(gs.population() == gd.START_POPULATION, "si parte con pochi abitanti")
+	check(gd.max_population() > 40, "tanti abitanti da riportare")
+	gs.level = 5
+	gs.coins = 5000
+	gs.inventory = {"grano": 100, "pomodori": 30, "olive": 20}
+	check(gs.restore("mulino"), "restauro il mulino")
+	check(gs.population() == gd.START_POPULATION + 4, "tornano 2 abitanti, 1 commerciante, 1 famiglia")
+	check(gs.nostalgie == 2, "il restauro dà Nostalgie")
+	check(not gs.tourism_active(), "con un solo edificio non arrivano turisti")
+	check(gs.restore("frantoio"), "restauro il frantoio")
+	check(gs.tourism_active(), "ora arrivano i turisti")
+	check(gd.building_product("frantoio") == "olio", "il frantoio fa olio extravergine")
+	check(gs.start_production("frantoio"), "metto le olive nel frantoio")
+	gs.productions["frantoio"]["started_at"] -= 99999
+	check(gs.collect_production("frantoio") and gs.item_count("olio") == 1, "ecco l'olio")
+	gs.next_tourist_at = gs.now() - 1
+	gs.tick_tourism()
+	check(gs.tourists.size() == 1, "è arrivato un gruppo di visitatori")
+	check(gs.visitors_today >= 1, "contati nei visitatori di oggi")
+	var want: Dictionary = gs.tourists[0]["items"]
+	for prod in want:
+		gs.add_item(prod, int(want[prod]))
+	var c: int = gs.coins
+	check(gs.serve_tourist(0) and gs.coins > c, "li servo e pagano")
+	check(gs.reviews.size() == 1 and gs.reviews[0] >= 4 and gs.rating() > 3.0, "recensione positiva")
+	gs.tourists.append({"type": "ciclisti", "size": 2, "items": {"olio": 9}, "coins": 1, "arrived": 0.0, "leaves": gs.now() - 1})
+	gs.next_tourist_at = gs.now() + 9999
+	gs.tick_tourism()
+	check(gs.tourists.is_empty() and gs.reviews[-1] == 2, "chi aspetta troppo se ne va e lascia 2 stelle")
+	var nost: int = gs.nostalgie
+	var d: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	gs.new_game()
+	gs.from_dict(d)
+	check(gs.reviews.size() == 2 and gs.nostalgie == nost and nost >= 5, "turismo e Nostalgie salvati")
+	gs.from_dict({"version": 4, "lire_oro": 7})
+	check(gs.nostalgie == 7, "le Lire d'oro vecchie diventano Nostalgie")

@@ -1,4 +1,4 @@
-> Copia di riferimento del documento di design (Claude Docs, rev 23, 2026-11-12). Se cambia il documento online, vale quello.
+> Copia di riferimento del documento di design (Claude Docs, rev 23, 2026-11-12), aggiornata il 2026-11-13 con la svolta "il borgo protagonista" (sezione qui sotto). Il documento online non contiene ancora questa sezione.
 
 
 # Terra Mia — Documento di design
@@ -6,9 +6,41 @@
 2026-11-12 · Riccardo
 
 
+## Il borgo protagonista (aggiornamento 2026-11-13)
+
+**Ricostruisci un borgo italiano abbandonato.** Non "gestisci una fattoria": di
+fattorie ne esistono mille. La fattoria è il mezzo, il borgo è lo scopo; il
+giocatore deve sentire di salvare il paese.
+
+- **Restauro come evento.** Ogni edificio ha un abitante che chiede aiuto con
+  una storia ("Mi servono 10 sacchi di grano per riaprire il mulino"). Al
+  restauro: polvere e pulizia, l'edificio torna com'era, esce l'abitante, si
+  accendono le luci, fuma il camino, arrivano visitatori.
+- **Abitanti del borgo.** Un grande contatore, da 3 (chi è rimasto) a 62. Ogni
+  restauro riporta abitanti, un commerciante e una famiglia. Per le strade
+  camminano più persone man mano che il paese si ripopola.
+- **Ordini con un perché.** Gli abitanti spiegano a cosa serve quello che
+  chiedono (la cena della domenica, i nipoti che arrivano...).
+- **Prodotti tipici.** Ogni bottega restaurata produce un prodotto iconico:
+  farina (mulino), pane (forno), passata (conserve), olio extravergine
+  (frantoio), pecorino (caseificio, col latte di pecora), Chianti (cantina),
+  gelato, pasta fresca (pastificio), limoncello (bar), cantucci
+  (pasticceria), caldarroste. In fattoria la cucina prepara bruschetta, pesto e
+  pizza margherita.
+- **Turismo.** Dopo due restauri arrivano ciclisti, turisti, camperisti e
+  viaggiatori stranieri: chiedono prodotti tipici, pagano più del prezzo di
+  vendita e lasciano una recensione (5 stelle se serviti, 2 se se ne vanno
+  dopo 3 ore). Valutazione del borgo in stelle e visitatori di oggi. Alcuni
+  edifici hanno un effetto: l'ufficio postale porta più visitatori, il
+  campanile alza la valutazione, l'osteria fa pagare di più, le bocce danno
+  monete ogni giorno.
+- **Nostalgie** al posto delle Lire d'oro: la valuta speciale è legata al
+  recupero del borgo (restauri, livelli, visitatori serviti), non suona come
+  una valuta premium.
+
 ## Concept
 
-Terra Mia è un gioco di fattoria a quadranti in cui, coltivando e allevando, riporti in vita un borgo italiano abbandonato.
+Terra Mia è un gioco in cui, coltivando e allevando, ricostruisci un borgo italiano abbandonato.
 
 - **Tema:** campagna italiana. Pomodori, grano, ulivi, uva; olio, vino, pane, pasta, formaggio. È quello che lo distingue dai mille idle farm generici.
 - **Piattaforme:** prima browser (CrazyGames, Poki), poi Steam e mobile con lo stesso progetto Godot.
@@ -175,7 +207,7 @@ Fattoria e borgo sono due scene separate: due pulsanti fissi in basso, Fattoria 
 Le monete si guadagnano con gli ordini e si spendono in semi, terreni e restauri; l'esperienza fa salire di livello e sblocca contenuti.
 
 - **Monete:** la valuta normale, da ordini e vendite.
-- **Lire d'oro****:** la valuta rara, vecchie lire d'oro da collezione. Si ottengono salendo di livello, dalle sagre e coi video premio; si usano per accelerare la produzione e per le decorazioni speciali.
+- **Nostalgie** (ex Lire d'oro)**:** la valuta speciale, legata al recupero del borgo. Si ottengono salendo di livello, dalle sagre e coi video premio; si usano per accelerare la produzione e per le decorazioni speciali.
 - **Esperienza e livelli:** ogni livello sblocca una coltura, un animale o un edificio da restaurare.
 - **Bacheca degli ordini:** in piazza ci sono 3–6 ordini degli abitanti. Completarli dà monete ed esperienza, e ogni ordine completato ne fa arrivare uno nuovo.
 - **Il carretto:** ogni tanto arriva un ordine grande dalla città con una scadenza di qualche ora. Rende molto di più degli ordini normali.
@@ -224,7 +256,7 @@ Si parte solo con la pubblicità e si aggiungono gli acquisti quando il gioco tr
 
 **Fase 1 — lancio su browser**
 
-- Video premio a scelta del giocatore: raccolto pronto subito, ordine raddoppiato, Lire d'oro, un espresso.
+- Video premio a scelta del giocatore: raccolto pronto subito, ordine raddoppiato, Nostalgie, un espresso.
 - Interstiziali solo nelle pause naturali (dopo un livello), mai durante il gioco.
 
 **Fase 2 — quando i numeri tengono**

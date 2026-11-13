@@ -51,39 +51,65 @@ const CROPS := {
 	"mandorlo":    {"name": "Mandorlo",    "kind": "tree",  "time": 12 * HOUR, "product": "mandorle",   "level": 10,"seed_cost": 160,"sell_price": 89, "xp": 24,"yield": 3, "color": "d8c09a"},
 	"anguria":     {"name": "Anguria",     "kind": "crop",  "time": 4 * HOUR,  "product": "angurie",    "level": 11,"seed_cost": 23, "sell_price": 52, "xp": 14,"yield": 2, "color": "3d8c3a"},
 	"pesco":       {"name": "Pesco",       "kind": "tree",  "time": 8 * HOUR,  "product": "pesche",     "level": 11,"seed_cost": 132,"sell_price": 70, "xp": 20,"yield": 3, "color": "f2a46b"},
+	"limone":      {"name": "Limone",      "kind": "tree",  "time": 8 * HOUR,  "product": "limoni",     "level": 8, "seed_cost": 130,"sell_price": 60, "xp": 18,"yield": 3, "color": "f2d64b"},
 	"arancio":     {"name": "Arancio",     "kind": "tree",  "time": 10 * HOUR, "product": "arance",     "level": 12,"seed_cost": 148,"sell_price": 80, "xp": 22,"yield": 3, "color": "f08a12"},
 	"zafferano":   {"name": "Zafferano",   "kind": "crop",  "time": 1 * DAY,   "product": "zafferano",  "level": 12,"seed_cost": 57, "sell_price": 219,"xp": 34,"yield": 2, "color": "8a4fc0", "rare": true},
 	"pistacchio":  {"name": "Pistacchio",  "kind": "tree",  "time": 1 * DAY,   "product": "pistacchi",  "level": 13,"seed_cost": 228,"sell_price": 200,"xp": 34,"yield": 3, "color": "93b04a", "rare": true},
 }
 
-## Edifici del borgo. Nel prototipo esiste solo il mulino.
-## restore: costo del restauro (monete + prodotti).
-## recipe: trasformazione sbloccata dopo il restauro.
+## Edifici del borgo: il cuore del gioco. Ognuno ha un abitante che chiede
+## aiuto per riaprirlo (STORY_<id> nelle traduzioni), un costo di restauro,
+## gli abitanti che riporta in paese (pop: abitanti, commercianti, famiglie) e,
+## una volta restaurato, una produzione ("recipe") o un effetto ("effect").
 const BUILDINGS := {
-	"mulino": {
-		"name": "Mulino",
-		"resident": "Gino, il mugnaio",
-		"level": 2,
-		"prototype": true,
-		"restore": {"coins": 60, "items": {"grano": 10}},
+	"mulino": {"level": 2, "restore": {"coins": 60, "items": {"grano": 10}}, "pop": [2, 1, 1],
 		"recipe": {"in": {"grano": 3}, "out": {"farina": 1}, "time": 2 * MIN},
-		"lines": ["Piove? Non piove? Mamma mia!", "Allora... farina fresca!"],
-	},
-	"forno":           {"name": "Forno",                  "resident": "Rosa, la fornaia",       "level": 4},
-	"ufficio_postale": {"name": "Ufficio postale",        "resident": "Beppe, il postino",      "level": 4},
-	"frantoio":        {"name": "Frantoio",               "resident": "Aldo, il frantoiano",    "level": 5},
-	"conserve":        {"name": "Bottega delle conserve", "resident": "Zia Carmela",            "level": 5},
-	"caseificio":      {"name": "Caseificio",             "resident": "Mario, il casaro",       "level": 6},
-	"cantina":         {"name": "Cantina",                "resident": "Sergio, il vignaiolo",   "level": 7},
-	"gelateria":       {"name": "Gelateria",              "resident": "Luigi, il gelataio",     "level": 7},
-	"pastificio":      {"name": "Pastificio",             "resident": "Nonna Pina",             "level": 8},
-	"campanile":       {"name": "Campanile",              "resident": "Don Peppino, il parroco", "level": 8},
-	"bar":             {"name": "Bar della piazza",       "resident": "Totò, il barista",       "level": 9},
-	"osteria":         {"name": "Osteria",                "resident": "Franco, l'oste",         "level": 10},
-	"pasticceria":     {"name": "Pasticceria",            "resident": "Lucia, la pasticcera",   "level": 11},
-	"caldarroste":     {"name": "Caldarroste in piazza",  "resident": "Il caldarrostaio",       "level": 11},
-	"bocce":           {"name": "Campo da bocce",         "resident": "I nonni del paese",      "level": 12},
+		"lines": ["Piove? Non piove? Mamma mia!", "Allora... farina fresca!"]},
+	"forno": {"level": 3, "restore": {"coins": 120, "items": {"farina": 4, "grano": 10}}, "pop": [2, 1, 1],
+		"recipe": {"in": {"farina": 2, "uova": 1}, "out": {"pane": 1}, "time": 10 * MIN}},
+	"ufficio_postale": {"level": 4, "restore": {"coins": 150, "items": {"grano": 15, "pomodori": 6}}, "pop": [2, 1, 1],
+		"effect": "tourism"},
+	"conserve": {"level": 4, "restore": {"coins": 160, "items": {"pomodori": 15}}, "pop": [2, 1, 1],
+		"recipe": {"in": {"pomodori": 4}, "out": {"passata": 1}, "time": 5 * MIN}},
+	"frantoio": {"level": 5, "restore": {"coins": 220, "items": {"olive": 10}}, "pop": [3, 1, 1],
+		"recipe": {"in": {"olive": 5}, "out": {"olio": 1}, "time": 15 * MIN}},
+	"caseificio": {"level": 6, "restore": {"coins": 250, "items": {"latte": 4, "grano": 20}}, "pop": [2, 1, 1],
+		"recipe": {"in": {"latte_pecora": 3}, "out": {"pecorino": 1}, "time": 20 * MIN}},
+	"cantina": {"level": 7, "restore": {"coins": 300, "items": {"uva": 10}}, "pop": [3, 1, 1],
+		"recipe": {"in": {"uva": 5}, "out": {"chianti": 1}, "time": 30 * MIN}},
+	"gelateria": {"level": 7, "restore": {"coins": 220, "items": {"latte": 4, "fragole": 6}}, "pop": [2, 1, 1],
+		"recipe": {"in": {"latte": 2, "fragole": 3}, "out": {"gelato": 1}, "time": 8 * MIN}},
+	"pastificio": {"level": 8, "restore": {"coins": 280, "items": {"farina": 8, "uova": 6}}, "pop": [2, 1, 1],
+		"recipe": {"in": {"farina": 2, "uova": 2}, "out": {"pasta_fresca": 1}, "time": 10 * MIN}},
+	"campanile": {"level": 8, "restore": {"coins": 400, "items": {"grano": 20, "olio": 2}}, "pop": [1, 0, 1],
+		"effect": "rating"},
+	"bar": {"level": 9, "restore": {"coins": 300, "items": {"limoni": 8, "latte": 6}}, "pop": [2, 1, 1],
+		"recipe": {"in": {"limoni": 5}, "out": {"limoncello": 1}, "time": 20 * MIN}},
+	"osteria": {"level": 10, "restore": {"coins": 450, "items": {"passata": 3, "pasta_fresca": 3, "basilico": 5}}, "pop": [2, 1, 1],
+		"effect": "tips"},
+	"pasticceria": {"level": 11, "restore": {"coins": 400, "items": {"mandorle": 8, "farina": 6}}, "pop": [2, 1, 1],
+		"recipe": {"in": {"mandorle": 3, "farina": 2, "uova": 2}, "out": {"cantucci": 1}, "time": 15 * MIN}},
+	"caldarroste": {"level": 11, "restore": {"coins": 120, "items": {"castagne": 10}}, "pop": [1, 1, 0],
+		"recipe": {"in": {"castagne": 4}, "out": {"caldarroste": 1}, "time": 5 * MIN}},
+	"bocce": {"level": 12, "restore": {"coins": 200, "items": {"grano": 30}}, "pop": [4, 0, 1],
+		"effect": "daily"},
 }
+## Abitanti rimasti nel borgo abbandonato all'inizio.
+const START_POPULATION := 3
+## Gli edifici che si aprono con la bacheca, senza restauro.
+const ALWAYS_OPEN := ["bacheca"]
+
+## --- Turismo ---------------------------------------------------------------
+## Dopo TOURISM_FROM restauri arrivano i visitatori: chiedono prodotti tipici,
+## pagano e lasciano una recensione (5 stelle se serviti, 2 se se ne vanno).
+const TOURISM_FROM := 2
+const TOURIST_TYPES := ["ciclisti", "turisti", "camperisti", "stranieri"]
+const TOURIST_INTERVAL := 15 * MIN          ## uno ogni tanto, più spesso con più edifici
+const TOURIST_PATIENCE := 3 * HOUR
+const TOURIST_MAX := 4
+const TOURIST_PAY := 1.5                     ## rispetto al prezzo di vendita
+const REVIEWS_KEPT := 20
+const BOCCE_DAILY := 40
 
 ## Esperienza totale necessaria per raggiungere ogni livello (indice = livello).
 ## L'ultima coltura (pistacchio) si sblocca al livello 13.
@@ -162,7 +188,7 @@ const BOTTLE_COOLDOWN := 5 * MIN
 const ANIMALS := {
 	"gallina": {"level": 3, "price": 40, "bottles": 3, "feed": {"grano": 1}, "product": "uova", "yield": 2, "time": 20 * MIN, "xp": 4},
 	"mucca": {"level": 5, "price": 160, "bottles": 5, "feed": {"grano": 3}, "product": "latte", "yield": 1, "time": 1 * HOUR, "xp": 10},
-	"pecora": {"level": 6, "price": 120, "bottles": 4, "feed": {"grano": 2}, "product": "lana", "yield": 1, "time": 90 * MIN, "xp": 8},
+	"pecora": {"level": 6, "price": 120, "bottles": 4, "feed": {"grano": 2}, "product": "latte_pecora", "yield": 1, "time": 90 * MIN, "xp": 8},
 }
 
 ## --- Strutture, ricette e decorazioni -----------------------------------------
@@ -170,7 +196,7 @@ const ANIMALS := {
 ## non zappati) e fanno una ricetta alla volta.
 const STRUCTURES := {
 	"falegnameria": {"level": 3, "price": 150, "size": Vector2i(2, 2), "recipes": ["staccionata", "secchio", "barile", "panchina"]},
-	"cucina": {"level": 4, "price": 250, "size": Vector2i(2, 2), "recipes": ["insalata", "passata", "marmellata", "pane", "formaggio"]},
+	"cucina": {"level": 4, "price": 250, "size": Vector2i(2, 2), "recipes": ["bruschetta", "pesto", "pizza"]},
 }
 ## in: prodotti consumati; coins: costo in monete; espresso: tazzine consumate;
 ## out: cosa esce (decorazione per la falegnameria, prodotto per la cucina).
@@ -179,17 +205,18 @@ const RECIPES := {
 	"secchio": {"in": {}, "coins": 10, "espresso": 0, "time": 2 * MIN, "out": "secchio", "xp": 1},
 	"barile": {"in": {}, "coins": 25, "espresso": 0, "time": 5 * MIN, "out": "barile", "xp": 2},
 	"panchina": {"in": {}, "coins": 40, "espresso": 0, "time": 10 * MIN, "out": "panchina", "xp": 3},
-	"insalata": {"in": {"lattuga": 2, "pomodori": 2}, "coins": 0, "espresso": 1, "time": 3 * MIN, "out": "insalata", "xp": 4},
-	"passata": {"in": {"pomodori": 4}, "coins": 0, "espresso": 1, "time": 5 * MIN, "out": "passata", "xp": 5},
-	"marmellata": {"in": {"fragole": 4}, "coins": 0, "espresso": 1, "time": 8 * MIN, "out": "marmellata", "xp": 7},
-	"pane": {"in": {"farina": 2, "uova": 1}, "coins": 0, "espresso": 1, "time": 10 * MIN, "out": "pane", "xp": 8},
-	"formaggio": {"in": {"latte": 3}, "coins": 0, "espresso": 1, "time": 15 * MIN, "out": "formaggio", "xp": 10},
+	"bruschetta": {"in": {"pane": 1, "pomodori": 2, "olio": 1}, "coins": 0, "espresso": 1, "time": 5 * MIN, "out": "bruschetta", "xp": 8},
+	"pesto": {"in": {"basilico": 3, "aglio": 1, "olio": 1}, "coins": 0, "espresso": 1, "time": 8 * MIN, "out": "pesto", "xp": 10},
+	"pizza": {"in": {"farina": 2, "pomodori": 2, "basilico": 1}, "coins": 0, "espresso": 1, "time": 12 * MIN, "out": "pizza", "xp": 12},
 }
 const DECOR := ["staccionata", "secchio", "barile", "panchina"]
 ## Prezzo di vendita dei prodotti fatti in casa (e degli animali).
+## Prodotti tipici, fatti in casa e degli animali: si vendono e piacciono ai turisti.
 const SELL_PRICES := {
-	"insalata": 40, "passata": 55, "marmellata": 90, "pane": 75, "formaggio": 110,
-	"uova": 6, "latte": 14, "lana": 18, "farina": 12,
+	"farina": 12, "pane": 45, "passata": 50, "olio": 90, "pecorino": 110, "chianti": 160,
+	"gelato": 60, "pasta_fresca": 70, "limoncello": 120, "cantucci": 130, "caldarroste": 55,
+	"bruschetta": 140, "pesto": 150, "pizza": 170,
+	"uova": 6, "latte": 14, "latte_pecora": 16,
 }
 
 
@@ -284,6 +311,28 @@ func footprint(kind: String, type: String) -> Vector2i:
 	if kind == "structure":
 		return STRUCTURES[type]["size"]
 	return Vector2i(1, 1)
+
+
+func building_story(id: String) -> String:
+	return tr("STORY_" + id.to_upper())
+
+
+func building_effect(id: String) -> String:
+	return tr("EFFECT_" + str(BUILDINGS[id].get("effect", "")).to_upper())
+
+
+## Prodotto che esce da un edificio del borgo, o "" se ha un effetto.
+func building_product(id: String) -> String:
+	var r: Dictionary = BUILDINGS.get(id, {}).get("recipe", {})
+	return r["out"].keys()[0] if not r.is_empty() else ""
+
+
+func max_population() -> int:
+	var n := START_POPULATION
+	for id in BUILDINGS:
+		for v in BUILDINGS[id]["pop"]:
+			n += int(v)
+	return n
 
 
 func antique_name(id: String) -> String:

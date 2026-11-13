@@ -74,6 +74,11 @@ var _press := false
 var _press_pos := Vector2.ZERO
 var _panning := false
 var _font: Font
+var _streets: Array = []           ## celle percorribili, per le passeggiate
+var _walkers: Array = []           ## abitanti e visitatori a spasso
+var _event: Dictionary = {}        ## scena di restauro in corso: {"id", "t"}
+const EVENT_TIME := 6.0
+const REVEAL_AT := 1.6             ## quando, nella scena, l'edificio torna com'era
 
 
 func _ready() -> void:
@@ -138,6 +143,11 @@ func _build() -> void:
 			_astar.set_point_solid(cell, not (terrain(cell) in WALKABLE) or building_at(cell) != "")
 	for c in [Vector2i(22, 21), Vector2i(23, 21)]:
 		_astar.set_point_solid(c, true)
+	for y in SIZE.y:
+		for x in SIZE.x:
+			if not _astar.is_point_solid(Vector2i(x, y)) and terrain(Vector2i(x, y)) != "r":
+				_streets.append(Vector2i(x, y))
+	GameState.building_restored.connect(_on_building_restored)
 
 
 func _in_lot(cell: Vector2i) -> bool:
@@ -172,6 +182,11 @@ func _process(delta: float) -> void:
 		var id := _target_building
 		_target_building = ""
 		building_reached.emit(id)
+	_update_walkers(delta)
+	if not _event.is_empty():
+		_event["t"] = float(_event["t"]) + delta
+		if float(_event["t"]) >= EVENT_TIME:
+			_event = {}
 	_objects.queue_redraw()
 
 
@@ -392,6 +407,11 @@ func _draw_objects() -> void:
 		items.append({"d": t[0].x + t[0].y, "kind": "tree", "p": t[0], "sprite": t[1], "s": t[2]})
 	items.append({"d": FOUNTAIN.x + FOUNTAIN.y + 0.6, "kind": "fountain"})
 	items.append({"d": _farmer.x + _farmer.y + 0.05, "kind": "farmer"})
+	for w in _walkers:
+		var wp: Vector2 = w["p"]
+		items.append({"d": wp.x + wp.y + 0.04, "kind": "walker", "w": w})
+	if _has_tourist("camperisti"):
+		items.append({"d": CAMPER_SPOT.x + CAMPER_SPOT.y, "kind": "camper"})
 	items.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["d"] < b["d"])
 	for it in items:
 		match it["kind"]:
@@ -413,8 +433,13 @@ func _draw_objects() -> void:
 				_draw_fountain()
 			"farmer":
 				FarmerDrawer.draw(_ci, world(_farmer), _clock, not _route.is_empty(), "", _farmer_flip)
+			"walker":
+				_draw_walker(it["w"])
+			"camper":
+				_draw_camper(world(CAMPER_SPOT))
 	if hid != "":
 		_name_pill(hid)
+	_draw_event_effects()
 
 
 const TERRAIN_TINT := {
@@ -658,14 +683,30 @@ func _draw_fountain() -> void:
 
 
 ## Edificio del gioco: rudere o restaurato, sprite o disegno da codice.
+var _draw_lights_later: Array = []
+
+
+## Edificio e, se restaurato, le sue luci e il fumo dal camino.
 func _draw_building(id: String) -> void:
+	_draw_lights_later.clear()
+	_draw_building_body(id)
+	if not _draw_lights_later.is_empty():
+		_draw_life(id)
+
+
+func _draw_building_body(id: String) -> void:
 	var b: Dictionary = buildings[id]
 	var cell: Vector2i = b["cell"]
 	var s: Vector2i = b["size"]
 	var h: float = b["h"]
 	var restored := id == "bacheca" or id == "caldarroste" or GameState.is_restored(id)
+	# durante la scena di restauro si vede ancora il rudere sotto la polvere
+	if not _event.is_empty() and _event["id"] == id and float(_event["t"]) < REVEAL_AT:
+		restored = false
 	var a := Vector2(cell)
 	var lv := cell_h(cell)
+	if restored and GameData.BUILDINGS.has(id):
+		_draw_lights_later.append(id)
 	var top := world(a, lv)
 	var right := world(a + Vector2(s.x, 0), lv)
 	var front := world(a + Vector2(s), lv)
@@ -794,3 +835,221 @@ func _name_pill(id: String) -> void:
 	box.set_corner_radius_all(12)
 	_ci.draw_style_box(box, Rect2(p - Vector2(w * 0.5, 14), Vector2(w, 26)))
 	_ci.draw_string(_font, p + Vector2(-w * 0.5 + 10, 5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("f6eedb"))
+
+
+# --- Vita del borgo -----------------------------------------------------------
+
+const CAMPER_SPOT := Vector2(26.4, 37.6)
+const VILLAGER_COLORS := [Color("c8463a"), Color("3f6ea8"), Color("6f8f3e"), Color("d9a441"), Color("8a5a9a"), Color("e8e2d4")]
+
+
+## Luci calde alla porta, fumo dal camino se l'edificio produce.
+func _draw_life(id: String) -> void:
+	var b: Dictionary = buildings[id]
+	var a := Vector2(b["cell"])
+	var s := Vector2(b["size"])
+	var lv := cell_h(b["cell"])
+	var front := world(a + s, lv)
+	var door := world(a + Vector2(s.x * 0.5, s.y), lv)
+	var k := 0.85 + 0.15 * sin(_clock * 2.3 + float(posmod(hash(id), 10)))
+	_ci.draw_circle(door + Vector2(-14, -34), 16.0 * k, Color(1.0, 0.82, 0.4, 0.18))
+	_ci.draw_circle(door + Vector2(-14, -34), 5.0, Color(1.0, 0.9, 0.55, 0.95))
+	_ci.draw_line(door + Vector2(-14, -40), door + Vector2(-14, -46), Color("4a3423"), 2.0)
+	if GameData.BUILDINGS[id].has("recipe") or id in ["osteria", "bar"]:
+		_smoke(front + Vector2(TILE_W * 0.15, -150.0), float(posmod(hash(id), 10)))
+
+
+func _has_tourist(type: String) -> bool:
+	for t in GameState.tourists:
+		if t["type"] == type:
+			return true
+	return false
+
+
+## Quanti abitanti e visitatori ci devono essere per strada: crescono con la
+## popolazione e con i gruppi di turisti in paese.
+func _wanted_walkers() -> Array:
+	var want: Array = []
+	for i in mini(GameState.population() / 3, 16):
+		want.append("villager")
+	for t in GameState.tourists:
+		for j in mini(int(t["size"]), 3):
+			want.append(str(t["type"]))
+	return want
+
+
+func _update_walkers(delta: float) -> void:
+	if _streets.is_empty():
+		return
+	var count := {}
+	for k in _wanted_walkers():
+		count[k] = int(count.get(k, 0)) + 1
+	# toglie chi è di troppo (non quelli della scena di restauro), aggiunge chi manca
+	for i in range(_walkers.size() - 1, -1, -1):
+		var kind: String = _walkers[i]["kind"]
+		if _walkers[i].get("event", false):
+			continue
+		if int(count.get(kind, 0)) > 0:
+			count[kind] = int(count[kind]) - 1
+		else:
+			_walkers.remove_at(i)
+	for kind in count:
+		for j in int(count[kind]):
+			var start: Vector2i = _streets[randi() % _streets.size()]
+			_walkers.append(_new_walker(kind, Vector2(start) + Vector2(0.5, 0.5)))
+	for w in _walkers:
+		if float(w["wait"]) > 0.0:
+			w["wait"] = float(w["wait"]) - delta
+			continue
+		if (w["route"] as Array).is_empty():
+			if w.get("event", false) and _event.is_empty():
+				w["event"] = false
+			var dest: Vector2i = _streets[randi() % _streets.size()]
+			w["route"] = route(w["p"], Vector2(dest) + Vector2(0.5, 0.5))
+			w["wait"] = randf_range(0.5, 4.0)
+			continue
+		var next: Vector2 = w["route"][0]
+		var d: Vector2 = next - w["p"]
+		var step: float = float(w["speed"]) * delta
+		if d.length() <= step:
+			w["p"] = next
+			(w["route"] as Array).pop_front()
+		else:
+			w["p"] = (w["p"] as Vector2) + d.normalized() * step
+			w["flip"] = (world(next).x - world(w["p"]).x) < 0.0
+
+
+func _new_walker(kind: String, p: Vector2) -> Dictionary:
+	var speed := 1.6
+	if kind == "ciclisti":
+		speed = 3.4
+	elif kind == "villager":
+		speed = 1.2
+	return {"kind": kind, "p": p, "route": [], "wait": randf_range(0.0, 3.0), "speed": speed * randf_range(0.85, 1.15),
+		"flip": false, "color": VILLAGER_COLORS[randi() % VILLAGER_COLORS.size()], "old": randf() < 0.35}
+
+
+## Figurine (finché non ci sono gli sprite): abitanti, turisti con la macchina
+## fotografica, ciclisti in bici, camperisti con lo zaino, stranieri con la cartina.
+func _draw_walker(w: Dictionary) -> void:
+	var p := world(w["p"])
+	var moving: bool = not (w["route"] as Array).is_empty() and float(w["wait"]) <= 0.0
+	var bob := absf(sin(_clock * 9.0 + p.x * 0.05)) * -2.0 if moving else 0.0
+	var dir := -1.0 if w["flip"] else 1.0
+	var kind: String = w["kind"]
+	var shirt: Color = w["color"]
+	_ci.draw_set_transform(p + Vector2(0, 1), 0.0, Vector2(1.0, 0.45))
+	_ci.draw_circle(Vector2.ZERO, 9.0, Color(0.18, 0.12, 0.05, 0.25))
+	_ci.draw_set_transform(Vector2.ZERO)
+	if kind == "ciclisti":
+		for x in [-9.0, 9.0]:
+			_ci.draw_arc(p + Vector2(x, -7), 7.0, 0.0, TAU, 14, Color("2e2a26"), 2.0)
+		_ci.draw_line(p + Vector2(-9, -7), p + Vector2(4, -16), Color("d0643c"), 2.5)
+		_ci.draw_line(p + Vector2(9, -7), p + Vector2(4, -16), Color("d0643c"), 2.5)
+		_ci.draw_rect(Rect2(p + Vector2(-3, -30 + bob), Vector2(8, 12)), Color("f2c75c"))
+		_ci.draw_circle(p + Vector2(1, -34 + bob), 4.5, Color("f0c9a0"))
+		_ci.draw_arc(p + Vector2(1, -35 + bob), 5.0, PI, TAU, 8, Color("d0643c"), 3.0)
+		return
+	match kind:
+		"turisti":
+			shirt = Color("5aa3c8")
+		"stranieri":
+			shirt = Color("f2f2ea")
+		"camperisti":
+			shirt = Color("7c9a3c")
+	var step := sin(_clock * 9.0 + p.x * 0.05) * 2.0 if moving else 0.0
+	_ci.draw_line(p + Vector2(-2, 0), p + Vector2(-2 + step, -9), Color("3b3a44"), 3.0)
+	_ci.draw_line(p + Vector2(2, 0), p + Vector2(2 - step, -9), Color("3b3a44"), 3.0)
+	_ci.draw_rect(Rect2(p + Vector2(-5, -21 + bob), Vector2(10, 13)), shirt)
+	var head := p + Vector2(0, -25 + bob)
+	_ci.draw_circle(head, 4.5, Color("f0c9a0"))
+	match kind:
+		"villager":
+			if w["old"]:
+				_ci.draw_circle(head + Vector2(0, -2), 4.5, Color("dcdcd4"))
+				_ci.draw_line(p + Vector2(5 * dir, -14), p + Vector2(7 * dir, 0), Color("6b4a2b"), 1.5)
+			else:
+				_ci.draw_arc(head + Vector2(0, -1), 4.8, PI, TAU, 8, Color("4a3423"), 3.0)
+		"turisti":
+			_ci.draw_rect(Rect2(head + Vector2(-7, -5), Vector2(14, 2)), Color("e8c870"))
+			_ci.draw_rect(Rect2(head + Vector2(-4, -8), Vector2(8, 4)), Color("e8c870"))
+			_ci.draw_rect(Rect2(p + Vector2(2 * dir, -18 + bob), Vector2(5, 4)), Color("2e2a26"))
+		"stranieri":
+			_ci.draw_rect(Rect2(p + Vector2(4 * dir - 4, -20 + bob), Vector2(10, 7)), Color("f6eedb"))
+			_ci.draw_line(p + Vector2(4 * dir - 1, -20 + bob), p + Vector2(4 * dir - 1, -13 + bob), Color("5aa3c8"), 1.0)
+			_ci.draw_arc(head + Vector2(0, -1), 4.8, PI, TAU, 8, Color("e8d38a"), 3.0)
+		"camperisti":
+			_ci.draw_rect(Rect2(p + Vector2(-7 * dir - 3, -21 + bob), Vector2(5, 11)), Color("c0603e"))
+
+
+func _draw_camper(p: Vector2) -> void:
+	_ci.draw_set_transform(p + Vector2(0, 4), 0.0, Vector2(1.0, 0.45))
+	_ci.draw_circle(Vector2.ZERO, 44.0, Color(0.18, 0.12, 0.05, 0.25))
+	_ci.draw_set_transform(Vector2.ZERO)
+	_ci.draw_rect(Rect2(p + Vector2(-40, -44), Vector2(80, 36)), Color("f2efe6"))
+	_ci.draw_rect(Rect2(p + Vector2(-40, -24), Vector2(80, 5)), Color("5aa3c8"))
+	_ci.draw_rect(Rect2(p + Vector2(22, -40), Vector2(16, 12)), Color("a9cfe0"))
+	_ci.draw_rect(Rect2(p + Vector2(-30, -40), Vector2(20, 10)), Color("a9cfe0"))
+	_ci.draw_rect(Rect2(p + Vector2(-36, -54), Vector2(46, 10)), Color("e6e1d4"))
+	for x in [-24.0, 24.0]:
+		_ci.draw_circle(p + Vector2(x, -6), 7.5, Color("2e2a26"))
+		_ci.draw_circle(p + Vector2(x, -6), 3.0, Color("c8c2b4"))
+	# tendalino
+	_ci.draw_colored_polygon(PackedVector2Array([p + Vector2(-40, -44), p + Vector2(-70, -30), p + Vector2(-70, -26), p + Vector2(-40, -38)]), Color("e27a4f"))
+	_ci.draw_line(p + Vector2(-68, -28), p + Vector2(-68, 0), Color("8e9aa6"), 1.5)
+
+
+# --- Scena del restauro -------------------------------------------------------
+
+## Un edificio è stato restaurato: la telecamera ci va, la polvere lo copre,
+## torna come nuovo, esce l'abitante, si accendono le luci, arrivano visitatori.
+func _on_building_restored(id: String) -> void:
+	if not buildings.has(id):
+		return
+	_event = {"id": id, "t": 0.0}
+	var b: Dictionary = buildings[id]
+	var door := Vector2(door_cell(id)) + Vector2(0.5, 0.5)
+	camera.center_on(world(Vector2(b["cell"]) + Vector2(b["size"]) * 0.5))
+	var res := _new_walker("villager", door)
+	res["event"] = true
+	res["wait"] = REVEAL_AT + 0.6
+	_walkers.append(res)
+	for i in 2:
+		var v := _new_walker("turisti" if i == 0 else "stranieri", Vector2(BorgoLayout.ENTRY) + Vector2(0.5, 0.5))
+		v["event"] = true
+		v["wait"] = REVEAL_AT + 0.4 * i
+		v["route"] = route(v["p"], door)
+		_walkers.append(v)
+
+
+func _draw_event_effects() -> void:
+	if _event.is_empty():
+		return
+	var id: String = _event["id"]
+	var t: float = _event["t"]
+	var b: Dictionary = buildings[id]
+	var a := Vector2(b["cell"])
+	var s := Vector2(b["size"])
+	var c := world(a + s * 0.5, cell_h(b["cell"]))
+	# polvere e scintille mentre si ripulisce
+	if t < REVEAL_AT + 0.6:
+		var fade := clampf((REVEAL_AT + 0.6 - t) / 0.6, 0.0, 1.0)
+		for i in 14:
+			var ang := i * TAU / 14.0 + t * 1.5
+			var r := 40.0 + 30.0 * sin(t * 3.0 + i)
+			var q := c + Vector2(cos(ang) * r * 1.5, sin(ang) * r * 0.7 - 50.0 - t * 10.0)
+			_ci.draw_circle(q, 22.0 + 8.0 * sin(t * 4.0 + i), Color(0.9, 0.84, 0.72, 0.75 * fade))
+		for i in 8:
+			var q2 := c + Vector2(sin(t * 5.0 + i * 2.1) * 80.0, -40.0 - fposmod(t * 90.0 + i * 37.0, 160.0))
+			var k := 6.0 * fade
+			_ci.draw_line(q2 + Vector2(-k, 0), q2 + Vector2(k, 0), Color(1, 0.95, 0.7, fade), 2.0)
+			_ci.draw_line(q2 + Vector2(0, -k), q2 + Vector2(0, k), Color(1, 0.95, 0.7, fade), 2.0)
+	# "È tornato ...!" sopra l'edificio
+	if t > REVEAL_AT:
+		var k2 := clampf((t - REVEAL_AT) / 0.3, 0.0, 1.0) * clampf((EVENT_TIME - t) / 0.6, 0.0, 1.0)
+		var text := tr("MSG_RETURNS") % GameData.resident_name(id)
+		var size := 26
+		var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		var p := c + Vector2(-w * 0.5, -150.0 - 20.0 * k2)
+		_ci.draw_string_outline(_font, p, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 10, Color(0.45, 0.25, 0.1, k2))
+		_ci.draw_string(_font, p, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(1, 0.96, 0.85, k2))
