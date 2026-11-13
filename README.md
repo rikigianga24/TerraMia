@@ -36,8 +36,10 @@ Il documento di design completo è in [`docs/design.md`](docs/design.md).
   un livello minimo e alcuni oggetti antichi (monete romane, anfore, lucerne,
   tessere di mosaico, fibule, chiavi antiche), che si trovano a caso
   consegnando gli ordini e nel forziere che compare ogni giorno sulla fattoria.
-- **Borgo:** un paese medievale su un colle, con vie tortuose, vicoli a
-  gradini, una piazza irregolare, case addossate e le mura attorno. Tocca un
+- **Borgo:** un paese medievale in cima a una collina, con vie tortuose,
+  vicoli, una piazza irregolare, case addossate, il sagrato con la chiesa e il
+  campanile di Don Peppino, e le mura attorno. Scendendo dalla collina:
+  vigneti, uliveti, boschi e la strada bianca. Tocca un
   edificio e il contadino ci va a piedi per le vie: la bacheca in piazza apre
   gli ordini, il mulino la sua scheda. La pianta si rigenera con
   `python3 tools/gen_borgo.py`.

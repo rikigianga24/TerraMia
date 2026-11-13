@@ -1,28 +1,34 @@
 class_name BorgoMap
 extends Node2D
-## Il borgo: un paese medievale su un colle, con vie tortuose, vicoli, una
-## piazza irregolare, case addossate e le mura attorno.
+## Il borgo: un paese medievale in cima a una collina, con vie tortuose,
+## vicoli, una piazza irregolare, case addossate, il sagrato con la chiesa e
+## le mura; più in basso vigneti, uliveti e boschi.
 ##
-## La pianta (vie, altezze, lotti) è in BorgoLayout, generata da
-## tools/gen_borgo.py. Qui si disegna e ci si muove: le altezze sono a mezzi
-## livelli, tra due celle di altezza diversa si disegna un muro di pietra (o un
-## gradino, sulle vie). Toccando un edificio il contadino ci va per le vie col
-## percorso più breve; all'arrivo la mappa emette building_reached.
+## La pianta (terreno, altezze, lotti) è in BorgoLayout, generata da
+## tools/gen_borgo.py. Il terreno è una superficie continua: ogni cella è
+## inclinata tra le altezze dei suoi quattro vertici. Toccando un edificio il
+## contadino ci va per le vie col percorso più breve; all'arrivo la mappa
+## emette building_reached.
+##
+## Due strati: questo nodo disegna il terreno (ridisegnato solo se serve), il
+## figlio _objects disegna ogni fotogramma edifici, alberi, contadino, fumo.
 
 signal building_reached(id: String)
 
 const TILE_W := Iso.TILE_W
 const TILE_H := Iso.TILE_H
 const SIZE := BorgoLayout.SIZE
-const HALF_H := 20.0                ## pixel di un mezzo livello
-const WALL_EXTRA := 1.5             ## le mura sono più alte del terreno (in mezzi livelli)
-const FOUNTAIN := Vector2(13.0, 13.5)
+const LEVEL_H := 58.0               ## pixel di un livello d'altezza
+const WALL_EXTRA := 0.85            ## altezza delle mura (in livelli)
+const FOUNTAIN := Vector2(23.0, 21.5)
 const WALK_SPEED := 3.2             ## celle al secondo
 const DRAG_THRESHOLD := 8.0
 
 const TEX_GRASS := preload("res://assets/graphics/tiles/grass.png")
 const TEX_GRASS_FLOWERS := preload("res://assets/graphics/tiles/grass_flowers.png")
 const TEX_COBBLES := preload("res://assets/graphics/tiles/cobbles.png")
+const TEX_DIRT := preload("res://assets/graphics/tiles/dirt.png")
+const WALKABLE := ["#", "p", "c", "r"]
 
 const PAIRS := {
 	"mulino": ["mulino_rudere", "mulino_restaurato"],
@@ -42,18 +48,20 @@ const SPRITES := {
 }
 const HOUSE_SPRITES := ["casetta", "casa_piccola", "casa_grande", "casa_pergola", "casale", "casa_piccola", "casetta"]
 ## Edifici piccoli in piazza (1x1).
-const SMALL := {"bacheca": Vector2i(14, 12), "caldarroste": Vector2i(10, 14)}
+const SMALL := {"bacheca": Vector2i(24, 20), "caldarroste": Vector2i(20, 22)}
 ## Auto d'epoca: parcheggiate fuori dalla porta e qualcuna in salita.
 const CARS := [
-	[Vector2(14.6, 26.6), "d9412b"], [Vector2(16.0, 26.4), "e6d3a3"], [Vector2(17.4, 26.7), "5aa3c8"],
-	[Vector2(9.8, 20.6), "7c9a3c"], [Vector2(17.8, 23.4), "e6d3a3"],
+	[Vector2(23.6, 36.6), "d9412b"], [Vector2(21.0, 36.4), "e6d3a3"], [Vector2(23.8, 38.2), "5aa3c8"],
+	[Vector2(19.8, 28.6), "7c9a3c"], [Vector2(27.8, 31.4), "e6d3a3"],
 ]
-const BIKES := [Vector2(10.3, 14.9), Vector2(5.4, 19.8), Vector2(19.6, 13.8), Vector2(12.6, 25.4)]
+const BIKES := [Vector2(20.3, 22.9), Vector2(15.4, 27.8), Vector2(29.6, 21.8), Vector2(22.6, 33.4)]
 
 var camera: WorldCamera
 var buildings: Dictionary = {}     ## id -> {"cell", "size", "h"}
 var _houses: Array = []            ## [cella, sprite]
-var _trees: Array = []             ## [punto, sprite]
+var _trees: Array = []             ## [punto, tipo: sprite o "albero", scala]
+var _objects: Node2D               ## strato che si ridisegna ogni fotogramma
+var _ci: CanvasItem                ## dove disegnano le funzioni degli oggetti
 var _astar := AStarGrid2D.new()
 var _farmer := Vector2(BorgoLayout.GATE) + Vector2(0.5, 0.5)
 var _route: Array = []
@@ -70,7 +78,7 @@ var _font: Font
 
 func _ready() -> void:
 	_font = load("res://assets/fonts/Fredoka-SemiBold.ttf")
-	GameState.changed.connect(queue_redraw)
+	GameState.changed.connect(func() -> void: _objects.queue_redraw())
 	_build()
 	camera = WorldCamera.new()
 	add_child(camera)
@@ -80,7 +88,11 @@ func _ready() -> void:
 	var bottom := world(Vector2(SIZE), 0.0)
 	camera.bounds = Rect2(left.x - 80, top.y - 300, right.x - left.x + 160, bottom.y - top.y + 360)
 	camera.zoom = Vector2(0.7, 0.7)
-	camera.center_on(world(Vector2(12, 18)))
+	camera.center_on(world(Vector2(22, 26)))
+	_objects = Node2D.new()
+	add_child(_objects)
+	_ci = _objects
+	_objects.draw.connect(_draw_objects)
 
 
 ## Edifici, case, alberi e percorsi dalla pianta.
@@ -91,20 +103,29 @@ func _build() -> void:
 		if id == "":
 			_houses.append([cell, HOUSE_SPRITES[posmod(hash(cell), HOUSE_SPRITES.size())]])
 		else:
-			var h := 150 if id == "campanile" else (0 if id == "bocce" else 52)
-			buildings[id] = {"cell": cell, "size": Vector2i(2, 2), "h": h}
+			var h := 170 if id == "campanile" else (0 if id == "bocce" else 52)
+			buildings[id] = {"cell": cell, "size": lot[2], "h": h}
 	for id in SMALL:
 		buildings[id] = {"cell": SMALL[id], "size": Vector2i(1, 1), "h": 40}
-	# cipressi e ulivi fuori dalle mura, qualche albero negli orti
+	# alberi: uliveti a file, boschi fitti, qualche cipresso nei prati e negli orti
 	for y in SIZE.y:
 		for x in SIZE.x:
 			var cell := Vector2i(x, y)
 			var t := terrain(cell)
 			var r := posmod(hash(cell + Vector2i(7, 3)), 100)
-			if t == " " and r < 14 and not _near_building(cell):
-				_trees.append([Vector2(cell) + Vector2(0.5, 0.6), "cipresso" if r < 9 else "ulivo_albero_c"])
-			elif t == "." and r < 30 and not _in_lot(cell):
-				_trees.append([Vector2(cell) + Vector2(0.5, 0.6), "ulivo_albero_c" if r < 12 else "cipresso"])
+			var jit := Vector2(posmod(hash(cell), 7) - 3, posmod(hash(cell + Vector2i(1, 0)), 7) - 3) * 0.05
+			match t:
+				"o":
+					if (x + y) % 2 == 0:
+						_trees.append([Vector2(cell) + Vector2(0.5, 0.6) + jit, "ulivo_albero_c", 0.9])
+				"b":
+					_trees.append([Vector2(cell) + Vector2(0.5, 0.5) + jit * 3.0, "cipresso" if r < 22 else "albero", 0.8 + r * 0.006])
+				" ":
+					if r < 5 and not _near_building(cell):
+						_trees.append([Vector2(cell) + Vector2(0.5, 0.6), "cipresso", 1.0])
+				".":
+					if r < 30 and not _in_lot(cell):
+						_trees.append([Vector2(cell) + Vector2(0.5, 0.6), "ulivo_albero_c" if r < 12 else "cipresso", 0.9])
 	# percorsi: solo vie e piazza, senza attraversare edifici e fontana
 	_astar.region = Rect2i(Vector2i.ZERO, SIZE)
 	_astar.cell_size = Vector2.ONE
@@ -113,21 +134,21 @@ func _build() -> void:
 	for y in SIZE.y:
 		for x in SIZE.x:
 			var cell := Vector2i(x, y)
-			_astar.set_point_solid(cell, not (terrain(cell) in ["#", "p"]) or building_at(cell) != "")
-	for c in [Vector2i(12, 13), Vector2i(13, 13)]:
+			_astar.set_point_solid(cell, not (terrain(cell) in WALKABLE) or building_at(cell) != "")
+	for c in [Vector2i(22, 21), Vector2i(23, 21)]:
 		_astar.set_point_solid(c, true)
 
 
 func _in_lot(cell: Vector2i) -> bool:
 	for lot in BorgoLayout.LOTS:
-		if Rect2i(lot[0], Vector2i(2, 2)).has_point(cell):
+		if Rect2i(lot[0], lot[2]).has_point(cell):
 			return true
 	return false
 
 
 func _near_building(cell: Vector2i) -> bool:
 	for lot in BorgoLayout.LOTS:
-		if Rect2i(lot[0] - Vector2i(1, 1), Vector2i(4, 4)).has_point(cell):
+		if Rect2i(lot[0] - Vector2i(1, 1), lot[2] + Vector2i(2, 2)).has_point(cell):
 			return true
 	return false
 
@@ -150,7 +171,7 @@ func _process(delta: float) -> void:
 		var id := _target_building
 		_target_building = ""
 		building_reached.emit(id)
-	queue_redraw()
+	_objects.queue_redraw()
 
 
 ## Il contadino arriva dalla fattoria: entra dalla porta delle mura.
@@ -158,7 +179,7 @@ func arrive() -> void:
 	_farmer = Vector2(BorgoLayout.GATE) + Vector2(0.5, 0.5)
 	_route = []
 	_target_building = ""
-	camera.center_on(world(Vector2(12, 21)))
+	camera.center_on(world(Vector2(22, 30)))
 
 
 # --- Pianta e coordinate ----------------------------------------------------
@@ -171,35 +192,28 @@ func terrain(cell: Vector2i) -> String:
 	return BorgoLayout.TERRAIN[cell.y][cell.x] if in_map(cell) else " "
 
 
-## Altezza della cella in livelli (le mura sporgono un po').
+## Altezza di un vertice della griglia, in livelli.
+func vh(v: Vector2i) -> float:
+	var x := clampi(v.x, 0, SIZE.x)
+	var y := clampi(v.y, 0, SIZE.y)
+	return float(BorgoLayout.VHEIGHT[y].unicode_at(x) - 48) * 0.1
+
+
+## Altezza media di una cella (per gli edifici, che stanno su lotti spianati).
 func cell_h(cell: Vector2i) -> float:
-	if not in_map(cell):
-		return -0.6
-	var h := float(BorgoLayout.HEIGHT[cell.y].unicode_at(cell.x) - 48) * 0.5
-	if terrain(cell) == "w":
-		h += WALL_EXTRA * 0.5
-	return h
+	return (vh(cell) + vh(cell + Vector2i(1, 0)) + vh(cell + Vector2i(0, 1)) + vh(cell + Vector2i(1, 1))) * 0.25
 
 
-## Altezza del terreno sotto un punto, sfumata tra le celle (per il contadino).
+## Altezza del terreno sotto un punto (interpolata tra i vertici).
 func elev(p: Vector2) -> float:
-	var q := p - Vector2(0.5, 0.5)
-	var c := Vector2i(floori(q.x), floori(q.y))
-	var f := q - Vector2(c)
-	var h00 := _ground_h(c)
-	var h10 := _ground_h(c + Vector2i(1, 0))
-	var h01 := _ground_h(c + Vector2i(0, 1))
-	var h11 := _ground_h(c + Vector2i(1, 1))
-	var own := _ground_h(Vector2i(floori(p.x), floori(p.y)))
-	var smooth := lerpf(lerpf(h00, h10, f.x), lerpf(h01, h11, f.x), f.y)
-	# vicino al centro della cella si sta alla sua altezza (gradini netti)
-	return lerpf(own, smooth, 0.6)
+	var c := Vector2i(floori(p.x), floori(p.y))
+	var f := p - Vector2(c)
+	return lerpf(lerpf(vh(c), vh(c + Vector2i(1, 0)), f.x), lerpf(vh(c + Vector2i(0, 1)), vh(c + Vector2i(1, 1)), f.x), f.y)
 
 
+## Per i controlli dei percorsi: altezza al centro della cella.
 func _ground_h(cell: Vector2i) -> float:
-	if not in_map(cell):
-		return 0.0
-	return float(BorgoLayout.HEIGHT[cell.y].unicode_at(cell.x) - 48) * 0.5
+	return elev(Vector2(cell) + Vector2(0.5, 0.5))
 
 
 func cell_to_local(cell: Vector2) -> Vector2:
@@ -209,17 +223,19 @@ func cell_to_local(cell: Vector2) -> Vector2:
 ## Punto della mappa sullo schermo, sollevato della sua altezza (in livelli).
 func world(p: Vector2, h := INF) -> Vector2:
 	var z := elev(p) if h == INF else h
-	return cell_to_local(p) - Vector2(0, z * HALF_H * 2.0)
+	return cell_to_local(p) - Vector2(0, z * LEVEL_H)
 
 
-func cell_poly(cell: Vector2i) -> PackedVector2Array:
-	var h := cell_h(cell)
+## I quattro angoli della cella sullo schermo: alto, destra, basso, sinistra.
+func cell_poly(cell: Vector2i, extra := 0.0) -> PackedVector2Array:
 	var c := Vector2(cell)
-	return PackedVector2Array([world(c, h), world(c + Vector2(1, 0), h), world(c + Vector2(1, 1), h), world(c + Vector2(0, 1), h)])
+	return PackedVector2Array([
+		world(c, vh(cell) + extra), world(c + Vector2(1, 0), vh(cell + Vector2i(1, 0)) + extra),
+		world(c + Vector2(1, 1), vh(cell + Vector2i(1, 1)) + extra), world(c + Vector2(0, 1), vh(cell + Vector2i(0, 1)) + extra)])
 
 
 func is_street(cell: Vector2i) -> bool:
-	return terrain(cell) in ["#", "p"]
+	return terrain(cell) in ["#", "p", "c"]
 
 
 func pick_cell(local: Vector2) -> Vector2i:
@@ -229,6 +245,9 @@ func pick_cell(local: Vector2) -> Vector2i:
 			if y < 0 or y >= SIZE.y:
 				continue
 			var cell := Vector2i(x, y)
+			var base := cell_to_local(Vector2(cell) + Vector2(0.5, 0.5))
+			if absf(base.x - local.x) > TILE_W or local.y > base.y + TILE_H or local.y < base.y - TILE_H - 9.0 * LEVEL_H:
+				continue
 			if Geometry2D.is_point_in_polygon(local, cell_poly(cell)):
 				return cell
 	return Vector2i(-1, -1)
@@ -262,7 +281,7 @@ func _building_rect(id: String) -> Rect2:
 	var left := world(a + Vector2(0, s.y), lv)
 	var right := world(a + Vector2(s.x, 0), lv)
 	var front := world(a + Vector2(s), lv)
-	var h := maxf(float(b["h"]), 30.0) + 50.0
+	var h := maxf(float(b["h"]), 30.0) + 50.0 + (60.0 if s.x > 2 else 0.0)
 	return Rect2(Vector2(left.x, right.y - h), Vector2(right.x - left.x, front.y - right.y + h))
 
 
@@ -344,16 +363,19 @@ func _tap(local: Vector2) -> void:
 
 # --- Disegno ----------------------------------------------------------------
 
+## Terreno: celle inclinate, mura, vigne. Si ridisegna solo quando serve.
 func _draw() -> void:
 	for depth in SIZE.x + SIZE.y - 1:
 		for x in SIZE.x:
 			var y := depth - x
 			if y >= 0 and y < SIZE.y:
 				_draw_cell(Vector2i(x, y))
+
+
+func _draw_objects() -> void:
 	var hid := _hover_building
 	if hid != "":
 		_outline_building(hid)
-
 	var items: Array = []
 	for id in buildings:
 		var b: Dictionary = buildings[id]
@@ -366,7 +388,7 @@ func _draw() -> void:
 	for bk in BIKES:
 		items.append({"d": bk.x + bk.y, "kind": "bike", "p": bk})
 	for t in _trees:
-		items.append({"d": t[0].x + t[0].y, "kind": "tree", "p": t[0], "sprite": t[1]})
+		items.append({"d": t[0].x + t[0].y, "kind": "tree", "p": t[0], "sprite": t[1], "s": t[2]})
 	items.append({"d": FOUNTAIN.x + FOUNTAIN.y + 0.6, "kind": "fountain"})
 	items.append({"d": _farmer.x + _farmer.y + 0.05, "kind": "farmer"})
 	items.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["d"] < b["d"])
@@ -381,68 +403,197 @@ func _draw() -> void:
 			"bike":
 				_draw_bike(world(it["p"]))
 			"tree":
-				var w := 40.0 if it["sprite"] == "cipresso" else 80.0
-				Sprites.draw(self, it["sprite"], world(it["p"]), w, 0.05)
+				if it["sprite"] == "albero":
+					_draw_tree(world(it["p"]), it["s"], it["p"])
+				else:
+					var w: float = (40.0 if it["sprite"] == "cipresso" else 76.0) * it["s"]
+					Sprites.draw(_ci, it["sprite"], world(it["p"]), w, 0.05)
 			"fountain":
 				_draw_fountain()
 			"farmer":
-				FarmerDrawer.draw(self, world(_farmer), _clock, not _route.is_empty(), "", _farmer_flip)
+				FarmerDrawer.draw(_ci, world(_farmer), _clock, not _route.is_empty(), "", _farmer_flip)
 	if hid != "":
 		_name_pill(hid)
+
+
+const TERRAIN_TINT := {
+	"c": Color(1.08, 1.06, 1.02), "v": Color(1.02, 1.0, 0.86), "o": Color(0.98, 1.0, 0.9),
+	"b": Color(0.8, 0.88, 0.76),
+}
 
 
 func _draw_cell(cell: Vector2i) -> void:
 	var t := terrain(cell)
 	var poly := cell_poly(cell)
-	if t == "w":
-		# cammino di ronda delle mura: pietra, con la merlatura sul bordo
-		draw_colored_polygon(poly, Color("cbb894"))
-		draw_polyline(PackedVector2Array([poly[3], poly[2], poly[1]]), Color("e2d3b2"), 3.0)
-	else:
-		var tex: Texture2D = TEX_COBBLES if is_street(cell) else (TEX_GRASS_FLOWERS if posmod(hash(cell), 6) == 0 else TEX_GRASS)
-		var tint := Color.WHITE if t != " " else Color(0.96, 1.0, 0.92)
-		var uv := PackedVector2Array([Vector2(0.5, 0), Vector2(1, 0.5), Vector2(0.5, 1), Vector2(0, 0.5)])
-		draw_polygon(poly, PackedColorArray([tint, tint, tint, tint]), uv, tex)
-	var h := cell_h(cell)
 	var c := Vector2(cell)
-	var stone_l := Color("c9b48f") if t != "w" else Color("bba57d")
-	var stone_r := Color("a8946f") if t != "w" else Color("9a8662")
-	_wall(c + Vector2(0, 1), c + Vector2(1, 1), h, cell_h(cell + Vector2i(0, 1)), stone_l, is_street(cell))
-	_wall(c + Vector2(1, 0), c + Vector2(1, 1), h, cell_h(cell + Vector2i(1, 0)), stone_r, is_street(cell))
+	var h_top := vh(cell)
+	var h_right := vh(cell + Vector2i(1, 0))
+	var h_bottom := vh(cell + Vector2i(1, 1))
+	var h_left := vh(cell + Vector2i(0, 1))
+	# luce da sinistra: i pendii rivolti a sinistra e verso lo spettatore sono più chiari
+	var shade := clampf(1.0 + 0.55 * ((h_right - h_left) + 0.5 * (h_top - h_bottom)), 0.68, 1.2)
+	var tint: Color = TERRAIN_TINT.get(t, Color.WHITE)
+	tint = Color(tint.r * shade, tint.g * shade, tint.b * shade)
+	var tex: Texture2D = TEX_GRASS
+	if t in ["#", "p", "c"]:
+		tex = TEX_COBBLES
+	elif t == "r":
+		tex = TEX_DIRT
+	elif t in [" ", "."] and posmod(hash(cell), 6) == 0:
+		tex = TEX_GRASS_FLOWERS
+	var uv := PackedVector2Array([Vector2(0.5, 0), Vector2(1, 0.5), Vector2(0.5, 1), Vector2(0, 0.5)])
+	draw_polygon(poly, PackedColorArray([tint, tint, tint, tint]), uv, tex)
+	if t == "v":
+		_draw_vines(cell)
 	if t == "w":
-		# merli
+		_draw_town_wall(cell)
+	# bordo della mappa: la terra sotto la collina
+	if cell.y == SIZE.y - 1:
+		_skirt(c + Vector2(0, 1), c + Vector2(1, 1), h_left, h_bottom, Color("8a5f3a"))
+	if cell.x == SIZE.x - 1:
+		_skirt(c + Vector2(1, 0), c + Vector2(1, 1), h_right, h_bottom, Color("6e4a2c"))
+
+
+func _skirt(a: Vector2, b: Vector2, ha: float, hb: float, color: Color) -> void:
+	draw_colored_polygon(PackedVector2Array([world(a, ha), world(b, hb), world(b, -0.8), world(a, -0.8)]), color)
+
+
+## Filari di vite lungo la cella: pali, foglie e grappoli.
+func _draw_vines(cell: Vector2i) -> void:
+	var c := Vector2(cell)
+	for fy in [0.28, 0.78]:
+		var pa := world(c + Vector2(0.0, fy))
+		var pb := world(c + Vector2(1.0, fy))
+		draw_line(pa + Vector2(0, 2), pb + Vector2(0, 2), Color(0.2, 0.28, 0.1, 0.35), 7.0)
+		draw_line(pa + Vector2(0, -6), pb + Vector2(0, -6), Color("5b8a2e"), 8.0)
+		draw_line(pa + Vector2(0, -9), pb + Vector2(0, -9), Color("7fae45"), 4.0)
+		var post := world(c + Vector2(0.1, fy))
+		draw_line(post, post + Vector2(0, -14), Color("7a5a3a"), 2.0)
+		if posmod(hash(cell + Vector2i(int(fy * 10), 0)), 3) == 0:
+			var g := world(c + Vector2(0.55, fy))
+			draw_circle(g + Vector2(0, -3), 2.6, Color("5b2a6e"))
+			draw_circle(g + Vector2(3, -2), 2.2, Color("6a3480"))
+
+
+## Mura sottili lungo i lati della cella che danno verso l'esterno del paese,
+## con i merli in cima. Prima i lati in fondo, poi quelli davanti.
+func _draw_town_wall(cell: Vector2i) -> void:
+	var c := Vector2(cell)
+	var edges := [
+		[c, c + Vector2(1, 0), Vector2i(0, -1), Color("b29d77")],
+		[c, c + Vector2(0, 1), Vector2i(-1, 0), Color("a28e69")],
+		[c + Vector2(0, 1), c + Vector2(1, 1), Vector2i(0, 1), Color("cdb88f")],
+		[c + Vector2(1, 0), c + Vector2(1, 1), Vector2i(1, 0), Color("ae9973")],
+	]
+	for e in edges:
+		var n: Vector2i = cell + e[2]
+		if terrain(n) in [".", "#", "p", "c", "w"]:
+			continue
+		var a: Vector2 = e[0]
+		var b: Vector2 = e[1]
+		var ha := elev(a)
+		var hb := elev(b)
+		var ta := world(a, ha + WALL_EXTRA)
+		var tb := world(b, hb + WALL_EXTRA)
+		var col: Color = e[3]
+		draw_colored_polygon(PackedVector2Array([ta, tb, world(b, hb), world(a, ha)]), col)
+		for k in range(1, 4):
+			var f := k / 4.0
+			draw_line(ta.lerp(world(a, ha), f), tb.lerp(world(b, hb), f), col.darkened(0.12), 1.0)
+		draw_line(ta, tb, Color("e2d3b2"), 3.0)
 		for k in 3:
-			var p := world(c + Vector2(0.15 + k * 0.3, 1.0), h)
-			draw_rect(Rect2(p + Vector2(-5, -10), Vector2(10, 10)), Color("cbb894"))
+			var q := ta.lerp(tb, (k + 0.5) / 3.0)
+			draw_rect(Rect2(q + Vector2(-5, -9), Vector2(10, 9)), Color("d6c49f"))
+			draw_rect(Rect2(q + Vector2(-5, -9), Vector2(10, 9)), col.darkened(0.2), false, 1.0)
 
 
-## Muro di pietra lungo uno spigolo, dall'altezza della cella a quella più
-## bassa della vicina; sulle vie i salti piccoli sono gradini.
-func _wall(a: Vector2, b: Vector2, h: float, low: float, color: Color, step: bool) -> void:
-	if h <= low + 0.01:
-		return
-	var p := PackedVector2Array([world(a, h), world(b, h), world(b, low), world(a, low)])
-	draw_colored_polygon(p, color)
-	var top_a := world(a, h)
-	var top_b := world(b, h)
-	var depth_px := (h - low) * HALF_H * 2.0
-	if step and depth_px <= HALF_H + 1.0:
-		# gradino: pedata chiara e alzata
-		draw_line(top_a, top_b, Color("e8dcc0"), 3.0)
-		draw_line(top_a + Vector2(0, depth_px * 0.5), top_b + Vector2(0, depth_px * 0.5), color.darkened(0.15), 1.5)
-		return
-	var y := 9.0
-	var row := 0
-	while y < depth_px - 2.0:
-		draw_line(top_a + Vector2(0, y), top_b + Vector2(0, y), color.darkened(0.18), 1.2)
-		# giunti sfalsati
-		for k in 4:
-			var f := (k + 0.5 * (row % 2) + 0.25) / 4.0
-			var q := top_a.lerp(top_b, f) + Vector2(0, y)
-			draw_line(q, q + Vector2(0, -9), color.darkened(0.14), 1.0)
-		y += 9.0
-		row += 1
-	draw_line(top_a, top_b, color.lightened(0.2), 2.0)
+## Albero del bosco: tronco e chioma a tre volumi (finché non c'è lo sprite).
+func _draw_tree(p: Vector2, s: float, cell_p: Vector2) -> void:
+	var dark := Color("3f6a2c") if posmod(int(cell_p.x * 7 + cell_p.y * 3), 2) == 0 else Color("4a7a30")
+	_ci.draw_set_transform(p + Vector2(6, 2), 0.0, Vector2(1.0, 0.45))
+	_ci.draw_circle(Vector2.ZERO, 26.0 * s, Color(0.15, 0.2, 0.08, 0.3))
+	_ci.draw_set_transform(Vector2.ZERO)
+	_ci.draw_line(p, p + Vector2(0, -26 * s), Color("6b4a2b"), 7.0 * s)
+	var crown := p + Vector2(0, -42 * s)
+	_ci.draw_circle(crown + Vector2(8, 6) * s, 22 * s, dark.darkened(0.15))
+	_ci.draw_circle(crown + Vector2(-9, 3) * s, 20 * s, dark)
+	_ci.draw_circle(crown + Vector2(0, -9) * s, 20 * s, dark.lightened(0.12))
+	_ci.draw_circle(crown + Vector2(-7, -15) * s, 8 * s, Color(1, 1, 1, 0.1))
+
+
+## Chiesa romanica col campanile (rudere o restaurata), disegnata da codice
+## finché non c'è lo sprite. Il lotto è 3x4: navata larga 2 e lunga 4 col
+## tetto a capanna, facciata col rosone e il portale verso il sagrato;
+## campanile quadrato accanto alla facciata, sul lato destro.
+func _draw_church(cell: Vector2i, lv: float, restored: bool) -> void:
+	var a := Vector2(cell)
+	var wall_l := Color("eddcb8") if restored else Color("bfae90")
+	var wall_r := Color("d4bd93") if restored else Color("a99a7e")
+	var h := 1.5 if restored else 0.9
+	# navata: celle x 0..2, y 0..4
+	var top := world(a, lv)
+	var right := world(a + Vector2(2, 0), lv)
+	var front := world(a + Vector2(2, 4), lv)
+	var left := world(a + Vector2(0, 4), lv)
+	var up := Vector2(0, -h * LEVEL_H)
+	_ci.draw_colored_polygon(PackedVector2Array([front, right, right + up, front + up]), wall_r)
+	_ci.draw_colored_polygon(PackedVector2Array([left, front, front + up, left + up]), wall_l)
+	var gable := left.lerp(front, 0.5) + up + Vector2(0, -0.8 * LEVEL_H)
+	_ci.draw_colored_polygon(PackedVector2Array([left + up, front + up, gable]), wall_l.lightened(0.05))
+	var fc := left.lerp(front, 0.5)
+	if restored:
+		var back_gable := gable + (right - front)
+		_ci.draw_colored_polygon(PackedVector2Array([front + up, right + up, back_gable, gable]), Color("b65a3c"))
+		for k in range(1, 6):
+			var f := k / 6.0
+			_ci.draw_line((front + up).lerp(gable, f), (right + up).lerp(back_gable, f), Color("94442b"), 1.5)
+		_ci.draw_line(gable, back_gable, Color("7a321d"), 3.0)
+		_ci.draw_circle(fc + up + Vector2(0, -8), 12.0, Color("6e8fa8"))
+		_ci.draw_arc(fc + up + Vector2(0, -8), 12.0, 0, TAU, 24, Color("8a6a44"), 3.0)
+		for k in 6:
+			_ci.draw_line(fc + up + Vector2(0, -8), fc + up + Vector2(0, -8) + Vector2(11, 0).rotated(k * TAU / 6.0), Color("8a6a44"), 1.0)
+		_ci.draw_colored_polygon(_wall_rect(fc, left, front, 24, 44), Color("6b4a2b"))
+		_ci.draw_circle(fc + Vector2(0, -44), 12.0, Color("6b4a2b"))
+		_ci.draw_colored_polygon(_wall_rect(fc + Vector2(0, -50), left, front, 34, 6), wall_l.darkened(0.12))
+		for i in 4:
+			var q := front.lerp(right, (i + 0.5) / 4.0) + up * 0.6
+			_ci.draw_colored_polygon(_wall_rect(q, front, right, 7, 20), Color("6e8fa8"))
+	else:
+		for i in 4:
+			var q := front.lerp(right, (i + 0.5) / 4.0) + up
+			_ci.draw_line(q, q + (left - front) * 0.6 + Vector2(0, -10), Color("6b4a2b"), 3.0)
+		for i in 10:
+			var q := left.lerp(front, posmod(i * 37, 100) / 100.0) + Vector2(0, -posmod(i * 53, 40) - 6)
+			_ci.draw_circle(q, 6.0, Color("4f7f2a"))
+	# campanile: cella x 2..3, y 3..4 (accanto alla facciata, a destra)
+	var tb := a + Vector2(2.1, 3.0)
+	var t_top := world(tb, lv)
+	var t_right := world(tb + Vector2(0.8, 0), lv)
+	var t_front := world(tb + Vector2(0.8, 0.9), lv)
+	var t_left := world(tb + Vector2(0, 0.9), lv)
+	var th := (4.2 if restored else 1.8) * LEVEL_H
+	var tu := Vector2(0, -th)
+	_ci.draw_colored_polygon(PackedVector2Array([t_left, t_front, t_front + tu, t_left + tu]), wall_l.darkened(0.02))
+	_ci.draw_colored_polygon(PackedVector2Array([t_front, t_right, t_right + tu, t_front + tu]), wall_r.darkened(0.04))
+	for k in range(1, 5):
+		var f := k / 5.0
+		_ci.draw_line(t_left.lerp(t_left + tu, f), t_front.lerp(t_front + tu, f), wall_l.darkened(0.1), 1.2)
+	if restored:
+		# cella campanaria con le bifore e la campana, cuspide in coppi
+		var bell := t_left.lerp(t_front, 0.5) + tu * 0.86
+		_ci.draw_colored_polygon(_wall_rect(bell + Vector2(0, 14), t_left, t_front, 26, 30), Color("4a3423"))
+		_ci.draw_circle(bell + Vector2(0, -2), 7.0, Color("d9a441"))
+		var bell_r := t_front.lerp(t_right, 0.5) + tu * 0.86
+		_ci.draw_colored_polygon(_wall_rect(bell_r + Vector2(0, 14), t_front, t_right, 22, 30), Color("3b2a1c"))
+		var apex := (t_top + t_front) * 0.5 + tu + Vector2(0, -50)
+		_ci.draw_colored_polygon(PackedVector2Array([t_left + tu, t_front + tu, apex]), Color("c0603e"))
+		_ci.draw_colored_polygon(PackedVector2Array([t_front + tu, t_right + tu, apex]), Color("a24a2c"))
+		_ci.draw_line(apex, apex + Vector2(0, -16), Color("6b5a3a"), 2.0)
+		_ci.draw_line(apex + Vector2(-5, -11), apex + Vector2(5, -11), Color("6b5a3a"), 2.0)
+	else:
+		for k in 5:
+			var q := t_left.lerp(t_front, k / 4.0) + tu + Vector2(0, -posmod(k * 37, 14))
+			_ci.draw_circle(q, 5.0, Color("4f7f2a"))
 
 
 ## Casa del paese: sprite sul lotto 2x2 e fumo dal comignolo.
@@ -453,7 +604,7 @@ func _draw_house(cell: Vector2i, sprite: String) -> void:
 	if t == null:
 		return
 	var w := TILE_W * 2.0 * 1.06
-	Sprites.draw(self, sprite, front + Vector2(0, 10), w, 0.0, posmod(hash(cell), 2) == 0)
+	Sprites.draw(_ci, sprite, front + Vector2(0, 10), w, 0.0, posmod(hash(cell), 2) == 0)
 	if posmod(hash(cell), 3) != 0:
 		var hgt := t.get_height() * w / t.get_width()
 		_smoke(front + Vector2(w * 0.12, -hgt * 0.92), float(posmod(hash(cell), 10)))
@@ -463,46 +614,46 @@ func _smoke(p: Vector2, seed_t: float) -> void:
 	for i in 5:
 		var k := fposmod(_clock * 0.35 + seed_t * 0.13 + i * 0.2, 1.0)
 		var q := p + Vector2(sin(k * 5.0 + seed_t) * 6.0 + k * 10.0, -k * 60.0)
-		draw_circle(q, 4.0 + k * 9.0, Color(0.93, 0.92, 0.9, 0.55 * (1.0 - k)))
+		_ci.draw_circle(q, 4.0 + k * 9.0, Color(0.93, 0.92, 0.9, 0.55 * (1.0 - k)))
 
 
 func _draw_car(p: Vector2, body: Color) -> void:
 	var foot := world(p)
-	draw_set_transform(foot, 0.0, Vector2(1.0, 0.45))
-	draw_circle(Vector2(0, 4), 30.0, Color(0.18, 0.12, 0.05, 0.25))
-	draw_set_transform(Vector2.ZERO)
-	draw_rect(Rect2(foot + Vector2(-26, -20), Vector2(52, 14)), body)
-	draw_circle(foot + Vector2(-6, -22), 14.0, body)
-	draw_rect(Rect2(foot + Vector2(-14, -31), Vector2(16, 9)), Color("a9cfe0"))
-	draw_rect(Rect2(foot + Vector2(-26, -10), Vector2(52, 3)), body.darkened(0.3))
+	_ci.draw_set_transform(foot, 0.0, Vector2(1.0, 0.45))
+	_ci.draw_circle(Vector2(0, 4), 30.0, Color(0.18, 0.12, 0.05, 0.25))
+	_ci.draw_set_transform(Vector2.ZERO)
+	_ci.draw_rect(Rect2(foot + Vector2(-26, -20), Vector2(52, 14)), body)
+	_ci.draw_circle(foot + Vector2(-6, -22), 14.0, body)
+	_ci.draw_rect(Rect2(foot + Vector2(-14, -31), Vector2(16, 9)), Color("a9cfe0"))
+	_ci.draw_rect(Rect2(foot + Vector2(-26, -10), Vector2(52, 3)), body.darkened(0.3))
 	for x in [-16.0, 16.0]:
-		draw_circle(foot + Vector2(x, -4), 6.5, Color("2e2a26"))
-		draw_circle(foot + Vector2(x, -4), 2.5, Color("c8c2b4"))
-	draw_circle(foot + Vector2(25, -15), 3.0, Color("fff3c4"))
+		_ci.draw_circle(foot + Vector2(x, -4), 6.5, Color("2e2a26"))
+		_ci.draw_circle(foot + Vector2(x, -4), 2.5, Color("c8c2b4"))
+	_ci.draw_circle(foot + Vector2(25, -15), 3.0, Color("fff3c4"))
 
 
 func _draw_bike(p: Vector2) -> void:
 	var col := Color("2f6d8a")
 	for x in [-11.0, 11.0]:
-		draw_arc(p + Vector2(x, -8), 8.0, 0.0, TAU, 18, Color("2e2a26"), 2.0)
-	draw_line(p + Vector2(-11, -8), p + Vector2(0, -8), col, 2.5)
-	draw_line(p + Vector2(0, -8), p + Vector2(-5, -18), col, 2.5)
-	draw_line(p + Vector2(-5, -18), p + Vector2(7, -18), col, 2.5)
-	draw_line(p + Vector2(7, -18), p + Vector2(11, -8), col, 2.5)
-	draw_line(p + Vector2(7, -18), p + Vector2(9, -24), Color("3b2a17"), 2.5)
-	draw_rect(Rect2(p + Vector2(-8, -21), Vector2(7, 3)), Color("3b2a17"))
-	draw_rect(Rect2(p + Vector2(8, -23), Vector2(9, 6)), Color("c8a46a"))
+		_ci.draw_arc(p + Vector2(x, -8), 8.0, 0.0, TAU, 18, Color("2e2a26"), 2.0)
+	_ci.draw_line(p + Vector2(-11, -8), p + Vector2(0, -8), col, 2.5)
+	_ci.draw_line(p + Vector2(0, -8), p + Vector2(-5, -18), col, 2.5)
+	_ci.draw_line(p + Vector2(-5, -18), p + Vector2(7, -18), col, 2.5)
+	_ci.draw_line(p + Vector2(7, -18), p + Vector2(11, -8), col, 2.5)
+	_ci.draw_line(p + Vector2(7, -18), p + Vector2(9, -24), Color("3b2a17"), 2.5)
+	_ci.draw_rect(Rect2(p + Vector2(-8, -21), Vector2(7, 3)), Color("3b2a17"))
+	_ci.draw_rect(Rect2(p + Vector2(8, -23), Vector2(9, 6)), Color("c8a46a"))
 
 
 func _draw_fountain() -> void:
 	var c := world(FOUNTAIN)
 	if Sprites.tex("fontana") != null:
-		Sprites.draw(self, "fontana", c + Vector2(0, 34), 150.0, 0.0)
+		Sprites.draw(_ci, "fontana", c + Vector2(0, 34), 150.0, 0.0)
 		return
-	draw_set_transform(c, 0.0, Vector2(1.0, 0.5))
-	draw_circle(Vector2.ZERO, 52.0, Color("bfae8e"))
-	draw_circle(Vector2.ZERO, 44.0, Color("5aa3c8"))
-	draw_set_transform(Vector2.ZERO)
+	_ci.draw_set_transform(c, 0.0, Vector2(1.0, 0.5))
+	_ci.draw_circle(Vector2.ZERO, 52.0, Color("bfae8e"))
+	_ci.draw_circle(Vector2.ZERO, 44.0, Color("5aa3c8"))
+	_ci.draw_set_transform(Vector2.ZERO)
 
 
 ## Edificio del gioco: rudere o restaurato, sprite o disegno da codice.
@@ -521,8 +672,11 @@ func _draw_building(id: String) -> void:
 	if PAIRS.has(id):
 		var sprite: String = PAIRS[id][1 if restored else 0]
 		if sprite != "" and Sprites.tex(sprite) != null:
-			Sprites.draw(self, sprite, front + Vector2(0, 14), TILE_W * float(s.x) * 1.04, 0.0)
+			Sprites.draw(_ci, sprite, front + Vector2(0, 14), TILE_W * float(s.x) * 1.04, 0.0)
 			return
+	if id == "campanile":
+		_draw_church(cell, lv, restored)
+		return
 	match id:
 		"bacheca":
 			_draw_board((top + front) * 0.5)
@@ -538,7 +692,7 @@ func _draw_building(id: String) -> void:
 		return
 	if SPRITES.has(id) and Sprites.tex(SPRITES[id]) != null:
 		var k := 0.62 if id == "campanile" else 1.0
-		Sprites.draw(self, SPRITES[id], front + Vector2(0, 8), TILE_W * float(s.x) * 1.12 * k, 0.0)
+		Sprites.draw(_ci, SPRITES[id], front + Vector2(0, 8), TILE_W * float(s.x) * 1.12 * k, 0.0)
 		if id in ["osteria", "bar", "pastificio"]:
 			_smoke(front + Vector2(TILE_W * 0.25, -h - 90.0), float(posmod(hash(id), 10)))
 		return
@@ -555,10 +709,10 @@ func _draw_sails(hub: Vector2) -> void:
 	for i in 4:
 		var ang := _clock * 0.8 + i * PI * 0.5
 		var tip := hub + Vector2(cos(ang), sin(ang) * 0.9) * 46.0
-		draw_line(hub, tip, Color("8a5a2b"), 3.0)
+		_ci.draw_line(hub, tip, Color("8a5a2b"), 3.0)
 		var side := Vector2(-sin(ang), cos(ang) * 0.9) * 9.0
-		draw_colored_polygon(PackedVector2Array([hub.lerp(tip, 0.25), tip, tip + side, hub.lerp(tip, 0.25) + side]), Color("f4ead4"))
-	draw_circle(hub, 5.0, Color("6b4a2b"))
+		_ci.draw_colored_polygon(PackedVector2Array([hub.lerp(tip, 0.25), tip, tip + side, hub.lerp(tip, 0.25) + side]), Color("f4ead4"))
+	_ci.draw_circle(hub, 5.0, Color("6b4a2b"))
 
 
 func _draw_ruin(id: String, top: Vector2, right: Vector2, front: Vector2, left: Vector2, h: float) -> void:
@@ -575,49 +729,49 @@ func _draw_ruin(id: String, top: Vector2, right: Vector2, front: Vector2, left: 
 			var t := float(i) / steps
 			var jag := h * rng.randf_range(0.25, 0.7)
 			pts.append(a.lerp(b, t) + Vector2(0, -jag))
-		draw_colored_polygon(pts, face[2])
+		_ci.draw_colored_polygon(pts, face[2])
 		# pietre e una finestra vuota
 		for k in 8:
 			var t := rng.randf()
 			var p := a.lerp(b, t) + Vector2(0, -rng.randf_range(4, h * 0.3))
-			draw_rect(Rect2(p, Vector2(8, 4)), Color(face[2]).darkened(0.12))
+			_ci.draw_rect(Rect2(p, Vector2(8, 4)), Color(face[2]).darkened(0.12))
 	# edera e macerie
 	for k in 10:
 		var t := rng.randf()
 		var p := left.lerp(front, t) + Vector2(0, -rng.randf_range(4, h * 0.4))
-		draw_circle(p, rng.randf_range(4, 7), Color("4f7f2a"))
+		_ci.draw_circle(p, rng.randf_range(4, 7), Color("4f7f2a"))
 	for k in 5:
 		var p := front + Vector2(rng.randf_range(-30, 20), rng.randf_range(2, 10))
-		draw_circle(p, rng.randf_range(3, 6), Color("a3927a"))
+		_ci.draw_circle(p, rng.randf_range(3, 6), Color("a3927a"))
 
 
 func _draw_board(c: Vector2) -> void:
-	draw_line(c + Vector2(-16, 0), c + Vector2(-16, -46), Color("6e4626"), 4.0)
-	draw_line(c + Vector2(16, 0), c + Vector2(16, -46), Color("6e4626"), 4.0)
-	draw_rect(Rect2(c + Vector2(-22, -54), Vector2(44, 30)), Color("9a6a3e"))
-	draw_colored_polygon(PackedVector2Array([c + Vector2(-26, -54), c + Vector2(26, -54), c + Vector2(0, -66)]), Color("c0603e"))
+	_ci.draw_line(c + Vector2(-16, 0), c + Vector2(-16, -46), Color("6e4626"), 4.0)
+	_ci.draw_line(c + Vector2(16, 0), c + Vector2(16, -46), Color("6e4626"), 4.0)
+	_ci.draw_rect(Rect2(c + Vector2(-22, -54), Vector2(44, 30)), Color("9a6a3e"))
+	_ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-26, -54), c + Vector2(26, -54), c + Vector2(0, -66)]), Color("c0603e"))
 	for i in GameState.orders.size():
 		var ok := GameState.can_fulfill(i)
-		draw_rect(Rect2(c + Vector2(-18 + i * 13, -50), Vector2(10, 14)), Color("f6eedb") if not ok else Color("e9f2c9"))
-		draw_circle(c + Vector2(-13 + i * 13, -49), 1.8, Color("c0503a"))
+		_ci.draw_rect(Rect2(c + Vector2(-18 + i * 13, -50), Vector2(10, 14)), Color("f6eedb") if not ok else Color("e9f2c9"))
+		_ci.draw_circle(c + Vector2(-13 + i * 13, -49), 1.8, Color("c0503a"))
 
 
 func _draw_stand(c: Vector2) -> void:
-	draw_rect(Rect2(c + Vector2(-16, -20), Vector2(32, 18)), Color("8a5a2b"))
-	draw_circle(c + Vector2(0, -24), 10.0, Color("3b2a17"))
+	_ci.draw_rect(Rect2(c + Vector2(-16, -20), Vector2(32, 18)), Color("8a5a2b"))
+	_ci.draw_circle(c + Vector2(0, -24), 10.0, Color("3b2a17"))
 	for i in 5:
-		draw_circle(c + Vector2(-6 + i * 3, -27), 2.5, Color("7b4a26"))
+		_ci.draw_circle(c + Vector2(-6 + i * 3, -27), 2.5, Color("7b4a26"))
 	var smoke := fmod(_clock, 2.0) / 2.0
-	draw_circle(c + Vector2(4 + smoke * 6, -34 - smoke * 24), 5 + smoke * 6, Color(0.9, 0.88, 0.85, 0.5 - smoke * 0.5))
+	_ci.draw_circle(c + Vector2(4 + smoke * 6, -34 - smoke * 24), 5 + smoke * 6, Color(0.9, 0.88, 0.85, 0.5 - smoke * 0.5))
 
 
 func _draw_bocce(top: Vector2, right: Vector2, front: Vector2, left: Vector2) -> void:
-	draw_colored_polygon(PackedVector2Array([top, right, front, left]), Color("d9c49a"))
-	draw_polyline(PackedVector2Array([top, right, front, left, top]), Color("8a5a2b"), 3.0)
+	_ci.draw_colored_polygon(PackedVector2Array([top, right, front, left]), Color("d9c49a"))
+	_ci.draw_polyline(PackedVector2Array([top, right, front, left, top]), Color("8a5a2b"), 3.0)
 	var c := (top + front) * 0.5
 	for p in [Vector2(-14, 2), Vector2(10, -4), Vector2(2, 8)]:
-		draw_circle(c + p, 4.0, Color("8e9aa6"))
-	draw_circle(c + Vector2(-2, -2), 2.0, Color("c0503a"))
+		_ci.draw_circle(c + p, 4.0, Color("8e9aa6"))
+	_ci.draw_circle(c + Vector2(-2, -2), 2.0, Color("c0503a"))
 
 
 func _outline_building(id: String) -> void:
@@ -626,7 +780,7 @@ func _outline_building(id: String) -> void:
 	var s := Vector2(b["size"])
 	var lv := cell_h(b["cell"])
 	var pts := PackedVector2Array([world(a, lv), world(a + Vector2(s.x, 0), lv), world(a + s, lv), world(a + Vector2(0, s.y), lv), world(a, lv)])
-	draw_polyline(pts, Color(1, 1, 1, 0.85), 2.5, true)
+	_ci.draw_polyline(pts, Color(1, 1, 1, 0.85), 2.5, true)
 
 
 func _name_pill(id: String) -> void:
@@ -637,5 +791,5 @@ func _name_pill(id: String) -> void:
 	var box := StyleBoxFlat.new()
 	box.bg_color = Color(0.27, 0.19, 0.13, 0.88)
 	box.set_corner_radius_all(12)
-	draw_style_box(box, Rect2(p - Vector2(w * 0.5, 14), Vector2(w, 26)))
-	draw_string(_font, p + Vector2(-w * 0.5 + 10, 5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("f6eedb"))
+	_ci.draw_style_box(box, Rect2(p - Vector2(w * 0.5, 14), Vector2(w, 26)))
+	_ci.draw_string(_font, p + Vector2(-w * 0.5 + 10, 5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("f6eedb"))
