@@ -24,3 +24,5 @@
 - Sprite: fogli in `assets/graphics/source/`, nomi e riquadri in `assets/graphics/sprites/sprites.json`,
   ritaglio con `python3 tools/cut_sprites.py` (vedi `docs/art_direction.md`). Nel codice si usano con
   `Sprites.tex(nome)` / `Sprites.draw(...)`. Quello che non ha sprite si disegna da codice.
+- Pianta del borgo: si modifica `tools/gen_borgo.py` (vie, piazza, colle) e si rigenera
+  `scenes/borgo/borgo_layout.gd`; poi `godot --headless --path . -s tests/test_borgo.gd`.

@@ -36,8 +36,11 @@ Il documento di design completo è in [`docs/design.md`](docs/design.md).
   un livello minimo e alcuni oggetti antichi (monete romane, anfore, lucerne,
   tessere di mosaico, fibule, chiavi antiche), che si trovano a caso
   consegnando gli ordini e nel forziere che compare ogni giorno sulla fattoria.
-- **Borgo:** è una mappa a sé. Tocca un edificio e il contadino ci va a piedi:
-  la bacheca in piazza apre gli ordini, il mulino la sua scheda.
+- **Borgo:** un paese medievale su un colle, con vie tortuose, vicoli a
+  gradini, una piazza irregolare, case addossate e le mura attorno. Tocca un
+  edificio e il contadino ci va a piedi per le vie: la bacheca in piazza apre
+  gli ordini, il mulino la sua scheda. La pianta si rigenera con
+  `python3 tools/gen_borgo.py`.
 
 ## Struttura
 
@@ -46,7 +49,8 @@ project.godot            configurazione, autoload, finestra 1280×720
 scenes/
   main.tscn / main.gd    scena principale, HUD, navigazione Fattoria ↔ Borgo
   farm/farm.gd           griglia isometrica 6×6, piantare e raccogliere
-  borgo/borgo_map.gd     il borgo come mappa: piazza, edifici, il contadino che cammina
+  borgo/borgo_map.gd     il borgo: disegno, terrazze, percorsi del contadino
+  borgo/borgo_layout.gd  pianta del borgo (generata da tools/gen_borgo.py)
   borgo/borgo.gd         finestre del borgo: bacheca degli ordini e mulino
   farm/backdrop.gd       sfondo: cielo, colline, nuvole, il paese
   ui/shop.gd             negozio di semi e concime
@@ -128,6 +132,12 @@ e gli stessi segnaposto (`%d`, `%s`) dell'italiano.
 ```bash
 godot --headless --path . -s tests/test_game_state.gd
 ```
+
+```bash
+godot --headless --path . -s tests/test_borgo.gd
+```
+
+Il secondo controlla che nel borgo ogni edificio si raggiunga a piedi.
 
 Esce con codice 1 se un controllo fallisce.
 
