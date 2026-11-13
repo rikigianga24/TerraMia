@@ -20,6 +20,8 @@ extends Node2D
 
 signal tool_changed(tool: String)
 signal sector_tapped(sector: Vector2i)
+signal structure_tapped(uid: int)
+signal placing_changed(active: bool)
 
 const TILE_W := Iso.TILE_W
 const TILE_H := Iso.TILE_H
@@ -83,6 +85,8 @@ var selected_crop: String = "grano"
 var camera: WorldCamera
 
 var _hover := Vector2i(-1, -1)
+## Posizionamento in corso: {"kind", "type", "source": "buy"|"decor"}, vuoto se no.
+var placing: Dictionary = {}
 var _press := false
 var _press_pos := Vector2.ZERO
 var _panning := false
@@ -180,9 +184,49 @@ func _iso_quad(a: Vector2, b: Vector2) -> PackedVector2Array:
 
 # --- Input ------------------------------------------------------------------
 
+func start_placing(kind: String, type: String, source: String) -> void:
+	placing = {"kind": kind, "type": type, "source": source}
+	placing_changed.emit(true)
+
+
+func cancel_placing() -> void:
+	if placing.is_empty():
+		return
+	placing = {}
+	placing_changed.emit(false)
+
+
+func _place_at(cell: Vector2i) -> void:
+	var ok := false
+	if placing["source"] == "decor":
+		ok = GameState.place_decor(placing["type"], cell)
+	else:
+		ok = GameState.buy_and_place(placing["kind"], placing["type"], cell)
+	if ok:
+		cancel_placing()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_visible_in_tree():
 		return
+	if not placing.is_empty():
+		if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed) \
+				or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE):
+			cancel_placing()
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_press = true
+				_panning = false
+				_press_pos = event.position
+			else:
+				if _press and not _panning:
+					_place_at(local_to_cell(get_local_mouse_position()))
+				_press = false
+				_panning = false
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_press = true
@@ -194,8 +238,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			# con la mano si dipinge solo partendo da una pianta pronta;
 			# altrimenti il trascinamento sposta la vista
 			if tool != "hand" or GameState.is_ready(cell):
-				_painting = true
-				_apply_at(get_local_mouse_position(), true)
+				if GameState.object_at(cell).is_empty():
+					_painting = true
+					_apply_at(get_local_mouse_position(), true)
 			get_viewport().set_input_as_handled()
 		else:
 			if _press and not _painting and not _panning:
@@ -215,7 +260,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Tocco semplice con la mano (o su un forziere / terreno in vendita).
 func _tap(cell: Vector2i) -> void:
-	if GameState.chest_cell() == cell:
+	var o := GameState.object_at(cell)
+	if not o.is_empty():
+		_object_tap(o)
+	elif GameState.chest_cell() == cell:
 		_enqueue(cell, "chest")
 	elif GameState.is_in_world(cell) and not GameState.is_in_grid(cell):
 		sector_tapped.emit(GameData.sector_of(cell))
@@ -233,8 +281,37 @@ func _apply_at(local: Vector2, first: bool) -> void:
 	if first and (GameState.chest_cell() == cell or (GameState.is_in_world(cell) and not GameState.is_in_grid(cell))):
 		_tap(cell)
 		return
+	if not GameState.object_at(cell).is_empty():
+		if first:
+			_object_tap(GameState.object_at(cell))
+		return
 	if GameState.is_in_grid(cell):
 		_use_tool(cell, first)
+
+
+## Tocco su un oggetto posato: dagli animali va il contadino, le strutture
+## aprono il loro pannello.
+func _object_tap(o: Dictionary) -> void:
+	var cell := GameState.key_to_cell(o["cell"])
+	match o["kind"]:
+		"structure":
+			structure_tapped.emit(int(o["uid"]))
+		"animal":
+			match GameState.animal_state(o):
+				"bottle":
+					if GameState.biberon - _pending("bottle") <= 0:
+						GameState.toast.emit(tr("MSG_NO_BIBERON"))
+					else:
+						_enqueue(cell, "bottle")
+				"bottle_wait":
+					GameState.toast.emit(tr("ANIMAL_WAIT") % GameData.format_time(GameState.bottle_wait(o)))
+				"hungry":
+					if not GameState.has_items(GameData.ANIMALS[o["type"]]["feed"]):
+						GameState.toast.emit(tr("MSG_NO_FEED"))
+					else:
+						_enqueue(cell, "feed")
+				"ready":
+					_enqueue(cell, "collect")
 
 
 ## Lo strumento non agisce subito: mette in coda un lavoro per il contadino,
@@ -327,6 +404,17 @@ func _perform(t: Dictionary) -> void:
 			GameState.harvest(cell)
 		"chest":
 			GameState.open_chest(cell)
+		"bottle", "feed", "collect":
+			var o := GameState.object_at(cell)
+			if o.is_empty():
+				return
+			match t["kind"]:
+				"bottle":
+					GameState.give_bottle(int(o["uid"]))
+				"feed":
+					GameState.feed_animal(int(o["uid"]))
+				"collect":
+					GameState.collect_animal(int(o["uid"]))
 
 
 func _on_harvested(cell: Vector2i, product: String, qty: int) -> void:
@@ -387,7 +475,8 @@ func _update_farmer(delta: float) -> void:
 		_act_t = -1.0
 
 
-const ACTIONS := {"plant": "sow", "water": "water", "fertilize": "sow", "harvest": "pick", "chest": "pick"}
+const ACTIONS := {"plant": "sow", "water": "water", "fertilize": "sow", "harvest": "pick", "chest": "pick",
+	"bottle": "pick", "feed": "sow", "collect": "pick"}
 
 
 func _draw_farmer() -> void:
@@ -479,6 +568,19 @@ func _draw() -> void:
 		if t["back"]:
 			_draw_tree_decor(t)
 
+	# oggetti posati, indicizzati per la cella davanti (dove vanno disegnati)
+	var by_front := {}
+	for o in GameState.placed:
+		var size := GameData.footprint(o["kind"], o["type"])
+		var front := GameState.key_to_cell(o["cell"]) + size - Vector2i(1, 1)
+		if not by_front.has(front):
+			by_front[front] = []
+		by_front[front].append(o)
+	var ghost_front := Vector2i(-999, -999)
+	if not placing.is_empty():
+		ghost_front = _hover + GameData.footprint(placing["kind"], placing["type"]) - Vector2i(1, 1)
+		_draw_ghost_footprint()
+
 	# Pittore isometrico: un quadrante alla volta, dal fondo verso lo
 	# spettatore, prima la terra e poi la pianta.
 	var farmer_drawn := false
@@ -502,6 +604,10 @@ func _draw() -> void:
 				_draw_plant(cell)
 			if GameState.chest_cell() == cell:
 				_draw_chest(cell)
+			for o in by_front.get(cell, []):
+				_draw_object(o["kind"], o["type"], GameState.key_to_cell(o["cell"]), o, 1.0)
+			if cell == ghost_front:
+				_draw_object(placing["kind"], placing["type"], _hover, {}, 0.6)
 	if not farmer_drawn:
 		_draw_farmer()
 	_draw_sector_signs(w)
@@ -930,3 +1036,82 @@ func _draw_seed_bag(c: Vector2, color: Color) -> void:
 	draw_texture_rect(TEX_SEEDS, Rect2(c + Vector2(-17, -30), Vector2(34, 34)), false)
 	draw_circle(c + Vector2(9, -4), 5.0, Color("f6eedb"))
 	draw_circle(c + Vector2(9, -4), 3.5, color)
+
+
+
+# --- Oggetti posati: animali, strutture, decorazioni -------------------------
+
+## Rombi dell'ingombro sotto il mouse: verdi se si può posare, rossi se no.
+func _draw_ghost_footprint() -> void:
+	var size := GameData.footprint(placing["kind"], placing["type"])
+	var ok := GameState.can_place(placing["kind"], placing["type"], _hover)
+	var col := Color(0.4, 0.9, 0.3, 0.45) if ok else Color(0.95, 0.3, 0.2, 0.45)
+	for y in size.y:
+		for x in size.x:
+			draw_colored_polygon(_diamond(_hover + Vector2i(x, y), 2.0), col)
+
+
+func _draw_object(kind: String, type: String, origin: Vector2i, o: Dictionary, alpha: float) -> void:
+	var size := GameData.footprint(kind, type)
+	var mod := Color(1, 1, 1, alpha)
+	match kind:
+		"animal":
+			var baby := not o.is_empty() and not GameState.is_adult(o) or o.is_empty()
+			_draw_animal(type, baby, cell_center(origin), mod)
+		"structure":
+			var front := cell_to_local(Vector2(origin + size))
+			var sprite: String = {"falegnameria": "capanno", "cucina": "casetta"}.get(type, "")
+			if Sprites.tex(sprite) != null:
+				Sprites.draw(self, sprite, front + Vector2(0, 10), TILE_W * float(size.x) * 1.05, 0.0, false, mod)
+			else:
+				draw_colored_polygon(_iso_quad(Vector2(origin), Vector2(origin + size)), Color(0.6, 0.45, 0.3, alpha))
+			if type == "cucina" and not o.is_empty():
+				_draw_smoke(front + Vector2(TILE_W * 0.3, -150))
+		"decor":
+			var c := cell_center(origin) + Vector2(0, TILE_H * 0.25)
+			match type:
+				"staccionata":
+					Sprites.draw(self, "staccionata", c, 78.0, 0.05, false, mod)
+				"barile":
+					Sprites.draw(self, "botte", c, 36.0, 0.05, false, mod)
+				"panchina":
+					Sprites.draw(self, "panchina", c, 74.0, 0.05, false, mod)
+				"secchio":
+					_shadow(c + Vector2(0, 2), 12.0, alpha)
+					draw_colored_polygon(PackedVector2Array([c + Vector2(-10, -22), c + Vector2(10, -22), c + Vector2(7, 0), c + Vector2(-7, 0)]), Color(0.62, 0.66, 0.7, alpha))
+					draw_arc(c + Vector2(0, -22), 10.0, PI, TAU, 12, Color(0.4, 0.42, 0.45, alpha), 2.0)
+
+
+func _draw_smoke(p: Vector2) -> void:
+	for i in 4:
+		var k := fposmod(_clock * 0.35 + i * 0.25, 1.0)
+		draw_circle(p + Vector2(sin(k * 5.0) * 6.0 + k * 10.0, -k * 50.0), 4.0 + k * 8.0, Color(0.93, 0.92, 0.9, 0.5 * (1.0 - k)))
+
+
+## Animali: sprite se c'è (gallina, mucca), altrimenti disegnati da codice.
+## I cuccioli sono più piccoli e hanno colori da piccoli (pulcino giallo).
+func _draw_animal(type: String, baby: bool, c: Vector2, mod: Color) -> void:
+	var bob := absf(sin(_clock * 2.0 + c.x * 0.1)) * 1.5
+	var k := 0.6 if baby else 1.0
+	var p := c + Vector2(0, 6 - bob)
+	_shadow(c + Vector2(0, 8), 18.0 * k, mod.a)
+	if type == "gallina" and baby:
+		draw_circle(p + Vector2(0, -8), 8.0, Color(1.0, 0.85, 0.25, mod.a))
+		draw_circle(p + Vector2(5, -15), 5.0, Color(1.0, 0.88, 0.3, mod.a))
+		draw_circle(p + Vector2(7, -16), 1.2, Color(0.2, 0.15, 0.1, mod.a))
+		draw_colored_polygon(PackedVector2Array([p + Vector2(10, -15), p + Vector2(14, -14), p + Vector2(10, -13)]), Color(0.95, 0.55, 0.1, mod.a))
+		return
+	var sprite: String = {"gallina": "gallina", "mucca": "mucca"}.get(type, "")
+	var width: float = {"gallina": 40.0, "mucca": 92.0}.get(type, 60.0) * k
+	if sprite != "" and Sprites.tex(sprite) != null:
+		Sprites.draw(self, sprite, p + Vector2(0, 4), width, 0.05, false, mod)
+		return
+	# pecora (e riserva per gli altri): batuffoli di lana, muso scuro
+	var wool := Color(0.97, 0.95, 0.9, mod.a)
+	var r := 13.0 * k
+	for o in [Vector2(-10, -14), Vector2(0, -18), Vector2(10, -14), Vector2(-4, -8), Vector2(6, -8)]:
+		draw_circle(p + o * k, r, wool)
+	draw_line(p + Vector2(-8, -2) * k, p + Vector2(-8, 4) * k, Color(0.25, 0.2, 0.18, mod.a), 3.0)
+	draw_line(p + Vector2(8, -2) * k, p + Vector2(8, 4) * k, Color(0.25, 0.2, 0.18, mod.a), 3.0)
+	draw_circle(p + Vector2(18, -16) * k, 8.0 * k, Color(0.25, 0.2, 0.18, mod.a))
+	draw_circle(p + Vector2(21, -18) * k, 1.4, Color(1, 1, 1, mod.a))

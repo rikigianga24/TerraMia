@@ -41,6 +41,8 @@ var _borgo_btn: Button
 var _shop_btn: Button
 var _shop: Shop
 var _land: LandPanel
+var _structure: StructurePanel
+var _place_bar: PanelContainer
 var borgo_map: BorgoMap
 var _travel: TravelOverlay
 var _travel_dest := ""
@@ -154,6 +156,45 @@ func _on_building_reached(id: String) -> void:
 				show_toast(tr("MSG_BUILDING_LOCKED") % [GameData.building_name(id), lvl])
 			else:
 				show_toast(tr("MSG_BUILDING_SOON") % GameData.building_name(id))
+
+
+## Barra in alto durante il posizionamento: cosa fare e "Annulla".
+func _build_place_bar() -> void:
+	var holder := CenterContainer.new()
+	holder.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	holder.offset_top = 70
+	holder.offset_bottom = 130
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(holder)
+	_place_bar = PanelContainer.new()
+	_place_bar.theme_type_variation = "Pill"
+	_place_bar.visible = false
+	holder.add_child(_place_bar)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	_place_bar.add_child(row)
+	row.add_child(UiKit.label(tr("PLACE_HINT"), "Heading"))
+	var cancel := UiKit.button(tr("PLACE_CANCEL"), "NavButton")
+	cancel.pressed.connect(farm.cancel_placing)
+	row.add_child(cancel)
+
+
+func _on_place_requested(kind: String, type: String, source: String) -> void:
+	if not farm.visible:
+		_show_farm_now()
+	farm.start_placing(kind, type, source)
+
+
+func _on_placing_changed(active: bool) -> void:
+	_place_bar.visible = active
+	_dock.visible = not active and farm.visible
+
+
+func _on_structure_tapped(uid: int) -> void:
+	_shop.hide()
+	_land.hide()
+	_settings.hide()
+	_structure.open(uid)
 
 
 func _on_sector_tapped(sector: Vector2i) -> void:
@@ -342,7 +383,15 @@ func _build_hud() -> void:
 	_shop = Shop.new()
 	_shop.visible = false
 	_shop.seed_bought.connect(select_seed)
+	_shop.place_requested.connect(_on_place_requested)
 	hud.add_child(_shop)
+
+	_structure = StructurePanel.new()
+	_structure.visible = false
+	hud.add_child(_structure)
+	farm.structure_tapped.connect(_on_structure_tapped)
+	farm.placing_changed.connect(_on_placing_changed)
+	_build_place_bar()
 
 	_land = LandPanel.new()
 	_land.visible = false
@@ -362,6 +411,7 @@ func _build_hud() -> void:
 
 
 func _toggle_settings() -> void:
+	_structure.hide()
 	_shop.hide()
 	_land.hide()
 	_settings.visible = not _settings.visible

@@ -36,6 +36,15 @@ Il documento di design completo è in [`docs/design.md`](docs/design.md).
   un livello minimo e alcuni oggetti antichi (monete romane, anfore, lucerne,
   tessere di mosaico, fibule, chiavi antiche), che si trovano a caso
   consegnando gli ordini e nel forziere che compare ogni giorno sulla fattoria.
+- **Animali:** al Negozio si comprano pulcini, vitellini e agnellini (dai
+  livelli 3, 5 e 6) e si posano su un punto libero della fattoria. Crescono
+  con i biberon (uno ogni 5 minuti); da adulti mangiano grano e danno uova,
+  latte o lana. Il contadino va da loro per ogni azione.
+- **Strutture:** falegnameria (livello 3) e cucina (livello 4) si comprano e
+  si posano su terreno libero, non zappato. La falegnameria costruisce
+  staccionate, secchi, barili e panchine da posizionare; la cucina prepara
+  insalata, passata, marmellata, pane e formaggio (un espresso a ricetta) e li
+  vende.
 - **Borgo:** un paese medievale in cima a una collina, con vie tortuose,
   vicoli, una piazza irregolare, case addossate, il sagrato con la chiesa e il
   campanile di Don Peppino, e le mura attorno. Scendendo dalla collina:
@@ -58,6 +67,7 @@ scenes/
   ui/shop.gd             negozio di semi e concime
   ui/settings_panel.gd   impostazioni: lingua, volumi, informazioni
   ui/land_panel.gd       acquisto dei lotti di terra
+  ui/structure_panel.gd  ricette e vendita di falegnameria e cucina
 scripts/world/           telecamera con zoom (world_camera.gd), disegno del contadino
 scripts/ui/ui_kit.gd     pezzi d'interfaccia riusati (pastiglie, icone, pulsanti)
 scripts/autoload/settings.gd  lingua e volumi (impostazioni del dispositivo)

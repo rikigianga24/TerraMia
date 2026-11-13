@@ -26,6 +26,8 @@ func _initialize() -> void:
 	_test_fertilizer_and_harvest()
 	_test_trees_regrow()
 	_test_sectors_and_antiques()
+	_test_animals()
+	_test_structures()
 	_test_v2_save_migration()
 	_test_orders_and_levels()
 	_test_save_roundtrip()
@@ -297,3 +299,71 @@ func _test_translations() -> void:
 	check(gd.crop_name("grano") == "Wheat", "grano in inglese è Wheat")
 	TranslationServer.set_locale("fr")
 	check(gd.product_name("farina") == "farine", "farina in francese è farine")
+
+
+func _test_animals() -> void:
+	print("animali")
+	gs.new_game()
+	var cell := Vector2i(0, 0)
+	check(not gs.buy_and_place("animal", "gallina", cell), "gallina bloccata al livello 1")
+	gs.level = 3
+	gs.coins = 500
+	check(not gs.buy_and_place("animal", "gallina", Vector2i(2, 2)), "non sulla terra zappata")
+	check(gs.buy_and_place("animal", "gallina", cell), "compro un pulcino")
+	check(gs.coins == 500 - int(gd.ANIMALS["gallina"]["price"]), "pagato")
+	check(not gs.queue_plow(cell), "non si zappa sotto un animale")
+	var o: Dictionary = gs.object_at(cell)
+	var uid: int = o["uid"]
+	check(gs.animal_state(o) == "bottle", "il cucciolo aspetta il biberon")
+	check(not gs.give_bottle(uid), "senza biberon non si nutre")
+	check(gs.buy_biberon(5) and gs.biberon == 5, "compro 5 biberon")
+	check(gs.give_bottle(uid), "primo biberon")
+	check(not gs.give_bottle(uid), "il secondo deve aspettare")
+	check(gs.animal_state(o) == "bottle_wait", "in attesa")
+	for i in int(gd.ANIMALS["gallina"]["bottles"]) - 1:
+		o["last_bottle"] = gs.now() - gd.BOTTLE_COOLDOWN - 1
+		gs.give_bottle(uid)
+	check(gs.is_adult(o), "dopo 3 biberon è adulta")
+	check(gs.animal_state(o) == "hungry", "e ha fame")
+	check(not gs.feed_animal(uid), "senza grano non mangia")
+	gs.add_item("grano", 1)
+	check(gs.feed_animal(uid) and gs.item_count("grano") == 0, "mangia un grano")
+	check(not gs.collect_animal(uid), "le uova non sono ancora pronte")
+	o["fed_at"] = gs.now() - 99999
+	check(gs.collect_animal(uid) and gs.item_count("uova") == 2, "raccolgo 2 uova")
+	check(gs.animal_state(o) == "hungry", "e torna ad avere fame")
+
+
+func _test_structures() -> void:
+	print("strutture e cucina")
+	gs.new_game()
+	gs.level = 4
+	gs.coins = 1000
+	check(gs.buy_and_place("structure", "cucina", Vector2i(0, 0)), "compro la cucina")
+	check(not gs.can_place("decor", "secchio", Vector2i(1, 1)), "occupa 2x2")
+	var uid: int = gs.object_at(Vector2i(1, 1))["uid"]
+	gs.espresso = 0
+	gs.add_item("pomodori", 4)
+	check(not gs.start_recipe(uid, "passata"), "senza espresso non si cucina")
+	gs.espresso = 1
+	check(not gs.start_recipe(uid, "staccionata"), "la cucina non fa staccionate")
+	check(gs.start_recipe(uid, "passata"), "cucino la passata")
+	check(gs.espresso == 0 and gs.item_count("pomodori") == 0, "consumati espresso e pomodori")
+	check(not gs.start_recipe(uid, "insalata"), "una ricetta alla volta")
+	gs.get_object(uid)["started_at"] = gs.now() - 99999
+	check(gs.collect_recipe(uid) and gs.item_count("passata") == 1, "passata pronta")
+	var c: int = gs.coins
+	check(gs.sell("passata", 1) and gs.coins == c + int(gd.SELL_PRICES["passata"]), "venduta")
+	# falegnameria e decorazioni
+	gs.buy_and_place("structure", "falegnameria", Vector2i(3, 0))
+	var f: int = gs.object_at(Vector2i(3, 0))["uid"]
+	check(gs.start_recipe(f, "staccionata"), "costruisco una staccionata")
+	gs.get_object(f)["started_at"] = gs.now() - 99999
+	gs.collect_recipe(f)
+	check(int(gs.decor_inv.get("staccionata", 0)) == 1, "staccionata in magazzino")
+	check(gs.place_decor("staccionata", Vector2i(5, 5)), "la posiziono")
+	check(not gs.object_at(Vector2i(5, 5)).is_empty(), "è sulla fattoria")
+	var d: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	gs.new_game()
+	gs.from_dict(d)
+	check(gs.placed.size() == 3 and gs.object_at(Vector2i(5, 5))["type"] == "staccionata", "oggetti salvati")

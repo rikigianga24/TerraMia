@@ -1,9 +1,11 @@
 class_name Shop
 extends PanelContainer
-## Negozio del consorzio agrario: semi di tutte le piante (bloccate fino al
-## loro livello) e concime, a schede su tre colonne.
+## Negozio del consorzio agrario, a schede: semi, alberi, scorte (concime e
+## biberon), animali, strutture e le decorazioni costruite da posizionare.
 
 signal seed_bought(crop_id: String)
+## Animale, struttura o decorazione da posizionare sulla fattoria.
+signal place_requested(kind: String, type: String, source: String)
 
 const KIND_LABEL := {"crop": "KIND_CROP", "tree": "KIND_TREE", "bush": "KIND_BUSH"}
 const COLUMNS := 3
@@ -53,13 +55,14 @@ func _ready() -> void:
 	tabs.add_theme_constant_override("separation", 8)
 	col.add_child(tabs)
 	var group := ButtonGroup.new()
-	for t in [["crop", "SHOP_TAB_CROPS", "seeds"], ["tree", "SHOP_TAB_TREES", "farm"], ["extra", "SHOP_TAB_FERTILIZER", "fertilizer"]]:
+	for t in [["crop", "SHOP_TAB_CROPS", "seeds"], ["tree", "SHOP_TAB_TREES", "farm"], ["extra", "SHOP_TAB_FERTILIZER", "fertilizer"],
+			["animals", "SHOP_TAB_ANIMALS", "farm"], ["structures", "SHOP_TAB_STRUCTURES", "shop"], ["decor", "SHOP_TAB_DECOR", "star"]]:
 		var b := UiKit.button(tr(t[1]), "ToolButton", t[2])
 		b.toggle_mode = true
 		b.button_group = group
 		b.custom_minimum_size = Vector2(0, 46)
-		b.add_theme_font_size_override("font_size", 17)
-		b.add_theme_constant_override("icon_max_width", 28)
+		b.add_theme_font_size_override("font_size", 15)
+		b.add_theme_constant_override("icon_max_width", 24)
 		var id: String = t[0]
 		b.pressed.connect(_select_tab.bind(id))
 		tabs.add_child(b)
@@ -98,6 +101,29 @@ func _refresh() -> void:
 			tr("SHOP_FERTILIZER_DESC"),
 			tr("SHOP_OWNED") % GameState.fertilizer, GameData.FERTILIZER_LEVEL, GameData.FERTILIZER_PRICE,
 			func(qty: int) -> void: GameState.buy_fertilizer(qty))
+		_add_card(UiKit.icon("drop"), tr("SHOP_BIBERON"), tr("SHOP_BIBERON_DESC"),
+			tr("SHOP_OWNED") % GameState.biberon, 1, GameData.BIBERON_PRICE,
+			func(qty: int) -> void: GameState.buy_biberon(qty))
+		return
+	if _tab == "animals":
+		for id in GameData.ANIMALS:
+			var a: Dictionary = GameData.ANIMALS[id]
+			var detail: String = tr("SHOP_ANIMAL_DESC") % [int(a["bottles"]), GameData.product_name(a["product"])]
+			_add_card(_object_icon("animal", id), GameData.animal_name(id, true) + " / " + GameData.animal_name(id), detail, "",
+				int(a["level"]), int(a["price"]), _requester("animal", id, "buy"), true)
+		return
+	if _tab == "structures":
+		for id in GameData.STRUCTURES:
+			var st: Dictionary = GameData.STRUCTURES[id]
+			_add_card(_object_icon("structure", id), GameData.structure_name(id), tr("STRUCT_DESC_" + id.to_upper()), "",
+				int(st["level"]), int(st["price"]), _requester("structure", id, "buy"), true)
+		return
+	if _tab == "decor":
+		if GameState.decor_inv.is_empty():
+			_grid.add_child(UiKit.label(tr("SHOP_DECOR_NONE")))
+		for id in GameState.decor_inv:
+			_add_card(_object_icon("decor", id), GameData.recipe_name(id), "", tr("SHOP_OWNED") % int(GameState.decor_inv[id]),
+				1, 0, _requester("decor", id, "decor"), true, tr("SHOP_DECOR_PLACE"))
 		return
 	for id in GameData.all_plants():
 		var perennial := GameData.is_perennial(id)
@@ -116,8 +142,26 @@ func _refresh() -> void:
 			int(c["level"]), int(c["seed_cost"]), buy)
 
 
+## Pulsante che chiede alla fattoria di posizionare (il negozio si chiude).
+func _requester(kind: String, type: String, source: String) -> Callable:
+	return func(_qty: int) -> void:
+		place_requested.emit(kind, type, source)
+		hide()
+
+
+const OBJECT_SPRITES := {
+	"gallina": "gallina", "mucca": "mucca", "falegnameria": "capanno", "cucina": "casetta",
+	"staccionata": "staccionata", "barile": "botte", "panchina": "panchina",
+}
+
+
+func _object_icon(_kind: String, type: String) -> Texture2D:
+	var t := Sprites.tex(OBJECT_SPRITES.get(type, ""))
+	return t if t != null else UiKit.icon("farm")
+
+
 func _add_card(icon: Texture2D, title: String, detail: String, owned: String,
-		unlock_level: int, price: int, buy: Callable) -> void:
+		unlock_level: int, price: int, buy: Callable, single := false, button_text := "") -> void:
 	var locked := GameState.level < unlock_level
 	var card := PanelContainer.new()
 	card.theme_type_variation = "Card"
@@ -141,14 +185,17 @@ func _add_card(icon: Texture2D, title: String, detail: String, owned: String,
 	names.add_child(UiKit.label(tr("SHOP_UNLOCK") % unlock_level if locked else owned, "Small"))
 
 	var info := UiKit.label(detail, "Small")
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size = Vector2(220, 0)
 	info.add_theme_font_size_override("font_size", 13)
 	col.add_child(info)
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 6)
 	col.add_child(buttons)
-	for qty in [1, 5]:
-		var b := UiKit.button("%s%d" % ["" if qty == 1 else "×5  ", price * qty], "PrimaryButton", "coin")
+	for qty in ([1] if single else [1, 5]):
+		var text := button_text if button_text != "" else "%s%d" % ["" if qty == 1 else "×5  ", price * qty]
+		var b := UiKit.button(text, "PrimaryButton", "" if button_text != "" else "coin")
 		b.add_theme_constant_override("icon_max_width", 20)
 		b.add_theme_font_size_override("font_size", 16)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL

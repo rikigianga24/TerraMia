@@ -154,6 +154,44 @@ const ANTIQUE_ORDER_CHANCE := 0.3
 const CHEST_ANTIQUES := Vector2i(1, 2)      ## da 1 a 2 oggetti
 const CHEST_COINS := Vector2i(20, 60)
 
+## --- Animali ----------------------------------------------------------------
+## Si comprano da cuccioli e crescono con i biberon (uno ogni BOTTLE_COOLDOWN);
+## da adulti si nutrono ("feed") e dopo "time" danno il loro prodotto.
+const BIBERON_PRICE := 12
+const BOTTLE_COOLDOWN := 5 * MIN
+const ANIMALS := {
+	"gallina": {"level": 3, "price": 40, "bottles": 3, "feed": {"grano": 1}, "product": "uova", "yield": 2, "time": 20 * MIN, "xp": 4},
+	"mucca": {"level": 5, "price": 160, "bottles": 5, "feed": {"grano": 3}, "product": "latte", "yield": 1, "time": 1 * HOUR, "xp": 10},
+	"pecora": {"level": 6, "price": 120, "bottles": 4, "feed": {"grano": 2}, "product": "lana", "yield": 1, "time": 90 * MIN, "xp": 8},
+}
+
+## --- Strutture, ricette e decorazioni -----------------------------------------
+## Le strutture si comprano, si posizionano sulla fattoria (su quadranti liberi,
+## non zappati) e fanno una ricetta alla volta.
+const STRUCTURES := {
+	"falegnameria": {"level": 3, "price": 150, "size": Vector2i(2, 2), "recipes": ["staccionata", "secchio", "barile", "panchina"]},
+	"cucina": {"level": 4, "price": 250, "size": Vector2i(2, 2), "recipes": ["insalata", "passata", "marmellata", "pane", "formaggio"]},
+}
+## in: prodotti consumati; coins: costo in monete; espresso: tazzine consumate;
+## out: cosa esce (decorazione per la falegnameria, prodotto per la cucina).
+const RECIPES := {
+	"staccionata": {"in": {}, "coins": 5, "espresso": 0, "time": 1 * MIN, "out": "staccionata", "xp": 1},
+	"secchio": {"in": {}, "coins": 10, "espresso": 0, "time": 2 * MIN, "out": "secchio", "xp": 1},
+	"barile": {"in": {}, "coins": 25, "espresso": 0, "time": 5 * MIN, "out": "barile", "xp": 2},
+	"panchina": {"in": {}, "coins": 40, "espresso": 0, "time": 10 * MIN, "out": "panchina", "xp": 3},
+	"insalata": {"in": {"lattuga": 2, "pomodori": 2}, "coins": 0, "espresso": 1, "time": 3 * MIN, "out": "insalata", "xp": 4},
+	"passata": {"in": {"pomodori": 4}, "coins": 0, "espresso": 1, "time": 5 * MIN, "out": "passata", "xp": 5},
+	"marmellata": {"in": {"fragole": 4}, "coins": 0, "espresso": 1, "time": 8 * MIN, "out": "marmellata", "xp": 7},
+	"pane": {"in": {"farina": 2, "uova": 1}, "coins": 0, "espresso": 1, "time": 10 * MIN, "out": "pane", "xp": 8},
+	"formaggio": {"in": {"latte": 3}, "coins": 0, "espresso": 1, "time": 15 * MIN, "out": "formaggio", "xp": 10},
+}
+const DECOR := ["staccionata", "secchio", "barile", "panchina"]
+## Prezzo di vendita dei prodotti fatti in casa (e degli animali).
+const SELL_PRICES := {
+	"insalata": 40, "passata": 55, "marmellata": 90, "pane": 75, "formaggio": 110,
+	"uova": 6, "latte": 14, "lana": 18, "farina": 12,
+}
+
 
 func crop(id: String) -> Dictionary:
 	return CROPS.get(id, {})
@@ -224,6 +262,28 @@ func resident_name(id: String) -> String:
 
 func building_line(id: String, n: int) -> String:
 	return tr("LINE_%s_%d" % [id.to_upper(), n])
+
+
+func animal_name(id: String, baby := false) -> String:
+	return tr(("BABY_" if baby else "ANIMAL_") + id.to_upper())
+
+
+func structure_name(id: String) -> String:
+	return tr("STRUCT_" + id.to_upper())
+
+
+func recipe_name(id: String) -> String:
+	return tr("RECIPE_" + id.to_upper())
+
+
+func is_decor_recipe(id: String) -> bool:
+	return RECIPES[id]["out"] in DECOR
+
+
+func footprint(kind: String, type: String) -> Vector2i:
+	if kind == "structure":
+		return STRUCTURES[type]["size"]
+	return Vector2i(1, 1)
 
 
 func antique_name(id: String) -> String:

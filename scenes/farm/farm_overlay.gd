@@ -31,11 +31,13 @@ func _draw() -> void:
 			if GameState.is_in_grid(Vector2i(x, y)):
 				_draw_labels(Vector2i(x, y))
 	_draw_sign_labels()
+	_draw_object_marks()
 	_draw_task_marks()
 	_draw_popups()
 
 
-const TASK_ICONS := {"plant": "seeds", "water": "drop", "fertilize": "fertilizer", "harvest": "hand", "chest": "coin"}
+const TASK_ICONS := {"plant": "seeds", "water": "drop", "fertilize": "fertilizer", "harvest": "hand", "chest": "coin",
+	"bottle": "drop", "feed": "seeds", "collect": "hand"}
 
 
 ## Lavori in coda: un'icona trasparente sul quadrante, finché il contadino
@@ -121,3 +123,74 @@ func _draw_popups() -> void:
 		var w := 160.0
 		draw_string_outline(_font_bold, pos + Vector2(-w * 0.5, 0), p["text"], HORIZONTAL_ALIGNMENT_CENTER, w, 22, 6, Color(0.27, 0.19, 0.13, col.a))
 		draw_string(_font_bold, pos + Vector2(-w * 0.5, 0), p["text"], HORIZONTAL_ALIGNMENT_CENTER, w, 22, col)
+
+
+
+const PRODUCT_SPRITES := {"uova": "item_uova"}
+const PRODUCT_COLORS := {"uova": Color("f4ecd8"), "latte": Color("e8f2f8"), "lana": Color("efe6d2")}
+
+
+## Indicatori sopra animali e strutture.
+func _draw_object_marks() -> void:
+	for o in GameState.placed:
+		var cell := GameState.key_to_cell(o["cell"])
+		var size := GameData.footprint(o["kind"], o["type"])
+		var c := farm.cell_center(cell)
+		var hover := Rect2i(cell, size).has_point(farm._hover)
+		match o["kind"]:
+			"animal":
+				var st := GameState.animal_state(o)
+				var top := c + Vector2(0, -58 if o["type"] == "mucca" else -46)
+				match st:
+					"bottle":
+						_bubble(top)
+						_bottle_icon(top)
+						_pill(top + Vector2(0, 26), "%d/%d" % [int(o.get("bottles", 0)), int(GameData.ANIMALS[o["type"]]["bottles"])], float(o.get("bottles", 0)) / float(GameData.ANIMALS[o["type"]]["bottles"]))
+					"bottle_wait":
+						if hover:
+							_pill(top, GameData.format_time(GameState.bottle_wait(o)), 0.0)
+					"hungry":
+						_bubble(top)
+						draw_texture_rect(UiKit.crop_icon("grano"), Rect2(top - Vector2(10, 10), Vector2(20, 20)), false)
+					"producing":
+						if hover:
+							_pill(top, GameData.format_time(ceili((1.0 - GameState.animal_progress(o)) * float(GameData.ANIMALS[o["type"]]["time"]))), GameState.animal_progress(o))
+					"ready":
+						var prod: String = GameData.ANIMALS[o["type"]]["product"]
+						var bp := top + Vector2(0, -4.0 * absf(sin(farm._clock * 3.5)))
+						_bubble(bp)
+						var tex: Texture2D = Sprites.tex(PRODUCT_SPRITES.get(prod, ""))
+						if tex != null:
+							draw_texture_rect(tex, Rect2(bp - Vector2(11, 11), Vector2(22, 22)), false)
+						else:
+							var col: Color = PRODUCT_COLORS.get(prod, Color.WHITE)
+							draw_circle(bp, 7.0, col)
+							draw_arc(bp, 7.0, 0, TAU, 16, col.darkened(0.35), 1.5)
+			"structure":
+				if not o.has("recipe"):
+					continue
+				var front := farm.cell_to_local(Vector2(cell + size))
+				var top2 := front + Vector2(0, -190)
+				var prog := GameState.recipe_progress(int(o["uid"]))
+				if prog >= 1.0:
+					_bubble(top2 + Vector2(0, -4.0 * absf(sin(farm._clock * 3.5))))
+					draw_texture_rect(UiKit.icon("star"), Rect2(top2 - Vector2(10, 14 + 4.0 * absf(sin(farm._clock * 3.5))), Vector2(20, 20)), false)
+				else:
+					var left := ceili((1.0 - prog) * float(GameData.RECIPES[o["recipe"]]["time"]))
+					_pill(top2, GameData.format_time(left), prog)
+
+
+func _bubble(p: Vector2) -> void:
+	var paper := Color("f6eedb")
+	draw_circle(p + Vector2(0, 2), 14.0, Color(0.25, 0.17, 0.1, 0.22))
+	draw_colored_polygon(PackedVector2Array([p + Vector2(-5, 10), p + Vector2(5, 10), p + Vector2(0, 18)]), paper)
+	draw_circle(p, 14.0, paper)
+	draw_arc(p, 14.0, 0.0, TAU, 32, Color("b89a72"), 1.5, true)
+
+
+func _bottle_icon(p: Vector2) -> void:
+	draw_rect(Rect2(p + Vector2(-5, -4), Vector2(10, 13)), Color("f8f8f4"))
+	draw_rect(Rect2(p + Vector2(-5, -4), Vector2(10, 13)), Color("9fb7c8"), false, 1.2)
+	draw_rect(Rect2(p + Vector2(-5, 2), Vector2(10, 7)), Color("fdfdf6"))
+	draw_rect(Rect2(p + Vector2(-6, -6), Vector2(12, 3)), Color("5aa3c8"))
+	draw_circle(p + Vector2(0, -9), 3.0, Color("e8b48a"))

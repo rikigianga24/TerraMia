@@ -34,6 +34,10 @@ var last_chest_day: String = ""      ## giorno (AAAA-MM-GG) dell'ultimo forziere
 var orders: Array = []               ## [{"giver", "items": {prodotto: qty}, "coins", "xp"}]
 var restored: Array = []             ## id degli edifici restaurati
 var productions: Dictionary = {}     ## edificio -> {"started_at": unix}
+var placed: Array = []               ## oggetti sulla fattoria (vedi "Oggetti sulla fattoria")
+var next_uid: int = 1
+var decor_inv: Dictionary = {}       ## decorazione -> quante da posizionare
+var biberon: int = 0
 
 
 static func now() -> float:
@@ -72,6 +76,10 @@ func new_game() -> void:
 	antiques = {}
 	chest = {}
 	last_chest_day = ""
+	placed = []
+	next_uid = 1
+	decor_inv = {}
+	biberon = 0
 	orders = []
 	restored = []
 	productions = {}
@@ -164,7 +172,7 @@ func is_plow_queued(cell: Vector2i) -> bool:
 
 ## Mette in coda la zappatura di un quadrante d'erba.
 func queue_plow(cell: Vector2i) -> bool:
-	if not is_in_grid(cell) or is_tilled(cell) or is_plow_queued(cell):
+	if not is_in_grid(cell) or is_tilled(cell) or is_plow_queued(cell) or not object_at(cell).is_empty():
 		return false
 	if plow_queue.size() >= GameData.PLOW_QUEUE_MAX:
 		toast.emit(tr("MSG_QUEUE_FULL"))
@@ -544,7 +552,7 @@ func tick_chest() -> void:
 	for y in w.y:
 		for x in w.x:
 			var cell := Vector2i(x, y)
-			if not is_in_grid(cell) or not get_plot(cell).is_empty() or is_plow_queued(cell):
+			if not is_in_grid(cell) or not get_plot(cell).is_empty() or is_plow_queued(cell) or not object_at(cell).is_empty():
 				continue
 			fallback.append(cell)
 			if not is_tilled(cell):
@@ -685,11 +693,267 @@ func collect_production(building_id: String) -> bool:
 	return true
 
 
+# --- Oggetti sulla fattoria -------------------------------------------------
+## Ogni oggetto: {"uid", "kind": "animal"|"structure"|"decor", "type", "cell": "x,y"}
+## più, per gli animali, "bottles", "last_bottle", "fed_at" (0 = da nutrire) e,
+## per le strutture, "recipe" e "started_at" (ricetta in corso).
+
+func object_at(cell: Vector2i) -> Dictionary:
+	for o in placed:
+		var size := GameData.footprint(o["kind"], o["type"])
+		if Rect2i(key_to_cell(o["cell"]), size).has_point(cell):
+			return o
+	return {}
+
+
+func get_object(uid: int) -> Dictionary:
+	for o in placed:
+		if int(o["uid"]) == uid:
+			return o
+	return {}
+
+
+## Quadrante libero per posare qualcosa: tuo, non zappato, senza piante, lavori,
+## forziere o altri oggetti.
+func is_cell_free(cell: Vector2i) -> bool:
+	return is_in_grid(cell) and not is_tilled(cell) and get_plot(cell).is_empty() \
+		and not is_plow_queued(cell) and object_at(cell).is_empty() and chest_cell() != cell
+
+
+func can_place(kind: String, type: String, cell: Vector2i) -> bool:
+	var size := GameData.footprint(kind, type)
+	for y in size.y:
+		for x in size.x:
+			if not is_cell_free(cell + Vector2i(x, y)):
+				return false
+	return true
+
+
+func buy_price(kind: String, type: String) -> int:
+	return int((GameData.ANIMALS if kind == "animal" else GameData.STRUCTURES)[type]["price"])
+
+
+func unlock_level(kind: String, type: String) -> int:
+	return int((GameData.ANIMALS if kind == "animal" else GameData.STRUCTURES)[type]["level"])
+
+
+func can_buy(kind: String, type: String) -> bool:
+	return level >= unlock_level(kind, type) and coins >= buy_price(kind, type)
+
+
+## Compra un animale o una struttura e lo mette nel quadrante scelto.
+func buy_and_place(kind: String, type: String, cell: Vector2i) -> bool:
+	if not can_buy(kind, type):
+		toast.emit(tr("MSG_NO_COINS") if level >= unlock_level(kind, type) else tr("SHOP_UNLOCK") % unlock_level(kind, type))
+		return false
+	if not can_place(kind, type, cell):
+		toast.emit(tr("MSG_PLACE_BLOCKED"))
+		return false
+	coins -= buy_price(kind, type)
+	var o := {"uid": next_uid, "kind": kind, "type": type, "cell": plot_key(cell)}
+	next_uid += 1
+	if kind == "animal":
+		o["bottles"] = 0
+		o["last_bottle"] = 0.0
+		o["fed_at"] = 0.0
+	placed.append(o)
+	add_xp(3)
+	changed.emit()
+	return true
+
+
+func place_decor(type: String, cell: Vector2i) -> bool:
+	if int(decor_inv.get(type, 0)) <= 0:
+		return false
+	if not can_place("decor", type, cell):
+		toast.emit(tr("MSG_PLACE_BLOCKED"))
+		return false
+	decor_inv[type] = int(decor_inv[type]) - 1
+	if decor_inv[type] <= 0:
+		decor_inv.erase(type)
+	placed.append({"uid": next_uid, "kind": "decor", "type": type, "cell": plot_key(cell)})
+	next_uid += 1
+	changed.emit()
+	return true
+
+
+## Rimette in magazzino una decorazione posata (per spostarla).
+func pick_up_decor(uid: int) -> bool:
+	var o := get_object(uid)
+	if o.is_empty() or o["kind"] != "decor":
+		return false
+	placed.erase(o)
+	decor_inv[o["type"]] = int(decor_inv.get(o["type"], 0)) + 1
+	changed.emit()
+	return true
+
+
+# --- Animali ----------------------------------------------------------------
+
+func buy_biberon(qty: int) -> bool:
+	var cost := GameData.BIBERON_PRICE * qty
+	if coins < cost:
+		toast.emit(tr("MSG_NO_COINS"))
+		return false
+	coins -= cost
+	biberon += qty
+	changed.emit()
+	return true
+
+
+func is_adult(o: Dictionary) -> bool:
+	return int(o.get("bottles", 0)) >= int(GameData.ANIMALS[o["type"]]["bottles"])
+
+
+## Secondi che mancano prima del prossimo biberon (0 = si può dare ora).
+func bottle_wait(o: Dictionary) -> int:
+	var last := float(o.get("last_bottle", 0.0))
+	if last <= 0.0:
+		return 0
+	return maxi(0, ceili(last + GameData.BOTTLE_COOLDOWN - now()))
+
+
+## Stato di un animale, per gli indicatori e per decidere cosa fare al tocco:
+## "bottle" (cucciolo, pronto per il biberon), "bottle_wait", "hungry" (adulto
+## da nutrire), "producing", "ready" (prodotto da raccogliere).
+func animal_state(o: Dictionary) -> String:
+	if not is_adult(o):
+		return "bottle" if bottle_wait(o) == 0 else "bottle_wait"
+	var fed := float(o.get("fed_at", 0.0))
+	if fed <= 0.0:
+		return "hungry"
+	return "ready" if animal_progress(o) >= 1.0 else "producing"
+
+
+func animal_progress(o: Dictionary) -> float:
+	var fed := float(o.get("fed_at", 0.0))
+	if fed <= 0.0:
+		return 0.0
+	return clampf((now() - fed) / float(GameData.ANIMALS[o["type"]]["time"]), 0.0, 1.0)
+
+
+func give_bottle(uid: int) -> bool:
+	var o := get_object(uid)
+	if o.is_empty() or o["kind"] != "animal" or is_adult(o):
+		return false
+	if bottle_wait(o) > 0:
+		return false
+	if biberon <= 0:
+		toast.emit(tr("MSG_NO_BIBERON"))
+		return false
+	biberon -= 1
+	o["bottles"] = int(o.get("bottles", 0)) + 1
+	o["last_bottle"] = now()
+	add_xp(1)
+	if is_adult(o):
+		toast.emit(tr("MSG_ANIMAL_GROWN") % GameData.animal_name(o["type"]))
+	changed.emit()
+	return true
+
+
+func feed_animal(uid: int) -> bool:
+	var o := get_object(uid)
+	if o.is_empty() or o["kind"] != "animal" or animal_state(o) != "hungry":
+		return false
+	var feed: Dictionary = GameData.ANIMALS[o["type"]]["feed"]
+	if not has_items(feed):
+		toast.emit(tr("MSG_NO_FEED"))
+		return false
+	remove_items(feed)
+	o["fed_at"] = now()
+	changed.emit()
+	return true
+
+
+func collect_animal(uid: int) -> bool:
+	var o := get_object(uid)
+	if o.is_empty() or o["kind"] != "animal" or animal_state(o) != "ready":
+		return false
+	var a: Dictionary = GameData.ANIMALS[o["type"]]
+	add_item(a["product"], int(a["yield"]))
+	o["fed_at"] = 0.0
+	add_xp(int(a["xp"]))
+	harvested.emit(key_to_cell(o["cell"]), a["product"], int(a["yield"]))
+	changed.emit()
+	return true
+
+
+# --- Strutture e ricette ----------------------------------------------------
+
+func recipe_progress(uid: int) -> float:
+	var o := get_object(uid)
+	if o.is_empty() or not o.has("recipe"):
+		return 0.0
+	return clampf((now() - float(o["started_at"])) / float(GameData.RECIPES[o["recipe"]]["time"]), 0.0, 1.0)
+
+
+func can_start_recipe(uid: int, recipe: String) -> bool:
+	var o := get_object(uid)
+	if o.is_empty() or o["kind"] != "structure" or o.has("recipe"):
+		return false
+	if not recipe in GameData.STRUCTURES[o["type"]]["recipes"]:
+		return false
+	var r: Dictionary = GameData.RECIPES[recipe]
+	return has_items(r["in"]) and coins >= int(r["coins"]) and espresso >= int(r["espresso"])
+
+
+func start_recipe(uid: int, recipe: String) -> bool:
+	if not can_start_recipe(uid, recipe):
+		var r: Dictionary = GameData.RECIPES.get(recipe, {})
+		if not r.is_empty() and espresso < int(r["espresso"]):
+			toast.emit(tr("MSG_NO_ESPRESSO"))
+		elif not r.is_empty() and not has_items(r["in"]):
+			toast.emit(tr("MSG_MISSING_INGREDIENTS"))
+		elif not r.is_empty() and coins < int(r["coins"]):
+			toast.emit(tr("MSG_NO_COINS"))
+		return false
+	var o := get_object(uid)
+	var r2: Dictionary = GameData.RECIPES[recipe]
+	remove_items(r2["in"])
+	coins -= int(r2["coins"])
+	if int(r2["espresso"]) > 0:
+		if espresso >= GameData.MOKA_MAX:
+			moka_last_tick = now()   # da piena la moka riparte
+		espresso -= int(r2["espresso"])
+	o["recipe"] = recipe
+	o["started_at"] = now()
+	changed.emit()
+	return true
+
+
+func collect_recipe(uid: int) -> bool:
+	var o := get_object(uid)
+	if o.is_empty() or not o.has("recipe") or recipe_progress(uid) < 1.0:
+		return false
+	var r: Dictionary = GameData.RECIPES[o["recipe"]]
+	var out: String = r["out"]
+	if out in GameData.DECOR:
+		decor_inv[out] = int(decor_inv.get(out, 0)) + 1
+	else:
+		add_item(out, 1)
+	o.erase("recipe")
+	o.erase("started_at")
+	add_xp(int(r["xp"]))
+	toast.emit(tr("MSG_RECIPE_DONE") % GameData.recipe_name(out))
+	changed.emit()
+	return true
+
+
+## Vende prodotti del magazzino (fatti in casa, latte, uova...).
+func sell(product: String, qty: int) -> bool:
+	if not GameData.SELL_PRICES.has(product) or item_count(product) < qty or qty <= 0:
+		return false
+	remove_items({product: qty})
+	coins += int(GameData.SELL_PRICES[product]) * qty
+	changed.emit()
+	return true
+
+
 # --- Serializzazione --------------------------------------------------------
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 3,
+		"version": 4,
 		"saved_at": now(),
 		"coins": coins,
 		"lire_oro": lire_oro,
@@ -709,6 +973,10 @@ func to_dict() -> Dictionary:
 		"antiques": antiques,
 		"chest": chest,
 		"last_chest_day": last_chest_day,
+		"placed": placed,
+		"next_uid": next_uid,
+		"decor_inv": decor_inv,
+		"biberon": biberon,
 		"orders": orders,
 		"restored": restored,
 		"productions": productions,
@@ -748,6 +1016,12 @@ func from_dict(d: Dictionary) -> void:
 	antiques = _int_values(d.get("antiques", {}))
 	chest = d.get("chest", {})
 	last_chest_day = str(d.get("last_chest_day", ""))
+	placed = d.get("placed", [])
+	for o in placed:
+		o["uid"] = int(o["uid"])
+	next_uid = int(d.get("next_uid", 1))
+	decor_inv = _int_values(d.get("decor_inv", {}))
+	biberon = int(d.get("biberon", 0))
 	orders = d.get("orders", [])
 	restored = d.get("restored", [])
 	productions = d.get("productions", {})
