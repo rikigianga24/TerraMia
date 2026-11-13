@@ -50,6 +50,7 @@ TILES = {
     "soil_wet": "terreno_bagnato",
     "dirt": "terreno_sterrato",
     "bank": "terreno_sponda",
+    "cobbles": "tile_ciottoli",
 }
 ## Mattonelle con i fianchi (foglio strada): si usa solo la faccia superiore.
 THICK_TILES = {"road": "strada_1", "road_puddles": "strada_2", "road_flowers": "strada_3"}

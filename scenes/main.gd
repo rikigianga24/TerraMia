@@ -131,6 +131,7 @@ func _show_borgo_now() -> void:
 	borgo_map.visible = true
 	farm.camera.active = false
 	borgo_map.camera.activate()
+	borgo_map.arrive()
 	_backdrop.mode = "borgo"
 	_dock.visible = false
 	_shop.hide()
