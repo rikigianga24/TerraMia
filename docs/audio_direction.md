@@ -15,7 +15,9 @@ contrabbasso pizzicato, flauto, campanellini (glockenspiel, celesta).
 - **Non scrivere nomi di giochi o di artisti** nei prompt: molti servizi li
   rifiutano, e comunque rischi di avere una copia. Le descrizioni qui sotto
   rendono già quell'atmosfera.
-- **Musiche:** Suno o Udio, in modalità *Instrumental*. Generane 3-4 versioni e
+- **Musiche:** Suno (piano a pagamento, che permette l'uso commerciale), in modalità
+  *Instrumental*. Udio da ottobre 2025 non permette di scaricare i brani (verificato a
+  novembre 2026), quindi per ora non serve per il gioco. Generane 3-4 versioni e
   tieni la migliore. Per renderle un loop pulito, tagliale in Audacity
   (dissolvenza di pochi millisecondi all'inizio e alla fine).
 - **Jingle, effetti, animali, ambienti:** ElevenLabs Sound Effects (fino a circa
@@ -28,6 +30,10 @@ contrabbasso pizzicato, flauto, campanellini (glockenspiel, celesta).
   gli ambienti). Gli effetti non devono avere silenzio all'inizio.
 
 ### Udio: come ottenere buoni risultati
+
+Attenzione: per ora Udio non permette di scaricare i brani. Questi consigli servono
+solo se torna a permetterlo; controlla anche che le condizioni d'uso consentano
+l'uso in un gioco.
 
 Udio funziona in modo diverso da Suno: i prompt lunghi e descrittivi lo
 confondono. Ogni musica qui sotto ha una versione **Udio** a parte.
