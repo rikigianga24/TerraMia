@@ -27,6 +27,29 @@ contrabbasso pizzicato, flauto, campanellini (glockenspiel, celesta).
 - **Volume:** normalizza tutto (per esempio -14 LUFS per la musica, -16/-18 per
   gli ambienti). Gli effetti non devono avere silenzio all'inizio.
 
+### Udio: come ottenere buoni risultati
+
+Udio funziona in modo diverso da Suno: i prompt lunghi e descrittivi lo
+confondono. Ogni musica qui sotto ha una versione **Udio** a parte.
+
+- **Prompt a tag**, separati da virgole, 8-15 tag al massimo. Prima il genere e
+  il fatto che è per un gioco (`video game soundtrack, cozy game music`), poi gli
+  strumenti, poi il mood, infine il tempo (`90 bpm`).
+- **Niente frasi negative.** Udio non capisce "no drums" o "no mandolin": legge
+  "drums" e "mandolin" e spesso li aggiunge. Scrivi solo quello che vuoi.
+- **Modalità manuale** (Manual mode), così Udio non riscrive il prompt.
+- **Strumentale** attivo. Se la tua versione lascia scrivere il testo anche in
+  strumentale, metti solo i tag di struttura indicati (`[Intro]`, `[Outro]`...),
+  senza parole.
+- **Lavora a pezzi:** Udio genera clip brevi (circa 30 secondi). Generane 4-6,
+  tieni la migliore e allungala con **Extend** (aggiungi una sezione alla volta),
+  usando sempre lo stesso prompt.
+- **Posizione d'inizio della clip** (Clip start, nelle impostazioni avanzate):
+  0% se vuoi un vero inizio (menu); 30-50% per le musiche in loop, così il pezzo
+  non suona come un'introduzione.
+- **Prompt strength** alta (70-90%), così rispetta strumenti e mood.
+- Se esce troppo "folk" o troppo pieno, togli tag invece di aggiungerne.
+
 Cartelle: `assets/audio/music/`, `assets/audio/sfx/`, `assets/audio/ambience/`,
 `assets/audio/voices/<abitante>/`.
 
@@ -48,6 +71,14 @@ acoustic, warm analog recording. No drums, no vocals, no folk clichés.
 Loopable, 2-3 minutes.
 ```
 
+**Udio**
+```
+video game soundtrack, cozy game main menu theme, acoustic, fingerpicked acoustic guitar, soft felt piano, wooden flute, upright bass, glockenspiel, nostalgic, warm, welcoming, italian countryside, golden hour, 75 bpm
+```
+Testo (solo struttura): `[Intro]` `[Main Theme]` `[Bridge]` `[Main Theme]` `[Outro]`.
+Clip start 0%. Allunga con Extend fino a 2-3 minuti, e chiudi con una sezione
+Outro solo se non la usi in loop.
+
 ### Fattoria — `music/fattoria.ogg`
 Sereno, produttivo, da ripetere per ore. 80-100 BPM. Melodia discreta.
 
@@ -60,6 +91,14 @@ gentle glockenspiel. Sunny Italian countryside morning, peaceful and productive.
 background and never takes over. Very light brushed percussion or shaker only.
 No accordion lead, no mandolin, no vocals. Seamless loop, about 3 minutes.
 ```
+
+**Udio**
+```
+video game soundtrack, farming game background music, cozy, acoustic guitar, pizzicato upright bass, soft piano, flute, glockenspiel, shaker, peaceful, sunny morning, relaxed, minimal, 90 bpm
+```
+Testo (solo struttura): `[Instrumental]` `[Verse]` `[Instrumental Break]` `[Verse]`.
+Clip start 40%. Allunga con Extend fino a circa 3 minuti, senza Outro: deve
+girare in loop.
 
 ### Borgo — `music/borgo.ogg`
 Più caldo e più umano. Qui la fisarmonica leggera e la chitarra danno personalità.
@@ -74,6 +113,14 @@ chatting in the piazza on a summer afternoon, human and welcoming.
 no tarantella. Seamless loop, about 3 minutes.
 ```
 
+**Udio**
+```
+video game soundtrack, cozy village theme, acoustic guitar, light swing, soft accordion, pizzicato upright bass, piano, flute, celesta, warm, friendly, italian village piazza, summer afternoon, 95 bpm
+```
+Testo (solo struttura): `[Instrumental]` `[Verse]` `[Chorus]` `[Verse]`.
+Clip start 40%. Allunga fino a circa 3 minuti, senza Outro. Se la fisarmonica
+copre tutto, sostituisci `soft accordion` con `accordion accents`.
+
 ### Restauro edificio — `music/restauro.ogg`
 10-15 secondi. Deve dare soddisfazione: una piccola fanfara giocosa.
 (Meglio con ElevenLabs Sound Effects o Stable Audio, perché Suno fa brani più lunghi.)
@@ -85,6 +132,12 @@ arpeggio, acoustic guitar strum, a cheerful flute melody, a soft accordion
 chord swell and a final bright chime with a short warm reverb tail.
 Joyful, rewarding, playful, orchestral-acoustic, major key, clear ending.
 ```
+
+**Udio** (se vuoi provarci: genera una clip e tagliala a 12 secondi in Audacity)
+```
+video game soundtrack, victory fanfare, cozy game, short jingle, rising piano arpeggio, glockenspiel, acoustic guitar strum, cheerful flute, triumphant, joyful, major key, 120 bpm
+```
+Testo (solo struttura): `[Intro]` `[Outro]`. Clip start 0%.
 
 ---
 
