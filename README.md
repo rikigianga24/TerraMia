@@ -93,7 +93,9 @@ tools/find_sprites.py    trova i disegni in un foglio trasparente (con anteprima
 tools/cut_sprites.py     ritaglia gli sprite nominati in assets/graphics/sprites/sprites.json,
                          prepara piante (3 stadi) e mattonelle di erba e terra
 tools/extract_plants.py  ritaglia le piante da un foglio con sfondo pieno (vecchio metodo)
-docs/art_direction.md    prompt e regole per tutte le illustrazioni
+docs/asset_prompts.md    prompt Flux di tutti gli asset e nomi dei file
+tools/import_flux.py     importa le immagini Flux (sfondo, ritaglio, mattonelle, piante)
+docs/art_direction.md    direzione artistica e storia dei fogli precedenti
 assets/graphics/         blocchi di terreno SVG (tiles/), icone PNG (icons/) ritagliate
                          da source/icons_sheet.webp con tools/extract_icons.py
 assets/theme/            tema dell'interfaccia (generato, non modificarlo a mano)

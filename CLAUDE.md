@@ -26,3 +26,6 @@
   `Sprites.tex(nome)` / `Sprites.draw(...)`. Quello che non ha sprite si disegna da codice.
 - Pianta del borgo: si modifica `tools/gen_borgo.py` (vie, piazza, colle) e si rigenera
   `scenes/borgo/borgo_layout.gd`; poi `godot --headless --path . -s tests/test_borgo.gd`.
+- Asset nuovi: generati con Flux uno per immagine, prompt e nomi dei file in `docs/asset_prompts.md`;
+  si importano con `python3 tools/import_flux.py CARTELLA` (originali in `assets/graphics/source/flux/`,
+  hanno la precedenza sui fogli vecchi di `cut_sprites.py`).

@@ -1088,6 +1088,9 @@ func _draw_smoke(p: Vector2) -> void:
 		draw_circle(p + Vector2(sin(k * 5.0) * 6.0 + k * 10.0, -k * 50.0), 4.0 + k * 8.0, Color(0.93, 0.92, 0.9, 0.5 * (1.0 - k)))
 
 
+const BABY_SPRITES := {"gallina": "pulcino", "mucca": "vitellino", "pecora": "agnellino"}
+
+
 ## Animali: sprite se c'è (gallina, mucca), altrimenti disegnati da codice.
 ## I cuccioli sono più piccoli e hanno colori da piccoli (pulcino giallo).
 func _draw_animal(type: String, baby: bool, c: Vector2, mod: Color) -> void:
@@ -1095,6 +1098,12 @@ func _draw_animal(type: String, baby: bool, c: Vector2, mod: Color) -> void:
 	var k := 0.6 if baby else 1.0
 	var p := c + Vector2(0, 6 - bob)
 	_shadow(c + Vector2(0, 8), 18.0 * k, mod.a)
+	# sprite: cuccioli e adulti col loro nome (docs/asset_prompts.md)
+	var named: String = (BABY_SPRITES.get(type, "") if baby else type)
+	if named != "" and Sprites.tex(named) != null:
+		var wd: float = {"gallina": 40.0, "mucca": 92.0, "pecora": 70.0}.get(type, 60.0) * k
+		Sprites.draw(self, named, p + Vector2(0, 4), wd, 0.05, false, mod)
+		return
 	if type == "gallina" and baby:
 		draw_circle(p + Vector2(0, -8), 8.0, Color(1.0, 0.85, 0.25, mod.a))
 		draw_circle(p + Vector2(5, -15), 5.0, Color(1.0, 0.88, 0.3, mod.a))

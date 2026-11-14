@@ -27,8 +27,13 @@ const ICONS := {
 static var _crop_icons: Dictionary = {}
 
 
+## Icona: quella importata in assets/graphics/icons/<nome>.png se c'è
+## (tools/import_flux.py), altrimenti quella di serie.
 static func icon(name: String) -> Texture2D:
-	return ICONS[name]
+	if not _crop_icons.has("icon_" + name):
+		var path := "res://assets/graphics/icons/%s.png" % name
+		_crop_icons["icon_" + name] = load(path) if ResourceLoader.exists(path) else ICONS.get(name, ICONS["star"])
+	return _crop_icons["icon_" + name]
 
 
 ## Icona tonda nel colore della pianta, con riflesso: segnaposto finché non
@@ -42,6 +47,9 @@ const CROP_ITEMS := {
 
 
 static func crop_icon(crop_id: String) -> Texture2D:
+	var prod: String = GameData.crop(crop_id).get("product", "")
+	if prod != "" and Sprites.tex("item_" + prod) != null:
+		return Sprites.tex("item_" + prod)
 	if CROP_ITEMS.has(crop_id) and Sprites.tex(CROP_ITEMS[crop_id]) != null:
 		return Sprites.tex(CROP_ITEMS[crop_id])
 	if _crop_icons.has(crop_id):

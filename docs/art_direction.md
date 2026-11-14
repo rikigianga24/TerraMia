@@ -1,5 +1,9 @@
 # Direzione artistica
 
+> **Da novembre 2026 gli asset si generano con Flux, uno per immagine: i prompt
+> aggiornati sono in [`asset_prompts.md`](asset_prompts.md).** Quello che segue
+> resta come storia dei fogli fatti prima.
+
 Tutte le illustrazioni del gioco (piante, edifici, icone, terreno, personaggi)
 seguono questo prompt. Va usato così com'è per ogni nuovo foglio di sprite,
 così lo stile resta uniforme.

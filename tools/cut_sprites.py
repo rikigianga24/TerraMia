@@ -188,26 +188,40 @@ def to_grid_tile(tile: Image.Image, thick: bool = False) -> Image.Image:
 def main() -> None:
     manifest = json.loads((OUT / "sprites.json").read_text())
     sheets = {}
+    # gli asset importati da Flux (tools/import_flux.py) hanno la precedenza
+    flux = {p.stem.lower() for p in (SRC / "flux").glob("*")} if (SRC / "flux").exists() else set()
     for name, entry in manifest.items():
+        if name in flux:
+            continue
         sheet = sheets.setdefault(entry["sheet"], Image.open(SRC / entry["sheet"]).convert("RGBA"))
         cut(sheet, entry["box"], entry.get("below_seam"), entry.get("above_seam")).save(OUT / f"{name}.png")
     print(len(manifest), "sprite in", OUT)
 
-    plants = {}
+    plants_path = ROOT / "assets/graphics/plants/plants.json"
+    old = json.loads(plants_path.read_text()) if plants_path.exists() else {}
+    # le piante importate da Flux restano quelle
+    plants = {c: v for c, v in old.items() if f"{c}_0" in flux}
     for crop, stages in PLANTS.items():
+        if crop in plants:
+            continue
         out = []
         for name in stages:
             img = Image.open(OUT / f"{name}.png")
             (ax, ay), w = soil_anchor(np.asarray(img))
             out.append({"file": f"res://assets/graphics/sprites/{name}.png", "anchor": [round(ax, 1), round(ay, 1)], "tile_w": round(w, 1)})
         plants[crop] = out
-    plants_path = ROOT / "assets/graphics/plants/plants.json"
     plants_path.parent.mkdir(parents=True, exist_ok=True)
     plants_path.write_text(json.dumps(plants, indent=2) + "\n")
     print(len(plants), "piante in", plants_path)
 
     tiles = ROOT / "assets/graphics/tiles"
+    flux_tiles = {"grass": "tex_grass", "grass_flowers": "tex_grass_flowers", "grass_wild": "tex_grass_wild",
+                  "grass_dry": "tex_grass_dry", "soil": "tex_soil", "soil_wet": "tex_soil_wet", "dirt": "tex_dirt",
+                  "bank": "tex_sand", "cobbles": "tex_cobbles", "road": "tex_road",
+                  "road_puddles": "tex_road_puddles", "road_flowers": "tex_road_flowers"}
     for out_name, sprite in TILES.items():
+        if flux_tiles.get(out_name) in flux:
+            continue
         tile = to_grid_tile(Image.open(OUT / f"{sprite}.png"))
         if out_name == "bank":
             # nel foglio l'acqua è in basso a destra; il fiume del gioco sta
@@ -215,6 +229,8 @@ def main() -> None:
             tile = tile.rotate(180)
         tile.save(tiles / f"{out_name}.png")
     for out_name, sprite in THICK_TILES.items():
+        if flux_tiles.get(out_name) in flux:
+            continue
         to_grid_tile(Image.open(OUT / f"{sprite}.png"), thick=True).save(tiles / f"{out_name}.png")
     print("mattonelle riportate sulla griglia in", tiles)
 

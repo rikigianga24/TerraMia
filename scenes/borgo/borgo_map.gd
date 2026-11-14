@@ -107,7 +107,7 @@ func _build() -> void:
 		var cell: Vector2i = lot[0]
 		var id: String = lot[1]
 		if id == "":
-			_houses.append([cell, HOUSE_SPRITES[posmod(hash(cell), HOUSE_SPRITES.size())]])
+			_houses.append([cell, _house_sprite(cell)])
 		else:
 			var h := 170 if id == "campanile" else (0 if id == "bocce" else 52)
 			buildings[id] = {"cell": cell, "size": lot[2], "h": h}
@@ -148,6 +148,16 @@ func _build() -> void:
 			if not _astar.is_point_solid(Vector2i(x, y)) and terrain(Vector2i(x, y)) != "r":
 				_streets.append(Vector2i(x, y))
 	GameState.building_restored.connect(_on_building_restored)
+
+
+## Casa del paese: le varianti casa_1..casa_8 se ci sono, altrimenti le vecchie.
+func _house_sprite(cell: Vector2i) -> String:
+	var std: Array = []
+	for i in range(1, 9):
+		if Sprites.tex("casa_%d" % i) != null:
+			std.append("casa_%d" % i)
+	var pool: Array = std if not std.is_empty() else HOUSE_SPRITES
+	return pool[posmod(hash(cell), pool.size())]
 
 
 func _in_lot(cell: Vector2i) -> bool:
@@ -711,6 +721,15 @@ func _draw_building_body(id: String) -> void:
 	var right := world(a + Vector2(s.x, 0), lv)
 	var front := world(a + Vector2(s), lv)
 	var left := world(a + Vector2(0, s.y), lv)
+	# prima i nomi standard (<id>_rudere / <id>_restaurato, vedi docs/asset_prompts.md),
+	# poi le coppie ritagliate dai fogli vecchi
+	var std := "%s_%s" % [id, "restaurato" if restored else "rudere"]
+	if Sprites.tex(std) != null:
+		var k := 1.0 if s.x <= 2 else 0.95
+		Sprites.draw(_ci, std, front + Vector2(0, 14), TILE_W * float(s.x) * 1.04 * k, 0.0)
+		if restored and GameData.BUILDINGS.has(id):
+			_draw_lights_later.append(id)
+		return
 	if PAIRS.has(id):
 		var sprite: String = PAIRS[id][1 if restored else 0]
 		if sprite != "" and Sprites.tex(sprite) != null:
