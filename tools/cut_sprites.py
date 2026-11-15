@@ -199,8 +199,8 @@ def main() -> None:
 
     plants_path = ROOT / "assets/graphics/plants/plants.json"
     old = json.loads(plants_path.read_text()) if plants_path.exists() else {}
-    # le piante importate da Flux restano quelle
-    plants = {c: v for c, v in old.items() if f"{c}_0" in flux}
+    # le piante importate da Flux o dai fogli nuovi (tools/import_plants.py) restano quelle
+    plants = {c: v for c, v in old.items() if f"{c}_0" in flux or v[0].get("sheet")}
     for crop, stages in PLANTS.items():
         if crop in plants:
             continue

@@ -1,54 +1,114 @@
 {
   "grano": [
     {
-      "file": "res://assets/graphics/sprites/grano_0.png",
+      "file": "res://assets/graphics/sprites/pianta_grano_0.png",
       "anchor": [
-        55.5,
-        52.0
+        14.0,
+        62.7
       ],
-      "tile_w": 109.0
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/grano_1.png",
+      "file": "res://assets/graphics/sprites/pianta_grano_1.png",
       "anchor": [
-        56.0,
-        97.0
+        30.0,
+        93.1
       ],
-      "tile_w": 110.0
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/grano_2.png",
+      "file": "res://assets/graphics/sprites/pianta_grano_2.png",
       "anchor": [
-        57.5,
-        118.5
+        46.0,
+        127.4
       ],
-      "tile_w": 113.0
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_grano_3.png",
+      "anchor": [
+        46.5,
+        183.3
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_grano_4.png",
+      "anchor": [
+        79.0,
+        178.4
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_grano_5.png",
+      "anchor": [
+        83.0,
+        183.3
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
     }
   ],
   "pomodoro": [
     {
-      "file": "res://assets/graphics/sprites/pomodoro_0.png",
+      "file": "res://assets/graphics/sprites/pianta_pomodoro_0.png",
       "anchor": [
-        58.5,
-        58.5
+        27.5,
+        57.8
       ],
-      "tile_w": 115.0
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/pomodoro_1.png",
+      "file": "res://assets/graphics/sprites/pianta_pomodoro_1.png",
       "anchor": [
-        57.5,
-        106.0
+        64.5,
+        113.7
       ],
-      "tile_w": 113.0
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/pomodoro_2.png",
+      "file": "res://assets/graphics/sprites/pianta_pomodoro_2.png",
       "anchor": [
-        57.5,
-        110.0
+        71.5,
+        148.0
       ],
-      "tile_w": 115.0
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_pomodoro_3.png",
+      "anchor": [
+        71.0,
+        164.6
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_pomodoro_4.png",
+      "anchor": [
+        72.0,
+        164.6
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_pomodoro_5.png",
+      "anchor": [
+        89.0,
+        185.2
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
     }
   ],
   "ulivo": [
@@ -131,28 +191,58 @@
   ],
   "peperoncino": [
     {
-      "file": "res://assets/graphics/sprites/peperoncino_0.png",
+      "file": "res://assets/graphics/sprites/pianta_peperoncino_0.png",
       "anchor": [
-        58.0,
-        66.5
+        32.0,
+        63.7
       ],
-      "tile_w": 114.0
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/peperoncino_1.png",
+      "file": "res://assets/graphics/sprites/pianta_peperoncino_1.png",
       "anchor": [
-        58.0,
-        87.0
+        46.5,
+        88.2
       ],
-      "tile_w": 114.0
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/peperoncino_2.png",
+      "file": "res://assets/graphics/sprites/pianta_peperoncino_2.png",
       "anchor": [
-        59.0,
-        96.0
+        58.5,
+        131.3
       ],
-      "tile_w": 116.0
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_peperoncino_3.png",
+      "anchor": [
+        70.0,
+        161.7
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_peperoncino_4.png",
+      "anchor": [
+        101.0,
+        173.5
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_peperoncino_5.png",
+      "anchor": [
+        161.0,
+        313.6
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
     }
   ],
   "lattuga": [
@@ -183,54 +273,557 @@
   ],
   "melanzana": [
     {
-      "file": "res://assets/graphics/sprites/melanzana_0.png",
+      "file": "res://assets/graphics/sprites/pianta_melanzana_0.png",
       "anchor": [
-        32.0,
-        33.5
+        44.0,
+        71.5
       ],
-      "tile_w": 64.0
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/melanzana_1.png",
+      "file": "res://assets/graphics/sprites/pianta_melanzana_1.png",
       "anchor": [
-        33.0,
-        56.0
+        55.5,
+        97.0
       ],
-      "tile_w": 66.0
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/melanzana_2.png",
+      "file": "res://assets/graphics/sprites/pianta_melanzana_2.png",
       "anchor": [
-        35.0,
-        71.0
+        73.0,
+        124.5
       ],
-      "tile_w": 68.0
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_melanzana_3.png",
+      "anchor": [
+        97.0,
+        151.9
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_melanzana_4.png",
+      "anchor": [
+        104.5,
+        194.0
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
     }
   ],
   "zucchina": [
     {
-      "file": "res://assets/graphics/sprites/zucchina_0.png",
+      "file": "res://assets/graphics/sprites/pianta_zucchina_0.png",
+      "anchor": [
+        48.0,
+        71.5
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_zucchina_1.png",
+      "anchor": [
+        70.5,
+        93.1
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_zucchina_2.png",
+      "anchor": [
+        78.0,
+        115.6
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_zucchina_3.png",
+      "anchor": [
+        98.5,
+        141.1
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_zucchina_4.png",
+      "anchor": [
+        111.0,
+        168.6
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    }
+  ],
+  "rucola": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_rucola_0.png",
+      "anchor": [
+        31.5,
+        66.6
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_rucola_1.png",
+      "anchor": [
+        44.5,
+        91.1
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_rucola_2.png",
+      "anchor": [
+        61.5,
+        111.7
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_rucola_3.png",
+      "anchor": [
+        92.0,
+        144.1
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_rucola_4.png",
+      "anchor": [
+        112.5,
+        172.5
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    }
+  ],
+  "fagioli": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_fagioli_0.png",
+      "anchor": [
+        30.0,
+        69.6
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fagioli_1.png",
+      "anchor": [
+        41.5,
+        100.0
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fagioli_2.png",
+      "anchor": [
+        59.0,
+        127.4
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fagioli_3.png",
+      "anchor": [
+        74.5,
+        316.5
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fagioli_4.png",
+      "anchor": [
+        95.5,
+        317.5
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    }
+  ],
+  "finocchio": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_finocchio_0.png",
       "anchor": [
         32.5,
-        38.5
+        100.9
       ],
-      "tile_w": 63.0
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/zucchina_1.png",
+      "file": "res://assets/graphics/sprites/pianta_finocchio_1.png",
       "anchor": [
-        34.5,
-        51.5
+        57.0,
+        136.2
       ],
-      "tile_w": 67.0
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/zucchina_2.png",
+      "file": "res://assets/graphics/sprites/pianta_finocchio_2.png",
       "anchor": [
-        34.0,
-        61.5
+        84.5,
+        156.8
       ],
-      "tile_w": 66.0
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_finocchio_3.png",
+      "anchor": [
+        140.5,
+        323.4
+      ],
+      "tile_w": 319.4,
+      "sheet": "piante_1.jpg"
+    }
+  ],
+  "carota": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_carota_0.png",
+      "anchor": [
+        27.0,
+        57.8
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carota_1.png",
+      "anchor": [
+        41.0,
+        99.0
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carota_2.png",
+      "anchor": [
+        57.5,
+        143.1
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carota_3.png",
+      "anchor": [
+        77.0,
+        172.5
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carota_4.png",
+      "anchor": [
+        91.0,
+        188.2
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    }
+  ],
+  "fragola": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_fragola_0.png",
+      "anchor": [
+        29.0,
+        54.9
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fragola_1.png",
+      "anchor": [
+        48.5,
+        86.2
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fragola_2.png",
+      "anchor": [
+        65.5,
+        100.0
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fragola_3.png",
+      "anchor": [
+        88.0,
+        129.4
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fragola_4.png",
+      "anchor": [
+        107.0,
+        149.9
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    }
+  ],
+  "cipolla": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_cipolla_0.png",
+      "anchor": [
+        22.0,
+        123.5
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_cipolla_1.png",
+      "anchor": [
+        31.5,
+        137.2
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_cipolla_2.png",
+      "anchor": [
+        37.0,
+        148.0
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_cipolla_3.png",
+      "anchor": [
+        43.0,
+        161.7
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_cipolla_4.png",
+      "anchor": [
+        41.5,
+        208.7
+      ],
+      "tile_w": 248.8,
+      "sheet": "piante_2.jpg"
+    }
+  ],
+  "carciofo": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_carciofo_0.png",
+      "anchor": [
+        29.5,
+        58.8
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carciofo_1.png",
+      "anchor": [
+        45.0,
+        98.0
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carciofo_2.png",
+      "anchor": [
+        74.0,
+        128.4
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carciofo_3.png",
+      "anchor": [
+        114.0,
+        156.8
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_carciofo_4.png",
+      "anchor": [
+        126.0,
+        198.0
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    }
+  ],
+  "patata": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_patata_0.png",
+      "anchor": [
+        33.5,
+        62.7
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_patata_1.png",
+      "anchor": [
+        46.5,
+        86.2
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_patata_2.png",
+      "anchor": [
+        70.0,
+        105.8
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_patata_3.png",
+      "anchor": [
+        86.5,
+        128.4
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_patata_4.png",
+      "anchor": [
+        94.5,
+        196.0
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    }
+  ],
+  "aglio": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_aglio_0.png",
+      "anchor": [
+        19.0,
+        77.4
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_aglio_1.png",
+      "anchor": [
+        36.5,
+        113.7
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_aglio_2.png",
+      "anchor": [
+        47.5,
+        139.2
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_aglio_3.png",
+      "anchor": [
+        51.5,
+        159.7
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_aglio_4.png",
+      "anchor": [
+        55.5,
+        198.0
+      ],
+      "tile_w": 243.1,
+      "sheet": "piante_3.jpg"
+    }
+  ],
+  "basilico": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_basilico_0.png",
+      "anchor": [
+        36.5,
+        71.5
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_basilico_1.png",
+      "anchor": [
+        58.0,
+        108.8
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_basilico_2.png",
+      "anchor": [
+        76.0,
+        143.1
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_basilico_3.png",
+      "anchor": [
+        86.5,
+        160.7
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_basilico_4.png",
+      "anchor": [
+        84.5,
+        157.8
+      ],
+      "tile_w": 218.1,
+      "sheet": "piante_4.jpg"
     }
   ]
 }

@@ -105,7 +105,7 @@ var _trees: Array = []             ## bosco e alberi sparsi, posizioni fisse
 var _vehicles: Array = []          ## veicoli sulla strada
 var _next_vehicle := 4.0
 var _overlay_layer: CanvasLayer
-var _plant_sprites: Dictionary = {}  ## coltura -> [ {tex, anchor, scale} ×3 stadi ]
+var _plant_sprites: Dictionary = {}  ## coltura -> [ {tex, anchor, scale} per stadio, almeno 3 ]
 
 
 func _ready() -> void:
@@ -834,10 +834,11 @@ func _shadow(p: Vector2, r: float, alpha := 1.0) -> void:
 
 # --- Piante -----------------------------------------------------------------
 
-## Sprite illustrati delle piante (assets/graphics/plants), ritagliati dai
-## fogli con tools/extract_plants.py. Ogni sprite comprende il suo blocco di
-## terra; "anchor" è il centro della faccia superiore del blocco, "tile_w" la
-## sua larghezza: servono ad allinearlo al quadrante. Le piante senza sprite
+## Sprite illustrati delle piante (assets/graphics/plants/plants.json). Quelli
+## del nuovo stile (tools/import_plants.py) sono senza terra: "anchor" è la base
+## della pianta; i vecchi (tools/cut_sprites.py) hanno il loro blocco di terra e
+## "anchor" è il centro della sua faccia superiore. "tile_w" è la larghezza del
+## quadrante in pixel dello sprite: serve ad allinearlo e a scalarlo. Le piante senza sprite
 ## si disegnano da codice.
 func _load_plant_sprites() -> void:
 	const MANIFEST := "res://assets/graphics/plants/plants.json"
@@ -857,18 +858,22 @@ func _load_plant_sprites() -> void:
 				stages = []
 				break
 			stages.append({"tex": tex, "anchor": Vector2(st["anchor"][0], st["anchor"][1]), "scale": TILE_W * PLANT_SCALE / float(st["tile_w"])})
-		if stages.size() == 3:
+		if stages.size() >= 3:
 			_plant_sprites[crop_id] = stages
 
 
-## Stadio dello sprite: 0 germoglio, 1 crescita, 2 maturazione (pronta).
-## Alberi e arbusti già raccolti ripartono dalla crescita, non dal germoglio.
+## Stadio dello sprite: l'ultimo quando la pianta è pronta, gli altri divisi in
+## parti uguali sulla crescita (0 è il germoglio). Le piante hanno 3 stadi o di
+## più (tools/import_plants.py). Alberi e arbusti già raccolti ripartono dalla
+## crescita, non dal germoglio.
 func _plant_stage(cell: Vector2i, plot: Dictionary) -> int:
+	var last: int = _plant_sprites[plot["crop"]].size() - 1
 	if GameState.is_ready(cell):
-		return 2
+		return last
+	var growing := mini(int(GameState.plot_progress(cell) * last), last - 1)
 	if int(plot.get("harvests", 0)) > 0:
-		return 1
-	return 0 if GameState.plot_progress(cell) < 0.34 else 1
+		return maxi(growing, 1)
+	return growing
 
 
 func _draw_plant_sprite(cell: Vector2i) -> bool:

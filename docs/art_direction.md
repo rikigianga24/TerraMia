@@ -73,6 +73,34 @@ I nomi vanno per righe, da sinistra a destra (quelli usati sono in
 proprio prendono il più simile (`SUBSTITUTES` in `scenes/borgo/borgo_map.gd`),
 e le botteghe in più (`bottega_*`) stanno tra le case del paese.
 
+## Piante
+
+Stile nuovo: fogli con una riga per pianta e gli stadi di crescita da sinistra
+a destra (quanti se ne vuole, almeno 3), sullo stesso sfondo grigio uniforme,
+**senza blocco di terra**: nel gioco la pianta poggia sulla terra arata del
+campo, con la base al centro del quadrante. Le piante di una riga sono
+disegnate alla stessa scala (il germoglio piccolo, la pianta matura grande).
+I fogli stanno in `assets/graphics/source/piante/` e si importano con:
+
+```bash
+python3 tools/import_plants.py assets/graphics/source/piante/FOGLIO.jpg coltura1 coltura2 ... [--riga X,Y=N]
+```
+
+Le colture vanno nell'ordine delle righe ("-" salta una riga); un disegno grande
+che scavalca due righe si assegna con `--riga`. Lo script scrive gli sprite
+`pianta_<coltura>_<stadio>` e `assets/graphics/plants/plants.json`; il gioco
+mostra l'ultimo stadio quando la pianta è pronta e divide gli altri sulla crescita.
+
+| Foglio | Righe |
+| --- | --- |
+| `piante_1.jpg` | peperoncino, rucola, fagioli, finocchio (`--riga 1200,190=0 --riga 630,450=2 --riga 890,450=2`) |
+| `piante_2.jpg` | carota, fragola, zucchina, cipolla |
+| `piante_3.jpg` | carciofo, patata, melanzana, aglio |
+| `piante_4.jpg` | pomodoro, grano, - (zucchina, già presa), basilico |
+
+Ancora nel vecchio stile: lattuga, origano, zucca, anguria, zafferano e gli
+alberi e arbusti (ulivo, vite, arancio e gli altri).
+
 ## Palette di riferimento
 
 - Terra coltivata: terracotta (#a8532e) con sassolini chiari.
