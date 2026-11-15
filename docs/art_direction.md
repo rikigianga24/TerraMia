@@ -111,6 +111,26 @@ L'ombra diventa trasparente e la base della pianta è il centro dell'ombra.
 Ancora nel vecchio stile: lattuga, origano, zucca, anguria, zafferano e gli
 alberi e arbusti (ulivo, vite, arancio e gli altri).
 
+## Animali animati
+
+Fogli a caselle (riquadri col bordo nero su sfondo bianco), una riga per
+animazione: camminata, beccata (o mangiare), posa ferma. Servono due direzioni:
+di tre quarti verso il basso ("_s") e di profilo verso destra ("_e"); verso
+sinistra il gioco le specchia. I fogli stanno in `assets/graphics/source/animali/`
+e si importano con:
+
+```bash
+python3 tools/import_frames.py assets/graphics/source/animali/gallina_sud.jpg gallina 0:cammina_s 1:becca_s 2:ferma_s:1
+python3 tools/import_frames.py assets/graphics/source/animali/gallina_est.jpg gallina 0:cammina_e 1:becca_e 2:ferma_e:1
+```
+
+Lo script trova i riquadri dalle linee nere, ritaglia ogni fotogramma (via lo
+sfondo e le scritte) e scrive `assets/graphics/animals/<animale>/anims.json`.
+Nel gioco l'animale adulto girella nel suo quadrante, cammina, si ferma a
+beccare o a guardarsi intorno (`_draw_wandering` in `scenes/farm/farm.gd`).
+Per un animale nuovo bastano gli stessi nomi di animazione e la sua altezza in
+`ANIMAL_H`.
+
 ## Palette di riferimento
 
 - Terra coltivata: terracotta (#a8532e) con sassolini chiari.

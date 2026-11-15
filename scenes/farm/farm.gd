@@ -63,6 +63,13 @@ const SHAPES := {
 
 ## Le piante illustrate occupano un po' meno del quadrante: resta un filo di terra.
 const PLANT_SCALE := 0.88
+## Animali che girellano (AnimalFrames): altezza in pixel della figura in piedi
+const ANIMAL_H := {"gallina": 50.0}
+const WANDER_SEG := 5.0          ## secondi di un tratto: cammina, poi becca o sta ferma
+const WANDER_SPEED := 18.0       ## pixel al secondo
+const WANDER_RANGE := 0.8        ## quanto si allontana dal centro (1 = fino al bordo del quadrante)
+const WANDER_WALK_FPS := 10.0
+const WANDER_PECK_FPS := 5.0
 const WIND_PERIOD := 16.0       ## secondi tra una raffica e l'altra
 const WIND_CELL_DELAY := 0.12   ## secondi di ritardo della raffica per ogni quadrante
 const FARMER_SPEED := 300.0
@@ -1087,7 +1094,15 @@ func _draw_object(kind: String, type: String, origin: Vector2i, o: Dictionary, a
 	match kind:
 		"animal":
 			var baby := not o.is_empty() and not GameState.is_adult(o) or o.is_empty()
-			_draw_animal(type, baby, cell_center(origin), mod)
+			if not baby and AnimalFrames.has(type, "cammina_e"):
+				_draw_wandering(type, int(o.get("uid", 0)), cell_center(origin), mod)
+			elif o.is_empty() and AnimalFrames.has(type, "ferma_e"):
+				# anteprima mentre lo si posa: fermo, di profilo
+				_shadow(cell_center(origin) + Vector2(0, 2), 16.0, mod.a)
+				AnimalFrames.draw(self, type, "ferma_e", 0, cell_center(origin), ANIMAL_H.get(type, 50.0),
+					AnimalFrames.scale_of(type, "ferma_e"), false, mod)
+			else:
+				_draw_animal(type, baby, cell_center(origin), mod)
 		"structure":
 			var front := cell_to_local(Vector2(origin + size))
 			var sprite: String = type
@@ -1123,6 +1138,57 @@ const BABY_SPRITES := {"gallina": "pulcino", "mucca": "vitellino", "pecora": "ag
 
 ## Animali: sprite se c'è (gallina, mucca), altrimenti disegnati da codice.
 ## I cuccioli sono più piccoli e hanno colori da piccoli (pulcino giallo).
+## Animale adulto che girella nel suo quadrante: va verso un punto, poi si
+## ferma a beccare per terra o a guardarsi intorno, e riparte. È solo un effetto
+## visivo, calcolato dall'orologio della scena e dall'uid (stesso animale,
+## stessa passeggiata): non tocca lo stato del gioco. I disegni ci sono di
+## fronte-destra ("_s") e di profilo a destra ("_e"); verso sinistra si specchiano.
+func _draw_wandering(type: String, uid: int, c: Vector2, mod: Color) -> void:
+	var t := _clock + float(posmod(uid * 7919, 1000)) * 0.37
+	var seg := floori(t / WANDER_SEG)
+	var local := t - seg * WANDER_SEG
+	var from := c + _wander_point(uid, seg - 1)
+	var to := c + _wander_point(uid, seg)
+	var move := to - from
+	var walk_t := minf(move.length() / WANDER_SPEED, WANDER_SEG - 1.0)
+	# direzione: di profilo se si muove in orizzontale, di tre quarti se scende
+	var side := absf(move.x) >= absf(move.y) * 1.2 or move.y < 0.0
+	var dir := "e" if side else "s"
+	var flip := move.x < 0.0
+	var anim: String
+	var frame: int
+	var foot: Vector2
+	if local < walk_t:
+		anim = "cammina_" + dir
+		frame = int(local * WANDER_WALK_FPS)
+		foot = from.lerp(to, local / walk_t)
+	else:
+		foot = to
+		var rest := local - walk_t
+		if posmod(uid + seg, 3) != 0:
+			# becca: giù e su, con una pausa ogni tanto
+			anim = "becca_" + dir
+			var cycle := fmod(rest, 1.6)
+			frame = mini(int(cycle * WANDER_PECK_FPS), 3) if cycle < 0.9 else 0
+		else:
+			anim = "ferma_" + dir
+			frame = 0
+	if not AnimalFrames.has(type, anim):
+		anim = "ferma_e"
+	var ref := AnimalFrames.scale_of(type, anim.replace("becca", "cammina"))
+	_shadow(foot + Vector2(0, 2), 16.0, mod.a)
+	AnimalFrames.draw(self, type, anim, frame, foot, ANIMAL_H.get(type, 50.0), ref, flip, mod)
+
+
+## Punto della passeggiata numero "seg" (rispetto al centro del quadrante),
+## dentro un rombo un po' più piccolo del quadrante.
+func _wander_point(uid: int, seg: int) -> Vector2:
+	var h := hash(Vector2i(uid, seg))
+	var u := float(posmod(h, 1000)) / 1000.0 - 0.5
+	var v := float(posmod(h / 1000, 1000)) / 1000.0 - 0.5
+	return Vector2((u - v) * TILE_W * 0.5, (u + v) * TILE_H * 0.5) * WANDER_RANGE
+
+
 func _draw_animal(type: String, baby: bool, c: Vector2, mod: Color) -> void:
 	var bob := absf(sin(_clock * 2.0 + c.x * 0.1)) * 1.5
 	var k := 0.6 if baby else 1.0
