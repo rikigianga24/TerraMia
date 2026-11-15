@@ -53,7 +53,7 @@ Stylized hand-painted casual mobile game asset, cozy Tuscan countryside, warm Me
 **OGGETTO** (alla fine dei prompt di oggetti, piante, edifici, personaggi):
 
 ```
-A single object, centered, seen in isometric three-quarter view from above at about 35 degrees, fully visible with plenty of empty space around it, with only a soft round contact shadow underneath. Plain flat uniform light grey background, no ground, no scenery, no text, no letters, no watermark.
+A single object, centered, seen in classic 2:1 isometric game view (footprint diamond half as tall as it is wide), fully visible with plenty of empty space around it, with only a soft round contact shadow underneath. Plain flat uniform light grey background, no ground, no scenery, no text, no letters, no watermark.
 ```
 
 **TEXTURE** (alla fine dei prompt del terreno):

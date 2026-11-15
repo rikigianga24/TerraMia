@@ -6,7 +6,7 @@ extends Node2D
 ##
 ## Attorno: il fiume a sinistra, il bosco a destra, una strada di pietrisco
 ## davanti dove ogni tanto passa un carretto o un'auto d'epoca.
-## Le mattonelle sono illustrate (tools/cut_sprites.py), quadranti 3:2 (Iso); piante,
+## Le mattonelle sono illustrate (tools/cut_sprites.py), quadranti 2:1 (Iso); piante,
 ## contadino, fiume, alberi e veicoli sono disegnati da codice.
 ##
 ## Strumenti (barra in basso):
@@ -63,6 +63,8 @@ const SHAPES := {
 
 ## Le piante illustrate occupano un po' meno del quadrante: resta un filo di terra.
 const PLANT_SCALE := 0.88
+const WIND_PERIOD := 16.0       ## secondi tra una raffica e l'altra
+const WIND_CELL_DELAY := 0.12   ## secondi di ritardo della raffica per ogni quadrante
 const FARMER_SPEED := 300.0
 const ACT_TIME := 0.7            ## durata di un'azione sul posto (semina, acqua...)
 const TASK_MAX := 40
@@ -105,7 +107,7 @@ var _trees: Array = []             ## bosco e alberi sparsi, posizioni fisse
 var _vehicles: Array = []          ## veicoli sulla strada
 var _next_vehicle := 4.0
 var _overlay_layer: CanvasLayer
-var _plant_sprites: Dictionary = {}  ## coltura -> [ {tex, anchor, scale} ×3 stadi ]
+var _plant_sprites: Dictionary = {}  ## coltura -> [ {tex, anchor, scale} per stadio, almeno 3 ]
 
 
 func _ready() -> void:
@@ -834,10 +836,11 @@ func _shadow(p: Vector2, r: float, alpha := 1.0) -> void:
 
 # --- Piante -----------------------------------------------------------------
 
-## Sprite illustrati delle piante (assets/graphics/plants), ritagliati dai
-## fogli con tools/extract_plants.py. Ogni sprite comprende il suo blocco di
-## terra; "anchor" è il centro della faccia superiore del blocco, "tile_w" la
-## sua larghezza: servono ad allinearlo al quadrante. Le piante senza sprite
+## Sprite illustrati delle piante (assets/graphics/plants/plants.json). Quelli
+## del nuovo stile (tools/import_plants.py) sono senza terra: "anchor" è la base
+## della pianta; i vecchi (tools/cut_sprites.py) hanno il loro blocco di terra e
+## "anchor" è il centro della sua faccia superiore. "tile_w" è la larghezza del
+## quadrante in pixel dello sprite: serve ad allinearlo e a scalarlo. Le piante senza sprite
 ## si disegnano da codice.
 func _load_plant_sprites() -> void:
 	const MANIFEST := "res://assets/graphics/plants/plants.json"
@@ -856,19 +859,25 @@ func _load_plant_sprites() -> void:
 			if tex == null:
 				stages = []
 				break
-			stages.append({"tex": tex, "anchor": Vector2(st["anchor"][0], st["anchor"][1]), "scale": TILE_W * PLANT_SCALE / float(st["tile_w"])})
-		if stages.size() == 3:
+			# le piante senza blocco di terra (fogli nuovi) si piegano col vento
+			stages.append({"tex": tex, "anchor": Vector2(st["anchor"][0], st["anchor"][1]),
+				"scale": TILE_W * PLANT_SCALE / float(st["tile_w"]), "sway": st.has("sheet")})
+		if stages.size() >= 3:
 			_plant_sprites[crop_id] = stages
 
 
-## Stadio dello sprite: 0 germoglio, 1 crescita, 2 maturazione (pronta).
-## Alberi e arbusti già raccolti ripartono dalla crescita, non dal germoglio.
+## Stadio dello sprite: l'ultimo quando la pianta è pronta, gli altri divisi in
+## parti uguali sulla crescita (0 è il germoglio). Le piante hanno 3 stadi o di
+## più (tools/import_plants.py). Alberi e arbusti già raccolti ripartono dalla
+## crescita, non dal germoglio.
 func _plant_stage(cell: Vector2i, plot: Dictionary) -> int:
+	var last: int = _plant_sprites[plot["crop"]].size() - 1
 	if GameState.is_ready(cell):
-		return 2
+		return last
+	var growing := mini(int(GameState.plot_progress(cell) * last), last - 1)
 	if int(plot.get("harvests", 0)) > 0:
-		return 1
-	return 0 if GameState.plot_progress(cell) < 0.34 else 1
+		return maxi(growing, 1)
+	return growing
 
 
 func _draw_plant_sprite(cell: Vector2i) -> bool:
@@ -881,11 +890,32 @@ func _draw_plant_sprite(cell: Vector2i) -> bool:
 	var st: Dictionary = _plant_sprites[plot["crop"]][_plant_stage(cell, plot)]
 	var tex: Texture2D = st["tex"]
 	var k: float = st["scale"]
-	var pos: Vector2 = cell_center(cell) - st["anchor"] * k
-	draw_texture_rect(tex, Rect2(pos, tex.get_size() * k), false)
+	if st["sway"]:
+		# piegata dalla base: la base resta ferma, la cima si sposta col vento
+		var base := cell_center(cell)
+		draw_set_transform_matrix(Transform2D(0.0, Vector2.ONE, _wind(cell), base))
+		draw_texture_rect(tex, Rect2(-st["anchor"] * k, tex.get_size() * k), false)
+		draw_set_transform_matrix(Transform2D.IDENTITY)
+	else:
+		draw_texture_rect(tex, Rect2(cell_center(cell) - st["anchor"] * k, tex.get_size() * k), false)
 	if cell == _hover:
 		draw_polyline(_closed(_diamond(cell, 2.0)), COLOR_HOVER, 2.5, true)
 	return true
+
+
+## Vento sulle piante: inclinazione (angolo di taglio, in radianti) per il
+## quadrante. Quasi sempre solo un respiro appena visibile; ogni tanto passa
+## una raffica che attraversa il campo in diagonale e fa ondeggiare le piante
+## per qualche secondo. Tutto dipende dall'orologio della scena: è solo un
+## effetto visivo, non tocca lo stato del gioco.
+func _wind(cell: Vector2i) -> float:
+	# raffica: picco stretto di un'onda lenta, una ogni WIND_PERIOD secondi,
+	# che arriva un po' dopo sui quadranti più lontani
+	var phase := _clock - float(cell.x + cell.y) * WIND_CELL_DELAY
+	var gust := pow(maxf(0.0, sin(phase * TAU / WIND_PERIOD)), 8.0)
+	var own := float(posmod(hash(cell), 100)) * 0.063
+	var breath := sin(_clock * 1.1 + own) * 0.012
+	return breath + gust * sin(_clock * 3.2 + own) * 0.09 + gust * 0.04
 
 
 func _draw_plant(cell: Vector2i) -> void:

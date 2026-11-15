@@ -8,7 +8,7 @@ riquadri si trovano con tools/find_sprites.py) e scrive:
   assets/graphics/plants/plants.json    stadi delle piante, allineati al
                                         blocco di terra (vedi farm.gd)
   assets/graphics/tiles/*.png           le mattonelle del foglio del terreno,
-                                        riportate sul rombo 240x160 della griglia (3:2)
+                                        riportate sul rombo 240x120 della griglia (2:1)
 
 Uso:  python3 tools/cut_sprites.py
 """
@@ -38,7 +38,7 @@ PLANTS = {
     "zucchina": ["zucchina_0", "zucchina_1", "zucchina_2"],
 }
 
-TILE_W, TILE_H = 240, 160   # doppio di Iso.TILE_W / Iso.TILE_H (scripts/world/iso.gd)
+TILE_W, TILE_H = 240, 120   # doppio di Iso.TILE_W / Iso.TILE_H (scripts/world/iso.gd)
 
 ## Mattonelle del gioco (assets/graphics/tiles/<nome>.png) -> sprite del foglio del terreno
 TILES = {
@@ -147,7 +147,7 @@ def cut(sheet: Image.Image, box, below_seam=None, above_seam=None) -> Image.Imag
 
 
 def to_grid_tile(tile: Image.Image, thick: bool = False) -> Image.Image:
-    """Porta la faccia superiore di una mattonella sul rombo 240x160 del gioco."""
+    """Porta la faccia superiore di una mattonella sul rombo 240x120 del gioco."""
     a = np.asarray(tile)[..., 3] > 128
     ys, xs = np.nonzero(a)
     # Vertici laterali e inferiore: affidabili (l'erba alta può sporgere
@@ -199,8 +199,8 @@ def main() -> None:
 
     plants_path = ROOT / "assets/graphics/plants/plants.json"
     old = json.loads(plants_path.read_text()) if plants_path.exists() else {}
-    # le piante importate da Flux restano quelle
-    plants = {c: v for c, v in old.items() if f"{c}_0" in flux}
+    # le piante importate da Flux o dai fogli nuovi (tools/import_plants.py) restano quelle
+    plants = {c: v for c, v in old.items() if f"{c}_0" in flux or v[0].get("sheet")}
     for crop, stages in PLANTS.items():
         if crop in plants:
             continue

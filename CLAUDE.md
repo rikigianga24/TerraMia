@@ -29,3 +29,6 @@
 - Asset nuovi: generati con Flux uno per immagine, prompt e nomi dei file in `docs/asset_prompts.md`;
   si importano con `python3 tools/import_flux.py CARTELLA` (originali in `assets/graphics/source/flux/`,
   hanno la precedenza sui fogli vecchi di `cut_sprites.py`).
+- Audio: musiche in `assets/audio/music/`, effetti e jingle in `assets/audio/sfx/`, in `.ogg`
+  (conversione con ffmpeg, musica normalizzata a -14 LUFS, effetti a -16). Le suona l'autoload
+  `Music` (`scripts/autoload/music.gd`) sui bus "Music" e "SFX" di `Settings`; senza finestra tace.
