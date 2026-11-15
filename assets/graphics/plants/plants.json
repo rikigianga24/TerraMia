@@ -3,8 +3,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_grano_0.png",
       "anchor": [
-        14.0,
-        62.7
+        14.5,
+        66.6
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -12,8 +12,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_grano_1.png",
       "anchor": [
-        30.0,
-        93.1
+        31.0,
+        94.1
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -21,8 +21,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_grano_2.png",
       "anchor": [
-        46.0,
-        127.4
+        47.0,
+        129.4
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -30,8 +30,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_grano_3.png",
       "anchor": [
-        46.5,
-        183.3
+        48.5,
+        171.5
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -39,8 +39,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_grano_4.png",
       "anchor": [
-        79.0,
-        178.4
+        81.0,
+        167.6
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -48,8 +48,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_grano_5.png",
       "anchor": [
-        83.0,
-        183.3
+        84.0,
+        171.5
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -68,8 +68,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_pomodoro_1.png",
       "anchor": [
-        64.5,
-        113.7
+        65.5,
+        114.7
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -78,7 +78,7 @@
       "file": "res://assets/graphics/sprites/pianta_pomodoro_2.png",
       "anchor": [
         71.5,
-        148.0
+        149.0
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -96,7 +96,7 @@
       "file": "res://assets/graphics/sprites/pianta_pomodoro_4.png",
       "anchor": [
         72.0,
-        164.6
+        165.6
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -105,7 +105,7 @@
       "file": "res://assets/graphics/sprites/pianta_pomodoro_5.png",
       "anchor": [
         89.0,
-        185.2
+        172.5
       ],
       "tile_w": 218.1,
       "sheet": "piante_4.jpg"
@@ -194,7 +194,7 @@
       "file": "res://assets/graphics/sprites/pianta_peperoncino_0.png",
       "anchor": [
         32.0,
-        63.7
+        62.7
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -211,8 +211,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_peperoncino_2.png",
       "anchor": [
-        58.5,
-        131.3
+        59.0,
+        133.3
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -221,7 +221,7 @@
       "file": "res://assets/graphics/sprites/pianta_peperoncino_3.png",
       "anchor": [
         70.0,
-        161.7
+        162.7
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -229,8 +229,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_peperoncino_4.png",
       "anchor": [
-        101.0,
-        173.5
+        101.5,
+        174.4
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -238,8 +238,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_peperoncino_5.png",
       "anchor": [
-        161.0,
-        313.6
+        161.5,
+        314.6
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -276,7 +276,7 @@
       "file": "res://assets/graphics/sprites/pianta_melanzana_0.png",
       "anchor": [
         44.0,
-        71.5
+        72.5
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -285,7 +285,7 @@
       "file": "res://assets/graphics/sprites/pianta_melanzana_1.png",
       "anchor": [
         55.5,
-        97.0
+        98.0
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -302,7 +302,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_melanzana_3.png",
       "anchor": [
-        97.0,
+        97.5,
         151.9
       ],
       "tile_w": 243.1,
@@ -311,8 +311,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_melanzana_4.png",
       "anchor": [
-        104.5,
-        194.0
+        105.0,
+        169.5
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -322,8 +322,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_zucchina_0.png",
       "anchor": [
-        48.0,
-        71.5
+        48.5,
+        72.5
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -332,7 +332,7 @@
       "file": "res://assets/graphics/sprites/pianta_zucchina_1.png",
       "anchor": [
         70.5,
-        93.1
+        92.1
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -340,7 +340,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_zucchina_2.png",
       "anchor": [
-        78.0,
+        79.0,
         115.6
       ],
       "tile_w": 248.8,
@@ -349,8 +349,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_zucchina_3.png",
       "anchor": [
-        98.5,
-        141.1
+        99.0,
+        140.1
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -359,7 +359,7 @@
       "file": "res://assets/graphics/sprites/pianta_zucchina_4.png",
       "anchor": [
         111.0,
-        168.6
+        155.8
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -369,7 +369,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_rucola_0.png",
       "anchor": [
-        31.5,
+        31.0,
         66.6
       ],
       "tile_w": 319.4,
@@ -378,8 +378,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_rucola_1.png",
       "anchor": [
-        44.5,
-        91.1
+        45.5,
+        92.1
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -387,8 +387,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_rucola_2.png",
       "anchor": [
-        61.5,
-        111.7
+        62.0,
+        113.7
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -397,7 +397,7 @@
       "file": "res://assets/graphics/sprites/pianta_rucola_3.png",
       "anchor": [
         92.0,
-        144.1
+        145.0
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -405,7 +405,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_rucola_4.png",
       "anchor": [
-        112.5,
+        113.0,
         172.5
       ],
       "tile_w": 319.4,
@@ -416,7 +416,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_fagioli_0.png",
       "anchor": [
-        30.0,
+        29.5,
         69.6
       ],
       "tile_w": 319.4,
@@ -426,7 +426,7 @@
       "file": "res://assets/graphics/sprites/pianta_fagioli_1.png",
       "anchor": [
         41.5,
-        100.0
+        100.9
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -435,7 +435,7 @@
       "file": "res://assets/graphics/sprites/pianta_fagioli_2.png",
       "anchor": [
         59.0,
-        127.4
+        129.4
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -443,8 +443,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_fagioli_3.png",
       "anchor": [
-        74.5,
-        316.5
+        75.5,
+        315.6
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -452,7 +452,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_fagioli_4.png",
       "anchor": [
-        95.5,
+        96.5,
         317.5
       ],
       "tile_w": 319.4,
@@ -463,8 +463,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_finocchio_0.png",
       "anchor": [
-        32.5,
-        100.9
+        35.0,
+        101.9
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -472,8 +472,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_finocchio_1.png",
       "anchor": [
-        57.0,
-        136.2
+        57.5,
+        137.2
       ],
       "tile_w": 319.4,
       "sheet": "piante_1.jpg"
@@ -481,7 +481,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_finocchio_2.png",
       "anchor": [
-        84.5,
+        85.5,
         156.8
       ],
       "tile_w": 319.4,
@@ -490,7 +490,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_finocchio_3.png",
       "anchor": [
-        140.5,
+        142.0,
         323.4
       ],
       "tile_w": 319.4,
@@ -511,7 +511,7 @@
       "file": "res://assets/graphics/sprites/pianta_carota_1.png",
       "anchor": [
         41.0,
-        99.0
+        98.0
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -519,7 +519,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_carota_2.png",
       "anchor": [
-        57.5,
+        58.0,
         143.1
       ],
       "tile_w": 248.8,
@@ -528,8 +528,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_carota_3.png",
       "anchor": [
-        77.0,
-        172.5
+        77.5,
+        171.5
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -537,7 +537,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_carota_4.png",
       "anchor": [
-        91.0,
+        91.5,
         188.2
       ],
       "tile_w": 248.8,
@@ -558,7 +558,7 @@
       "file": "res://assets/graphics/sprites/pianta_fragola_1.png",
       "anchor": [
         48.5,
-        86.2
+        87.2
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -566,7 +566,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_fragola_2.png",
       "anchor": [
-        65.5,
+        66.0,
         100.0
       ],
       "tile_w": 248.8,
@@ -576,7 +576,7 @@
       "file": "res://assets/graphics/sprites/pianta_fragola_3.png",
       "anchor": [
         88.0,
-        129.4
+        130.3
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -596,7 +596,7 @@
       "file": "res://assets/graphics/sprites/pianta_cipolla_0.png",
       "anchor": [
         22.0,
-        123.5
+        124.5
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -614,7 +614,7 @@
       "file": "res://assets/graphics/sprites/pianta_cipolla_2.png",
       "anchor": [
         37.0,
-        148.0
+        149.0
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -631,8 +631,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_cipolla_4.png",
       "anchor": [
-        41.5,
-        208.7
+        41.0,
+        197.0
       ],
       "tile_w": 248.8,
       "sheet": "piante_2.jpg"
@@ -651,7 +651,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_carciofo_1.png",
       "anchor": [
-        45.0,
+        45.5,
         98.0
       ],
       "tile_w": 243.1,
@@ -660,7 +660,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_carciofo_2.png",
       "anchor": [
-        74.0,
+        74.5,
         128.4
       ],
       "tile_w": 243.1,
@@ -670,7 +670,7 @@
       "file": "res://assets/graphics/sprites/pianta_carciofo_3.png",
       "anchor": [
         114.0,
-        156.8
+        157.8
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -678,8 +678,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_carciofo_4.png",
       "anchor": [
-        126.0,
-        198.0
+        127.0,
+        187.2
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -689,7 +689,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_patata_0.png",
       "anchor": [
-        33.5,
+        34.0,
         62.7
       ],
       "tile_w": 243.1,
@@ -716,7 +716,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_patata_3.png",
       "anchor": [
-        86.5,
+        87.0,
         128.4
       ],
       "tile_w": 243.1,
@@ -725,8 +725,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_patata_4.png",
       "anchor": [
-        94.5,
-        196.0
+        88.5,
+        171.5
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -737,7 +737,7 @@
       "file": "res://assets/graphics/sprites/pianta_aglio_0.png",
       "anchor": [
         19.0,
-        77.4
+        78.4
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -746,7 +746,7 @@
       "file": "res://assets/graphics/sprites/pianta_aglio_1.png",
       "anchor": [
         36.5,
-        113.7
+        115.6
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
@@ -754,7 +754,7 @@
     {
       "file": "res://assets/graphics/sprites/pianta_aglio_2.png",
       "anchor": [
-        47.5,
+        48.0,
         139.2
       ],
       "tile_w": 243.1,
@@ -772,8 +772,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_aglio_4.png",
       "anchor": [
-        55.5,
-        198.0
+        52.0,
+        187.2
       ],
       "tile_w": 243.1,
       "sheet": "piante_3.jpg"
