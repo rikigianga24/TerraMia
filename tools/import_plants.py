@@ -5,12 +5,16 @@ pianta poggia sulla terra del campo).
 
 Uso:
     python3 tools/import_plants.py FOGLIO coltura1 coltura2 ... [--riga X,Y=N ...] [--secca]
+        [--cancella X0,Y0,X1,Y1 ...] [--larghezza F]
 
 Le colture vanno nell'ordine delle righe, dall'alto; "-" salta una riga (per
 esempio una pianta già presa da un altro foglio). Un disegno grande che
 scavalca due righe si assegna a mano con --riga: il disegno che contiene il
 punto X,Y del foglio va nella riga N (da 0). Con --secca l'ultima colonna è
 la pianta secca: diventa pianta_<coltura>_secca e non è uno stadio.
+--cancella copre col colore dello sfondo un rettangolo del foglio (per esempio
+le scritte sotto i disegni). --larghezza è quanto è larga, in quadranti, la
+pianta matura tipica del foglio (di serie 0.8; per gli alberi 1.3).
 
 Lo sfondo può essere grigio uniforme o bianco con un'ombra morbida sotto la
 pianta: in quel caso l'ombra diventa trasparente e la base della pianta è il
@@ -53,6 +57,10 @@ BG_FAR = 60.0
 WHITE_BG = 235.0
 WHITE_NEUTRAL_SAT = 22.0
 WHITE_SHADOW_MIN_L = 120.0
+PETAL_MAX = 150
+PETAL_MIN_SAT = 10.0
+WHITE_PURE_L = 236.0          ## bianco dello sfondo
+WHITE_SHADOW_ZONE = 0.35      ## l'ombra sta in questa parte bassa del disegno
 WHITE_SHADOW_GAIN = 1.6
 WHITE_SHADOW_COLOR = (30.0, 22.0, 10.0)
 WHITE_POCKET_L = 215.0       ## zone chiuse candidate: luminose ...
@@ -177,8 +185,14 @@ def cut_plant_white(rgb: np.ndarray, others: np.ndarray, bg: np.ndarray,
     lum = rgb @ np.array([0.299, 0.587, 0.114])
     sat = rgb.max(axis=2) - rgb.min(axis=2)
     d = np.sqrt(((rgb - bg) ** 2).sum(axis=2))
+    # fuori: il bianco dappertutto, il grigio dell'ombra solo nella parte bassa
+    # del disegno (dove sta l'ombra): più su un grigio chiaro è una foglia
+    # argentata, come quelle dell'ulivo
+    white = (sat < WHITE_NEUTRAL_SAT) & (lum > WHITE_PURE_L)
     neutral = (sat < WHITE_NEUTRAL_SAT) & (lum > WHITE_SHADOW_MIN_L)
-    lab, _ = labels(neutral)
+    rows = np.arange(rgb.shape[0])[:, None]
+    low = rows >= rgb.shape[0] * (1.0 - WHITE_SHADOW_ZONE)
+    lab, _ = labels(white | (neutral & low))
     border = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
     outside = np.isin(lab, border[border > 0]) | others
     plab, pn = labels((lum > WHITE_POCKET_L) & (sat < WHITE_POCKET_SAT))
@@ -191,9 +205,16 @@ def cut_plant_white(rgb: np.ndarray, others: np.ndarray, bg: np.ndarray,
     greenish = ((mean(rgb[..., 1] - np.maximum(rgb[..., 0], rgb[..., 2])) > WHITE_POCKET_GREEN)
                 & (mean_l > WHITE_POCKET_GREEN_L) & (mean_s < WHITE_POCKET_GREEN_SAT))
     # i petali toccano il centro giallo del fiore: le zone chiare lì vicino restano
-    yellow = (rgb[..., 0] > 170) & (rgb[..., 1] > 130) & (rgb[..., 2] < 110) & (rgb[..., 0] - rgb[..., 2] > 90)
+    # centro del fiore: giallo-arancio, il rosso almeno quanto il verde (le foglie
+    # giallo-verdi chiare hanno più verde)
+    yellow = ((rgb[..., 0] > 170) & (rgb[..., 1] > 130) & (rgb[..., 2] < 110)
+              & (rgb[..., 0] - rgb[..., 2] > 90) & (rgb[..., 0] >= rgb[..., 1] - 5))
     near_yellow = np.asarray(Image.fromarray(yellow.astype(np.uint8) * 255).filter(ImageFilter.MaxFilter(9))) > 0
-    petal = np.bincount(flat, weights=near_yellow.ravel().astype(float), minlength=pn + 1) > 0
+    # misurato: i petali sono piccoli (fino a ~110 px) e un po' tinti (saturazione
+    # media 10-20); una zona grande o grigio neutro vicino a un giallo (legno
+    # chiaro, un fiore giallo) è sfondo
+    petal = ((np.bincount(flat, weights=near_yellow.ravel().astype(float), minlength=pn + 1) > 0)
+             & (size < PETAL_MAX) & (mean_s >= PETAL_MIN_SAT))
     if no_flowers:      # le piante secche non hanno fiori (e i baccelli secchi sono gialli)
         petal[:] = False
     pocket = (mean_l > WHITE_POCKET_MEAN_L) & ~petal & (
@@ -242,6 +263,17 @@ def main() -> None:
     forced = {}
     withered = "--secca" in args
     args = [a for a in args if a != "--secca"]
+    erase = []
+    fill, max_fill = FILL, MAX_FILL
+    while "--cancella" in args:
+        i = args.index("--cancella")
+        erase.append([int(v) for v in args[i + 1].split(",")])
+        del args[i:i + 2]
+    if "--larghezza" in args:
+        i = args.index("--larghezza")
+        fill = float(args[i + 1])
+        max_fill = fill * MAX_FILL / FILL
+        del args[i:i + 2]
     while "--riga" in args:
         i = args.index("--riga")
         point, row = args[i + 1].split("=")
@@ -251,6 +283,10 @@ def main() -> None:
         print(__doc__)
         sys.exit(1)
     sheet = Image.open(args[0]).convert("RGB")
+    # zone da ignorare (per esempio le scritte sotto i disegni): si coprono col colore dello sfondo
+    for x0, y0, x1, y1 in erase:
+        bgc = tuple(int(v) for v in sheet_background(np.asarray(sheet).astype(float)))
+        sheet.paste(bgc, (x0, y0, x1, y1))
     sheet_rgb = np.asarray(sheet).astype(float)
     bg = sheet_background(sheet_rgb)
     crops = args[1:]
@@ -293,7 +329,7 @@ def main() -> None:
             continue
         for old in SPRITES.glob(f"pianta_{crop}_*.png"):
             old.unlink()
-        tile_w = max(typical / FILL, final_w / MAX_FILL)
+        tile_w = max(typical / fill, final_w / max_fill)
         stages = []
         for i, b in enumerate(row):
             st = cut(b, f"pianta_{crop}_{i}")

@@ -113,54 +113,60 @@
   ],
   "ulivo": [
     {
-      "file": "res://assets/graphics/sprites/ulivo_0.png",
+      "file": "res://assets/graphics/sprites/pianta_ulivo_0.png",
       "anchor": [
-        58.0,
-        74.0
+        38.5,
+        101.0
       ],
-      "tile_w": 114.0
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/ulivo_1.png",
+      "file": "res://assets/graphics/sprites/pianta_ulivo_1.png",
       "anchor": [
-        57.5,
-        108.5
+        97.5,
+        189.0
       ],
-      "tile_w": 113.0
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/ulivo_2.png",
+      "file": "res://assets/graphics/sprites/pianta_ulivo_2.png",
       "anchor": [
-        59.0,
-        111.5
+        165.5,
+        280.0
       ],
-      "tile_w": 114.0
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
     }
   ],
   "vite": [
     {
-      "file": "res://assets/graphics/sprites/vite_0.png",
+      "file": "res://assets/graphics/sprites/pianta_vite_0.png",
       "anchor": [
-        56.0,
-        63.5
+        39.5,
+        106.0
       ],
-      "tile_w": 110.0
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/vite_1.png",
+      "file": "res://assets/graphics/sprites/pianta_vite_1.png",
       "anchor": [
-        59.0,
-        84.5
+        99.5,
+        208.0
       ],
-      "tile_w": 116.0
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
     },
     {
-      "file": "res://assets/graphics/sprites/vite_2.png",
+      "file": "res://assets/graphics/sprites/pianta_vite_2.png",
       "anchor": [
-        60.5,
-        111.5
+        163.5,
+        242.0
       ],
-      "tile_w": 119.0
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
     }
   ],
   "arancio": [
@@ -193,8 +199,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_peperoncino_0.png",
       "anchor": [
-        52.0,
-        75.0
+        49.0,
+        74.0
       ],
       "tile_w": 332.5,
       "sheet": "piante_5.jpg"
@@ -212,7 +218,7 @@
       "file": "res://assets/graphics/sprites/pianta_peperoncino_2.png",
       "anchor": [
         133.0,
-        247.5
+        248.0
       ],
       "tile_w": 332.5,
       "sheet": "piante_5.jpg"
@@ -258,7 +264,7 @@
       "file": "res://assets/graphics/sprites/pianta_melanzana_1.png",
       "anchor": [
         115.0,
-        195.0
+        203.0
       ],
       "tile_w": 326.2,
       "sheet": "piante_6.jpg"
@@ -267,7 +273,7 @@
       "file": "res://assets/graphics/sprites/pianta_melanzana_2.png",
       "anchor": [
         163.0,
-        251.0
+        266.0
       ],
       "tile_w": 326.2,
       "sheet": "piante_6.jpg"
@@ -277,8 +283,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_zucchina_0.png",
       "anchor": [
-        57.5,
-        57.0
+        55.5,
+        81.3
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -286,8 +292,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_zucchina_1.png",
       "anchor": [
-        107.5,
-        132.0
+        104.5,
+        169.5
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -295,8 +301,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_zucchina_2.png",
       "anchor": [
-        184.0,
-        232.0
+        180.5,
+        242.0
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -324,8 +330,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_rucola_2.png",
       "anchor": [
-        167.5,
-        253.0
+        164.0,
+        246.0
       ],
       "tile_w": 332.5,
       "sheet": "piante_5.jpg"
@@ -353,8 +359,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_fagioli_2.png",
       "anchor": [
-        122.0,
-        321.5
+        120.0,
+        316.0
       ],
       "tile_w": 332.5,
       "sheet": "piante_5.jpg"
@@ -420,8 +426,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_carota_2.png",
       "anchor": [
-        131.5,
-        203.0
+        129.0,
+        291.1
       ],
       "tile_w": 417.5,
       "sheet": "piante_8.jpg"
@@ -461,7 +467,7 @@
       "file": "res://assets/graphics/sprites/pianta_cipolla_0.png",
       "anchor": [
         36.5,
-        132.0
+        155.0
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -469,8 +475,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_cipolla_1.png",
       "anchor": [
-        43.5,
-        199.0
+        42.5,
+        218.0
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -478,8 +484,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_cipolla_2.png",
       "anchor": [
-        72.0,
-        221.0
+        70.5,
+        295.0
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -490,7 +496,7 @@
       "file": "res://assets/graphics/sprites/pianta_carciofo_0.png",
       "anchor": [
         90.5,
-        97.0
+        119.5
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -499,7 +505,7 @@
       "file": "res://assets/graphics/sprites/pianta_carciofo_1.png",
       "anchor": [
         138.5,
-        201.0
+        210.0
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -508,7 +514,7 @@
       "file": "res://assets/graphics/sprites/pianta_carciofo_2.png",
       "anchor": [
         154.0,
-        221.0
+        225.0
       ],
       "tile_w": 386.2,
       "sheet": "piante_7.jpg"
@@ -536,8 +542,8 @@
     {
       "file": "res://assets/graphics/sprites/pianta_patata_2.png",
       "anchor": [
-        132.0,
-        209.0
+        130.5,
+        260.7
       ],
       "tile_w": 326.2,
       "sheet": "piante_6.jpg"
@@ -548,7 +554,7 @@
       "file": "res://assets/graphics/sprites/pianta_aglio_0.png",
       "anchor": [
         44.0,
-        132.0
+        161.5
       ],
       "tile_w": 326.2,
       "sheet": "piante_6.jpg"
@@ -557,7 +563,7 @@
       "file": "res://assets/graphics/sprites/pianta_aglio_1.png",
       "anchor": [
         72.0,
-        158.5
+        199.5
       ],
       "tile_w": 326.2,
       "sheet": "piante_6.jpg"
@@ -566,7 +572,7 @@
       "file": "res://assets/graphics/sprites/pianta_aglio_2.png",
       "anchor": [
         97.5,
-        200.0
+        278.0
       ],
       "tile_w": 326.2,
       "sheet": "piante_6.jpg"
@@ -594,11 +600,185 @@
     {
       "file": "res://assets/graphics/sprites/pianta_basilico_2.png",
       "anchor": [
-        167.5,
-        270.0
+        167.0,
+        300.9
       ],
       "tile_w": 417.5,
       "sheet": "piante_8.jpg"
+    }
+  ],
+  "ciliegio": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_ciliegio_0.png",
+      "anchor": [
+        49.5,
+        176.0
+      ],
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_ciliegio_1.png",
+      "anchor": [
+        117.0,
+        255.0
+      ],
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_ciliegio_2.png",
+      "anchor": [
+        153.5,
+        302.0
+      ],
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
+    }
+  ],
+  "castagno": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_castagno_0.png",
+      "anchor": [
+        83.0,
+        189.0
+      ],
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_castagno_1.png",
+      "anchor": [
+        129.0,
+        284.0
+      ],
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_castagno_2.png",
+      "anchor": [
+        180.5,
+        320.0
+      ],
+      "tile_w": 252.3,
+      "sheet": "alberi_1.jpg"
+    }
+  ],
+  "nocciolo": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_nocciolo_0.png",
+      "anchor": [
+        56.0,
+        126.0
+      ],
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_nocciolo_1.png",
+      "anchor": [
+        115.5,
+        225.0
+      ],
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_nocciolo_2.png",
+      "anchor": [
+        144.5,
+        263.0
+      ],
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
+    }
+  ],
+  "fico": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_fico_0.png",
+      "anchor": [
+        83.5,
+        167.0
+      ],
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fico_1.png",
+      "anchor": [
+        119.5,
+        246.0
+      ],
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_fico_2.png",
+      "anchor": [
+        187.0,
+        313.5
+      ],
+      "tile_w": 254.6,
+      "sheet": "alberi_2.jpg"
+    }
+  ],
+  "anguria": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_anguria_0.png",
+      "anchor": [
+        77.0,
+        131.0
+      ],
+      "tile_w": 595.6,
+      "sheet": "piante_9.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_anguria_1.png",
+      "anchor": [
+        150.0,
+        216.0
+      ],
+      "tile_w": 595.6,
+      "sheet": "piante_9.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_anguria_2.png",
+      "anchor": [
+        265.5,
+        339.0
+      ],
+      "tile_w": 595.6,
+      "sheet": "piante_9.jpg"
+    }
+  ],
+  "zafferano": [
+    {
+      "file": "res://assets/graphics/sprites/pianta_zafferano_0.png",
+      "anchor": [
+        92.0,
+        196.0
+      ],
+      "tile_w": 595.6,
+      "sheet": "piante_9.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_zafferano_1.png",
+      "anchor": [
+        142.0,
+        278.0
+      ],
+      "tile_w": 595.6,
+      "sheet": "piante_9.jpg"
+    },
+    {
+      "file": "res://assets/graphics/sprites/pianta_zafferano_2.png",
+      "anchor": [
+        207.5,
+        325.0
+      ],
+      "tile_w": 595.6,
+      "sheet": "piante_9.jpg"
     }
   ]
 }
