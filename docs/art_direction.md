@@ -93,10 +93,16 @@ mostra l'ultimo stadio quando la pianta è pronta e divide gli altri sulla cresc
 
 | Foglio | Righe |
 | --- | --- |
-| `piante_1.jpg` | peperoncino, rucola, fagioli, finocchio (`--riga 1200,190=0 --riga 630,450=2 --riga 890,450=2`) |
-| `piante_2.jpg` | carota, fragola, zucchina, cipolla |
-| `piante_3.jpg` | carciofo, patata, melanzana, aglio |
-| `piante_4.jpg` | pomodoro, grano, - (zucchina, già presa), basilico |
+| `piante_5.jpg` | peperoncino, rucola, fagioli (`--secca`) |
+| `piante_6.jpg` | patata, melanzana, aglio (`--secca`) |
+| `piante_7.jpg` | zucchina, cipolla, carciofo (`--secca`) |
+| `piante_8.jpg` | carota, basilico, fragola (`--secca`) |
+| `piante_1.jpg` … `piante_4.jpg` | fogli precedenti (sfondo grigio, senza la pianta secca): da lì vengono ancora finocchio, pomodoro e grano (`piante_1.jpg peperoncino rucola fagioli finocchio --riga 1200,190=0 --riga 630,450=2 --riga 890,450=2`, `piante_4.jpg pomodoro grano - basilico`); vanno importati **prima** dei fogli nuovi, che sovrascrivono le colture in comune |
+
+I fogli nuovi (5-8) hanno sfondo bianco, l'ombra morbida sotto la pianta e
+nell'ultima colonna la pianta secca: con `--secca` diventa
+`pianta_<coltura>_secca`, pronta per quando il gioco avrà le piante che seccano.
+L'ombra diventa trasparente e la base della pianta è il centro dell'ombra.
 
 Ancora nel vecchio stile: lattuga, origano, zucca, anguria, zafferano e gli
 alberi e arbusti (ulivo, vite, arancio e gli altri).
