@@ -30,6 +30,17 @@ const TEX_COBBLES := preload("res://assets/graphics/tiles/cobbles.png")
 const TEX_DIRT := preload("res://assets/graphics/tiles/dirt.png")
 const WALKABLE := ["#", "p", "c", "r"]
 
+## Edifici senza un disegno proprio nei fogli del nuovo stile
+## (assets/graphics/source/edifici): si usa quello che gli somiglia di più.
+const SUBSTITUTES := {
+	"frantoio_rudere": "rudere_pietra", "cantina_rudere": "rudere_pietra",
+	"caseificio_rudere": "rudere_palazzo", "ufficio_postale_rudere": "rudere_palazzo",
+	"conserve_rudere": "rudere_casa", "gelateria_rudere": "rudere_casa",
+	"pasticceria_rudere": "bar_rudere",
+	"conserve_restaurato": "bottega_fruttivendolo", "caseificio_restaurato": "bottega_salumeria",
+}
+## Botteghe che non sono edifici del gioco: stanno tra le case del paese.
+const SHOPS := ["bottega_fioraio", "bottega_merceria", "bottega_farmacia", "bottega_agraria"]
 ## Edifici piccoli in piazza (1x1).
 const SMALL := {"bacheca": Vector2i(24, 20), "caldarroste": Vector2i(20, 22)}
 ## Auto d'epoca: parcheggiate fuori dalla porta e qualcuna in salita.
@@ -133,14 +144,18 @@ func _build() -> void:
 	GameState.building_restored.connect(_on_building_restored)
 
 
-## Casa del paese: una delle varianti casa_1..casa_8 che ci sono (docs/asset_prompts.md);
-## "" se non ce n'è nessuna, e allora la casa si disegna da codice.
+## Casa del paese: una delle case casa_1, casa_2... che ci sono, ogni tanto una
+## bottega; "" se non ce n'è nessuna, e allora la casa si disegna da codice.
 func _house_sprite(cell: Vector2i) -> String:
-	var std: Array = []
-	for i in range(1, 9):
-		if Sprites.tex("casa_%d" % i) != null:
-			std.append("casa_%d" % i)
-	return "" if std.is_empty() else std[posmod(hash(cell), std.size())]
+	var pool: Array = []
+	var i := 1
+	while Sprites.tex("casa_%d" % i) != null:
+		pool.append("casa_%d" % i)
+		i += 1
+	for shop in SHOPS:
+		if Sprites.tex(shop) != null:
+			pool.append(shop)
+	return "" if pool.is_empty() else pool[posmod(hash(cell), pool.size())]
 
 
 func _in_lot(cell: Vector2i) -> bool:
@@ -712,6 +727,8 @@ func _draw_building_body(id: String) -> void:
 	var left := world(a + Vector2(0, s.y), lv)
 	# sprite <id>_rudere / <id>_restaurato (docs/asset_prompts.md), se ci sono
 	var std := "%s_%s" % [id, "restaurato" if restored else "rudere"]
+	if Sprites.tex(std) == null:
+		std = SUBSTITUTES.get(std, std)
 	if Sprites.tex(std) != null:
 		var k := 1.0 if s.x <= 2 else 0.95
 		Sprites.draw(_ci, std, front + Vector2(0, 14), TILE_W * float(s.x) * 1.04 * k, 0.0)

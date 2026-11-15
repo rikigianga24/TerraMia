@@ -42,13 +42,30 @@ e non "2:1 isometric".
 
 ## Edifici
 
-Gli edifici (del borgo, case del paese e strutture della fattoria) non si
-ritagliano più dai fogli: le immagini del vecchio stile sono state tolte. Si
-generano con Flux uno per immagine, coi prompt e i nomi di
-`docs/asset_prompts.md` (sezione 6: `<id>_rudere` / `<id>_restaurato`,
-`casa_1`…`casa_8`, `casale`, `falegnameria`, `cucina`), e si importano con
-`python3 tools/import_flux.py CARTELLA`. Finché manca uno sprite, il gioco
-disegna da codice un segnaposto (rudere, oppure casa intonacata col tetto in coppi).
+Stile nuovo: fogli di 12 edifici (3 righe x 4 colonne) su sfondo grigio
+uniforme, vista isometrica di tre quarti, ognuno sulla sua base quadrata in
+rilievo (lastra di ciottoli o di prato con il bordo di terra), tetti in coppi,
+contorni scuri, colori caldi. I fogli stanno in `assets/graphics/source/edifici/`:
+
+| Foglio | Contenuto |
+| --- | --- |
+| `ruderi.jpg` | ruderi (base di prato) |
+| `botteghe.jpg` | botteghe restaurate (base di ciottoli) |
+| `case_ciottoli.jpg` | case del paese, base di ciottoli (`casa_1`…`casa_12`) |
+| `case_prato.jpg` | le stesse case su base di prato (`casa_prato_*`, `casale`, `cucina`, `falegnameria`) |
+
+Per portarli nel gioco si dividono in un'immagine per edificio e si importano:
+
+```bash
+python3 tools/split_sheet.py assets/graphics/source/edifici/FOGLIO.jpg 3 4 CARTELLA nome1 nome2 ... nome12
+python3 tools/import_flux.py CARTELLA
+```
+
+I nomi vanno per righe, da sinistra a destra (quelli usati sono in
+`docs/asset_prompts.md`, sezione 6). Gli edifici del gioco usano
+`<id>_rudere` / `<id>_restaurato`; quelli che nei fogli non hanno un disegno
+proprio prendono il più simile (`SUBSTITUTES` in `scenes/borgo/borgo_map.gd`),
+e le botteghe in più (`bottega_*`) stanno tra le case del paese.
 
 ## Palette di riferimento
 

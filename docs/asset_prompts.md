@@ -211,6 +211,23 @@ Ritratti degli abitanti, per le loro storie (`ritratto_<edificio>`). Prompt:
 
 ## 6. Edifici del borgo (rudere e restaurato)
 
+**Stile nuovo (in uso).** Gli edifici attuali vengono dai fogli in
+`assets/graphics/source/edifici/` (vedi `docs/art_direction.md`, "Edifici").
+Nomi assegnati, per righe:
+
+- `ruderi.jpg`: `rudere_pietra`, `rudere_palazzo`, `osteria_rudere`, `bar_rudere`, `rudere_casa`, `forno_rudere`, `pastificio_rudere`, `mulino_rudere`, `pollaio_rudere`, `campanile_rudere`, `fontana_rudere`, `pozzo_rudere`
+- `botteghe.jpg`: `bar_restaurato`, `bottega_salumeria`, `bottega_fruttivendolo`, `pastificio_restaurato`, `forno_restaurato`, `pasticceria_restaurato`, `frantoio_restaurato`, `bottega_fioraio`, `bottega_agraria`, `bottega_merceria`, `bottega_farmacia`, `osteria_restaurato`
+- `case_ciottoli.jpg`: `casa_1` … `casa_12`
+- `case_prato.jpg`: `casa_prato_1`, `casa_prato_2`, `casa_prato_3`, `cucina`, `casa_prato_5`, `casale`, `casa_prato_7`, `casa_prato_8`, `casa_prato_9`, `falegnameria`, `casa_prato_11`, `casa_prato_12`
+
+Mancano ancora nello stile nuovo: rudere proprio di frantoio, cantina,
+caseificio, ufficio postale, conserve, gelateria, pasticceria (oggi usano un
+rudere simile); restaurati di mulino, ufficio postale, cantina, gelateria,
+campanile (oggi disegnati da codice); conserve e caseificio usano
+fruttivendolo e salumeria. I prompt qui sotto restano validi per i soggetti, ma
+lo stile da seguire è quello dei fogli.
+
+
 Per ogni edificio due immagini con **lo stesso seed**:
 `<id>_rudere` e `<id>_restaurato`. Prompt:
 
