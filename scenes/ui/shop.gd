@@ -150,7 +150,7 @@ func _requester(kind: String, type: String, source: String) -> Callable:
 
 
 const OBJECT_SPRITES := {
-	"gallina": "gallina", "mucca": "mucca", "falegnameria": "capanno", "cucina": "casetta",
+	"gallina": "gallina", "mucca": "mucca", "falegnameria": "falegnameria", "cucina": "cucina",
 	"staccionata": "staccionata", "barile": "botte", "panchina": "panchina",
 }
 

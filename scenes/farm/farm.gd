@@ -1060,9 +1060,9 @@ func _draw_object(kind: String, type: String, origin: Vector2i, o: Dictionary, a
 			_draw_animal(type, baby, cell_center(origin), mod)
 		"structure":
 			var front := cell_to_local(Vector2(origin + size))
-			var sprite: String = {"falegnameria": "capanno", "cucina": "casetta"}.get(type, "")
+			var sprite: String = type
 			if Sprites.tex(sprite) != null:
-				Sprites.draw(self, sprite, front + Vector2(0, 10), TILE_W * float(size.x) * 1.05, 0.0, false, mod)
+				Sprites.draw(self, sprite, front, TILE_W * float(size.x), 0.0, false, mod)
 			else:
 				draw_colored_polygon(_iso_quad(Vector2(origin), Vector2(origin + size)), Color(0.6, 0.45, 0.3, alpha))
 			if type == "cucina" and not o.is_empty():

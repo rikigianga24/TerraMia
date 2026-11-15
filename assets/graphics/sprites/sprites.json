@@ -98,26 +98,6 @@
   ],
   "sheet": "sheet_c.webp"
  },
- "bocce": {
-  "above_seam": 533,
-  "box": [
-   1032,
-   363,
-   1344,
-   750
-  ],
-  "sheet": "edifici_misti.png"
- },
- "bocce_rudere": {
-  "above_seam": 532,
-  "box": [
-   720,
-   363,
-   1017,
-   750
-  ],
-  "sheet": "edifici_misti.png"
- },
  "botte": {
   "box": [
    804,
@@ -135,43 +115,6 @@
    681
   ],
   "sheet": "sheet_c.webp"
- },
- "cantina": {
-  "box": [
-   447,
-   642,
-   822,
-   936
-  ],
-  "sheet": "edifici_conserve.png"
- },
- "cantina_b": {
-  "below_seam": 531,
-  "box": [
-   375,
-   21,
-   684,
-   756
-  ],
-  "sheet": "edifici_misti.png"
- },
- "cantina_rudere": {
-  "box": [
-   27,
-   675,
-   405,
-   936
-  ],
-  "sheet": "edifici_conserve.png"
- },
- "capanno": {
-  "box": [
-   309,
-   348,
-   438,
-   447
-  ],
-  "sheet": "sheet_a.webp"
  },
  "carretto": {
   "box": [
@@ -199,79 +142,6 @@
    513
   ],
   "sheet": "sheet_c.webp"
- },
- "casa_grande": {
-  "box": [
-   486,
-   42,
-   828,
-   342
-  ],
-  "sheet": "sheet_c.webp"
- },
- "casa_pergola": {
-  "box": [
-   840,
-   108,
-   1077,
-   339
-  ],
-  "sheet": "sheet_c.webp"
- },
- "casa_piccola": {
-  "box": [
-   18,
-   348,
-   135,
-   459
-  ],
-  "sheet": "sheet_a.webp"
- },
- "casale": {
-  "box": [
-   27,
-   528,
-   297,
-   735
-  ],
-  "sheet": "sheet_b.webp"
- },
- "caseificio": {
-  "box": [
-   447,
-   324,
-   822,
-   627
-  ],
-  "sheet": "edifici_conserve.png"
- },
- "caseificio_rudere": {
-  "box": [
-   27,
-   330,
-   402,
-   630
-  ],
-  "sheet": "edifici_conserve.png"
- },
- "caseificio_rudere_b": {
-  "below_seam": 532,
-  "box": [
-   720,
-   363,
-   1017,
-   750
-  ],
-  "sheet": "edifici_misti.png"
- },
- "casetta": {
-  "box": [
-   1278,
-   546,
-   1509,
-   735
-  ],
-  "sheet": "sheet_b.webp"
  },
  "cassetta_uva": {
   "box": [
@@ -318,24 +188,6 @@
   ],
   "sheet": "sheet_a.webp"
  },
- "conserve": {
-  "box": [
-   447,
-   15,
-   822,
-   315
-  ],
-  "sheet": "edifici_conserve.png"
- },
- "conserve_rudere": {
-  "box": [
-   27,
-   18,
-   405,
-   315
-  ],
-  "sheet": "edifici_conserve.png"
- },
  "contadina": {
   "box": [
    1053,
@@ -353,15 +205,6 @@
    963
   ],
   "sheet": "sheet_c.webp"
- },
- "fienile": {
-  "box": [
-   996,
-   363,
-   1107,
-   459
-  ],
-  "sheet": "sheet_a.webp"
  },
  "fontana": {
   "box": [
@@ -381,24 +224,6 @@
   ],
   "sheet": "sheet_c.webp"
  },
- "forno": {
-  "box": [
-   1083,
-   78,
-   1278,
-   342
-  ],
-  "sheet": "sheet_c.webp"
- },
- "forno_a": {
-  "box": [
-   585,
-   330,
-   687,
-   453
-  ],
-  "sheet": "sheet_a.webp"
- },
  "forno_legna": {
   "box": [
    1212,
@@ -407,25 +232,6 @@
    879
   ],
   "sheet": "sheet_b.webp"
- },
- "forno_rudere": {
-  "box": [
-   717,
-   87,
-   1032,
-   354
-  ],
-  "sheet": "edifici_misti.png"
- },
- "frantoio_rudere": {
-  "below_seam": 538,
-  "box": [
-   60,
-   21,
-   375,
-   756
-  ],
-  "sheet": "edifici_misti.png"
  },
  "gallina": {
   "box": [
@@ -444,34 +250,6 @@
    954
   ],
   "sheet": "sheet_c.webp"
- },
- "gelateria": {
-  "box": [
-   453,
-   945,
-   816,
-   1248
-  ],
-  "sheet": "edifici_conserve.png"
- },
- "gelateria_b": {
-  "below_seam": 533,
-  "box": [
-   1032,
-   363,
-   1344,
-   750
-  ],
-  "sheet": "edifici_misti.png"
- },
- "gelateria_rudere": {
-  "box": [
-   33,
-   972,
-   396,
-   1248
-  ],
-  "sheet": "edifici_conserve.png"
  },
  "girasole_0": {
   "box": [
@@ -887,53 +665,6 @@
   ],
   "sheet": "sheet_c.webp"
  },
- "mulino": {
-  "box": [
-   1281,
-   45,
-   1476,
-   333
-  ],
-  "sheet": "sheet_c.webp"
- },
- "mulino_a": {
-  "box": [
-   456,
-   330,
-   570,
-   459
-  ],
-  "sheet": "sheet_a.webp"
- },
- "mulino_b": {
-  "box": [
-   597,
-   507,
-   786,
-   744
-  ],
-  "sheet": "sheet_b.webp"
- },
- "mulino_restaurato": {
-  "above_seam": 339,
-  "box": [
-   375,
-   21,
-   684,
-   756
-  ],
-  "sheet": "edifici_misti.png"
- },
- "mulino_rudere": {
-  "above_seam": 343,
-  "box": [
-   60,
-   21,
-   375,
-   756
-  ],
-  "sheet": "edifici_misti.png"
- },
  "muretto": {
   "box": [
    786,
@@ -1123,15 +854,6 @@
   ],
   "sheet": "sheet_c.webp"
  },
- "stalla": {
-  "box": [
-   324,
-   528,
-   576,
-   747
-  ],
-  "sheet": "sheet_b.webp"
- },
  "strada_1": {
   "box": [
    36,
@@ -1276,46 +998,6 @@
   ],
   "sheet": "sheet_a.webp"
  },
- "torre": {
-  "box": [
-   906,
-   345,
-   984,
-   444
-  ],
-  "sheet": "sheet_a.webp"
- },
- "ufficio_postale": {
-  "above_seam": 531,
-  "below_seam": 339,
-  "box": [
-   375,
-   21,
-   684,
-   756
-  ],
-  "sheet": "edifici_misti.png"
- },
- "ufficio_postale_b": {
-  "box": [
-   1044,
-   48,
-   1341,
-   351
-  ],
-  "sheet": "edifici_misti.png"
- },
- "ufficio_postale_rudere": {
-  "above_seam": 538,
-  "below_seam": 343,
-  "box": [
-   60,
-   21,
-   375,
-   756
-  ],
-  "sheet": "edifici_misti.png"
- },
  "ulivo_0": {
   "box": [
    585,
@@ -1369,15 +1051,6 @@
    684
   ],
   "sheet": "sheet_c.webp"
- },
- "villa": {
-  "box": [
-   144,
-   345,
-   309,
-   459
-  ],
-  "sheet": "sheet_a.webp"
  },
  "vite_0": {
   "box": [
