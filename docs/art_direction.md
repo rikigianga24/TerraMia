@@ -4,7 +4,7 @@
 > aggiornati sono in [`asset_prompts.md`](asset_prompts.md).** Quello che segue
 > resta come storia dei fogli fatti prima.
 
-Tutte le illustrazioni del gioco (piante, edifici, icone, terreno, personaggi)
+Tutte le illustrazioni del gioco (piante, icone, terreno, personaggi)
 seguono questo prompt. Va usato così com'è per ogni nuovo foglio di sprite,
 così lo stile resta uniforme.
 
@@ -42,27 +42,13 @@ e non "2:1 isometric".
 
 ## Edifici
 
-Un foglio = 4 edifici, ognuno in due versioni affiancate: a sinistra il rudere,
-a destra restaurato (stessa base, stessa dimensione, stessa posizione). Testo da
-aggiungere dopo il prompt base:
-
-```
-Sprite sheet on a transparent background, 4 rows and 2 columns, wide empty spacing, no labels, no text anywhere (shop signs show only pictograms, never letters).
-Isometric 3/4 view, ground footprint is a diamond two thirds as tall as it is wide (same angle as the previous ground tiles), light from the upper left. Every building stands on a small base that exactly fills a 2x2 tile footprint (cobblestone or grass), with no trees, people or extra props outside the footprint.
-Left column: the building as an abandoned ruin, crumbling stone walls, collapsed or missing roof, wooden beams, ivy, rubble, faded colors, same footprint and size as the restored version.
-Right column: the same building restored, sand-colored plaster or warm stone walls, terracotta tile roof, green wooden shutters, flower pots, cozy and lively.
-Rows from top to bottom: [ELENCO]
-```
-
-Fogli previsti (inglese per il prompt, tra parentesi l'edificio del gioco):
-
-1. a windmill with canvas sails (mulino); a village bakery with a wood-fired oven and a bread pictogram sign (forno); a small post office with a postal horn pictogram and a red letterbox (ufficio postale); an olive oil mill with a large stone millstone and olive jars (frantoio)
-2. a preserves shop with jars of tomato sauce on shelves and a tomato pictogram sign (bottega delle conserve); a small dairy with wheels of cheese and milk churns (caseificio); a wine cellar with oak barrels at the door and a grape pictogram sign (cantina); an ice cream shop with a striped awning and an ice cream cone pictogram (gelateria)
-3. a pasta workshop with pasta drying on wooden racks (pastificio); a small Romanesque church with a tall bell tower, on a 2x2 footprint (campanile); a village café with small outdoor tables and a coffee cup pictogram (bar della piazza); a rustic tavern with a vine pergola and wooden tables outside (osteria)
-4. a pastry shop with almond biscuits in the window and a cake pictogram (pasticceria); a roasted chestnut cart with a small brazier, 1x1 footprint (caldarroste); a bocce court with low wooden borders and bocce balls, flat, 2x2 footprint (campo da bocce); a village notice board with a small tiled roof and paper notes, 1x1 footprint (bacheca)
-
-Fattoria (stesso testo, ma solo la versione restaurata, una per cella in una
-griglia 2x2): a stone farmhouse; a wooden barn with a small fence; a chicken coop with a tiny yard; a round stone granary silo with a wooden storage shed.
+Gli edifici (del borgo, case del paese e strutture della fattoria) non si
+ritagliano più dai fogli: le immagini del vecchio stile sono state tolte. Si
+generano con Flux uno per immagine, coi prompt e i nomi di
+`docs/asset_prompts.md` (sezione 6: `<id>_rudere` / `<id>_restaurato`,
+`casa_1`…`casa_8`, `casale`, `falegnameria`, `cucina`), e si importano con
+`python3 tools/import_flux.py CARTELLA`. Finché manca uno sprite, il gioco
+disegna da codice un segnaposto (rudere, oppure casa intonacata col tetto in coppi).
 
 ## Palette di riferimento
 
@@ -81,7 +67,7 @@ griglia 2x2): a stone farmhouse; a wooden barn with a small fence; a chicken coo
 4. `python3 tools/cut_sprites.py` ritaglia tutto. Le piante vanno anche in
    `PLANTS` dentro lo script (coltura -> tre stadi).
 
-Fogli attuali: `sheet_a.webp`, `sheet_b.webp`, `sheet_c.webp` (piante, edifici,
+Fogli attuali: `sheet_a.webp`, `sheet_b.webp`, `sheet_c.webp` (piante,
 decorazioni, prodotti, attrezzi, terreni, personaggi) e `terreno.webp` (le 8
 mattonelle: erba, erba fiorita, erba selvatica, erba secca, terra arata, terra
 bagnata, sterrato, sponda). Le mattonelle vengono riportate sul rombo 3:2 del

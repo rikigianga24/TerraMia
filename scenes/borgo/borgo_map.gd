@@ -30,23 +30,6 @@ const TEX_COBBLES := preload("res://assets/graphics/tiles/cobbles.png")
 const TEX_DIRT := preload("res://assets/graphics/tiles/dirt.png")
 const WALKABLE := ["#", "p", "c", "r"]
 
-const PAIRS := {
-	"mulino": ["mulino_rudere", "mulino_restaurato"],
-	"forno": ["forno_rudere", "forno"],
-	"ufficio_postale": ["ufficio_postale_rudere", "ufficio_postale_b"],
-	"frantoio": ["frantoio_rudere", ""],
-	"conserve": ["conserve_rudere", "conserve"],
-	"caseificio": ["caseificio_rudere", "caseificio"],
-	"cantina": ["cantina_rudere", "cantina"],
-	"gelateria": ["gelateria_rudere", "gelateria"],
-	"bocce": ["bocce_rudere", "bocce"],
-}
-## Sprite dell'edificio restaurato, se non c'è la coppia rudere/restaurato.
-const SPRITES := {
-	"bar": "casetta", "osteria": "casale", "campanile": "torre",
-	"pastificio": "casa_pergola", "pasticceria": "villa",
-}
-const HOUSE_SPRITES := ["casetta", "casa_piccola", "casa_grande", "casa_pergola", "casale", "casa_piccola", "casetta"]
 ## Edifici piccoli in piazza (1x1).
 const SMALL := {"bacheca": Vector2i(24, 20), "caldarroste": Vector2i(20, 22)}
 ## Auto d'epoca: parcheggiate fuori dalla porta e qualcuna in salita.
@@ -150,14 +133,14 @@ func _build() -> void:
 	GameState.building_restored.connect(_on_building_restored)
 
 
-## Casa del paese: le varianti casa_1..casa_8 se ci sono, altrimenti le vecchie.
+## Casa del paese: una delle varianti casa_1..casa_8 che ci sono (docs/asset_prompts.md);
+## "" se non ce n'è nessuna, e allora la casa si disegna da codice.
 func _house_sprite(cell: Vector2i) -> String:
 	var std: Array = []
 	for i in range(1, 9):
 		if Sprites.tex("casa_%d" % i) != null:
 			std.append("casa_%d" % i)
-	var pool: Array = std if not std.is_empty() else HOUSE_SPRITES
-	return pool[posmod(hash(cell), pool.size())]
+	return "" if std.is_empty() else std[posmod(hash(cell), std.size())]
 
 
 func _in_lot(cell: Vector2i) -> bool:
@@ -638,6 +621,12 @@ func _draw_house(cell: Vector2i, sprite: String) -> void:
 	var front := world(a + Vector2(2, 2), cell_h(cell))
 	var t := Sprites.tex(sprite)
 	if t == null:
+		var top := world(a, cell_h(cell))
+		var right := world(a + Vector2(2, 0), cell_h(cell))
+		var left := world(a + Vector2(0, 2), cell_h(cell))
+		var roof := _draw_block(top, right, front, left, 72.0, hash(cell))
+		if posmod(hash(cell), 3) != 0:
+			_smoke(roof + Vector2(10, -6), float(posmod(hash(cell), 10)))
 		return
 	var w := TILE_W * 2.0 * 1.06
 	Sprites.draw(_ci, sprite, front + Vector2(0, 10), w, 0.0, posmod(hash(cell), 2) == 0)
@@ -721,8 +710,7 @@ func _draw_building_body(id: String) -> void:
 	var right := world(a + Vector2(s.x, 0), lv)
 	var front := world(a + Vector2(s), lv)
 	var left := world(a + Vector2(0, s.y), lv)
-	# prima i nomi standard (<id>_rudere / <id>_restaurato, vedi docs/asset_prompts.md),
-	# poi le coppie ritagliate dai fogli vecchi
+	# sprite <id>_rudere / <id>_restaurato (docs/asset_prompts.md), se ci sono
 	var std := "%s_%s" % [id, "restaurato" if restored else "rudere"]
 	if Sprites.tex(std) != null:
 		var k := 1.0 if s.x <= 2 else 0.95
@@ -730,11 +718,6 @@ func _draw_building_body(id: String) -> void:
 		if restored and GameData.BUILDINGS.has(id):
 			_draw_lights_later.append(id)
 		return
-	if PAIRS.has(id):
-		var sprite: String = PAIRS[id][1 if restored else 0]
-		if sprite != "" and Sprites.tex(sprite) != null:
-			Sprites.draw(_ci, sprite, front + Vector2(0, 14), TILE_W * float(s.x) * 1.04, 0.0)
-			return
 	if id == "campanile":
 		_draw_church(cell, lv, restored)
 		return
@@ -751,13 +734,53 @@ func _draw_building_body(id: String) -> void:
 	if not restored:
 		_draw_ruin(id, top, right, front, left, h)
 		return
-	if SPRITES.has(id) and Sprites.tex(SPRITES[id]) != null:
-		var k := 0.62 if id == "campanile" else 1.0
-		Sprites.draw(_ci, SPRITES[id], front + Vector2(0, 8), TILE_W * float(s.x) * 1.12 * k, 0.0)
-		if id in ["osteria", "bar", "pastificio"]:
-			_smoke(front + Vector2(TILE_W * 0.25, -h - 90.0), float(posmod(hash(id), 10)))
-		return
-	_draw_ruin(id, top, right, front, left, h)
+	var roof := _draw_block(top, right, front, left, h + 30.0, hash(id))
+	if id == "mulino":
+		_draw_sails(left.lerp(front, 0.5) + Vector2(0, -h - 10.0))
+	if id in ["osteria", "bar", "pastificio", "forno"]:
+		_smoke(roof + Vector2(10, -6), float(posmod(hash(id), 10)))
+
+
+## Segnaposto da codice per un edificio restaurato o una casa senza sprite:
+## muri intonacati, finestre con le persiane verdi e tetto a padiglione in coppi.
+## Restituisce il colmo del tetto (per il fumo).
+func _draw_block(top: Vector2, right: Vector2, front: Vector2, left: Vector2, h: float, seed_v: int) -> Vector2:
+	var walls := [Color("eddcb8"), Color("e8c890"), Color("f0d2b4"), Color("e3d3a8")]
+	var wall: Color = walls[posmod(seed_v, walls.size())]
+	var inset := 0.12
+	var c := (top + front) * 0.5
+	var l := left.lerp(c, inset)
+	var f := front.lerp(c, inset)
+	var r := right.lerp(c, inset)
+	var t := top.lerp(c, inset)
+	var up := Vector2(0, -h)
+	_ci.draw_colored_polygon(PackedVector2Array([l, f, f + up, l + up]), wall)
+	_ci.draw_colored_polygon(PackedVector2Array([f, r, r + up, f + up]), wall.darkened(0.14))
+	# porta sul lato sinistro, finestre su entrambi
+	var door := l.lerp(f, 0.5)
+	_ci.draw_colored_polygon(_wall_rect(door, l, f, 16, 26), Color("6b4a2b"))
+	for side in [[l, f, 0.2], [l, f, 0.8], [f, r, 0.3], [f, r, 0.7]]:
+		var q: Vector2 = Vector2(side[0]).lerp(side[1], side[2]) + up * 0.42
+		_ci.draw_colored_polygon(_wall_rect(q, side[0], side[1], 14, 16), Color("4f7a4a"))
+		_ci.draw_colored_polygon(_wall_rect(q + Vector2(0, -3), side[0], side[1], 6, 10), Color("3a3028"))
+	# tetto a padiglione con un po' di sporgenza
+	var ridge := c + up + Vector2(0, -h * 0.45)
+	var eave := 1.08
+	var el := c + (l - c) * eave + up
+	var ef := c + (f - c) * eave + up
+	var er := c + (r - c) * eave + up
+	var et := c + (t - c) * eave + up
+	_ci.draw_colored_polygon(PackedVector2Array([et, er, ridge]), Color("a24a2c"))
+	_ci.draw_colored_polygon(PackedVector2Array([el, et, ridge]), Color("b65a3c"))
+	_ci.draw_colored_polygon(PackedVector2Array([el, ef, ridge]), Color("c0603e"))
+	_ci.draw_colored_polygon(PackedVector2Array([ef, er, ridge]), Color("a24a2c"))
+	for k in range(1, 4):
+		var g := k / 4.0
+		_ci.draw_line(el.lerp(ridge, g), ef.lerp(ridge, g), Color("94442b"), 1.5)
+		_ci.draw_line(ef.lerp(ridge, g), er.lerp(ridge, g), Color("7a321d"), 1.5)
+	var chimney := ridge.lerp(er, 0.45)
+	_ci.draw_rect(Rect2(chimney + Vector2(-4, -14), Vector2(8, 14)), wall.darkened(0.2))
+	return chimney + Vector2(0, -14)
 
 
 ## Rettangolo "appoggiato" su un muro isometrico, centrato in base.
