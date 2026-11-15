@@ -6,7 +6,7 @@ extends Node2D
 ##
 ## Attorno: il fiume a sinistra, il bosco a destra, una strada di pietrisco
 ## davanti dove ogni tanto passa un carretto o un'auto d'epoca.
-## Le mattonelle sono illustrate (tools/cut_sprites.py), quadranti 3:2 (Iso); piante,
+## Le mattonelle sono illustrate (tools/cut_sprites.py), quadranti 2:1 (Iso); piante,
 ## contadino, fiume, alberi e veicoli sono disegnati da codice.
 ##
 ## Strumenti (barra in basso):

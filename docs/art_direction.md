@@ -23,19 +23,20 @@ copiare: personaggi, edifici e oggetti devono essere originali.
   Se ci sono etichette, devono stare ben staccate (a sinistra o in alto).
 - **Piante:** una riga per pianta e tre colonne per gli stadi: germoglio,
   crescita, maturazione. Ogni stadio sta sopra il proprio blocco di terra,
-  nella stessa vista isometrica dei quadranti del gioco: rombo 3:2, alto due
-  terzi della larghezza (circa 34 gradi), come le mattonelle di `terreno.webp`.
+  nella stessa vista isometrica dei quadranti del gioco: rombo 2:1, alto metà
+  della larghezza (circa 26,6 gradi), come le basi degli edifici del nuovo stile.
 - **Icone:** una per cella, ben distanziate.
 - **Sorgenti:** i fogli originali vanno in `assets/graphics/source/`; gli
   script in `tools/` ne ritagliano gli sprite.
 
 ## Angolo isometrico nei prompt
 
-La mappa usa quadranti 3:2 (scripts/world/iso.gd). In ogni prompt con
-mattonelle, basi o edifici va scritto:
+La mappa usa quadranti 2:1, l'isometria classica dei giochi (scripts/world/iso.gd),
+la stessa degli edifici del nuovo stile. In ogni prompt con mattonelle, basi o
+edifici va scritto:
 
 ```
-isometric 3/4 view, ground footprint is a diamond two thirds as tall as it is wide (same angle as the previous ground tiles), light from the upper left
+classic 2:1 isometric game view, ground footprint is a diamond half as tall as it is wide, light from the upper left
 ```
 
 e non "2:1 isometric".
@@ -92,7 +93,7 @@ e le botteghe in più (`bottega_*`) stanno tra le case del paese.
 Fogli attuali: `sheet_a.webp`, `sheet_b.webp`, `sheet_c.webp` (piante,
 decorazioni, prodotti, attrezzi, terreni, personaggi) e `terreno.webp` (le 8
 mattonelle: erba, erba fiorita, erba selvatica, erba secca, terra arata, terra
-bagnata, sterrato, sponda). Le mattonelle vengono riportate sul rombo 3:2 del
+bagnata, sterrato, sponda). Le mattonelle vengono riportate sul rombo 2:1 del
 gioco anche se il foglio ha un'angolazione diversa.
 
 ## Immagini con la scacchiera disegnata

@@ -9,7 +9,7 @@ grano_2.png, mulino_restaurato.png, tex_grass.png, icon_coin.png. Lo script:
 
   - copia l'originale in assets/graphics/source/flux/ (resta la sorgente);
   - tex_*      texture quadrate viste dall'alto: le rende ripetibili senza
-               giunture e le piega nel rombo 3:2 della griglia
+               giunture e le piega nel rombo 2:1 della griglia
                -> assets/graphics/tiles/<nome del gioco>.png
   - cielo      -> assets/graphics/backdrop/cielo.jpg
   - colline    toglie il cielo sopra le colline -> assets/graphics/backdrop/colline.png
@@ -40,7 +40,7 @@ TILES = ROOT / "assets/graphics/tiles"
 ICONS = ROOT / "assets/graphics/icons"
 BACKDROP = ROOT / "assets/graphics/backdrop"
 PLANTS_JSON = ROOT / "assets/graphics/plants/plants.json"
-TILE_W, TILE_H = 240, 160          # doppio di Iso.TILE_W / Iso.TILE_H
+TILE_W, TILE_H = 240, 120          # doppio di Iso.TILE_W / Iso.TILE_H
 PLANT_FILL = 0.92                  # larghezza delle piante rispetto al quadrante
 TREE_FILL = 1.35                   # gli alberi sporgono dal quadrante
 
@@ -116,7 +116,7 @@ def make_seamless(img: Image.Image) -> Image.Image:
 
 
 def square_to_tile(img: Image.Image) -> Image.Image:
-    """Piega un quadrato visto dall'alto nel rombo 3:2 del gioco (240x160)."""
+    """Piega un quadrato visto dall'alto nel rombo 2:1 del gioco (240x120)."""
     s = min(img.size)
     img = img.crop(((img.width - s) // 2, (img.height - s) // 2, (img.width + s) // 2, (img.height + s) // 2))
     # vertici del rombo: alto (0,0) del quadrato, destra (s,0), basso (s,s), sinistra (0,s)
