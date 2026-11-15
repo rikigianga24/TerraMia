@@ -217,8 +217,8 @@ Nomi assegnati, per righe:
 
 - `ruderi.jpg`: `rudere_pietra`, `rudere_palazzo`, `osteria_rudere`, `bar_rudere`, `rudere_casa`, `forno_rudere`, `pastificio_rudere`, `mulino_rudere`, `pollaio_rudere`, `campanile_rudere`, `fontana_rudere`, `pozzo_rudere`
 - `botteghe.jpg`: `bar_restaurato`, `bottega_salumeria`, `bottega_fruttivendolo`, `pastificio_restaurato`, `forno_restaurato`, `pasticceria_restaurato`, `frantoio_restaurato`, `bottega_fioraio`, `bottega_agraria`, `bottega_merceria`, `bottega_farmacia`, `osteria_restaurato`
-- `case_ciottoli.jpg`: `casa_1` … `casa_12`
-- `case_prato.jpg`: `casa_prato_1`, `casa_prato_2`, `casa_prato_3`, `cucina`, `casa_prato_5`, `casale`, `casa_prato_7`, `casa_prato_8`, `casa_prato_9`, `falegnameria`, `casa_prato_11`, `casa_prato_12`
+- `case_ciottoli.jpg`: `casa_1` … `casa_12`, saltando `casa_11` (la casa del pescatore, tolta: in un borgo di collina non c'entra)
+- `case_prato.jpg`: `casa_prato_1`, `casa_prato_2`, `casa_prato_3`, `cucina`, `casa_prato_5`, `casale`, `casa_prato_7`, `casa_prato_8`, `casa_prato_9`, `falegnameria`, - (pescatore, tolta), `casa_prato_12`
 
 Mancano ancora nello stile nuovo: rudere proprio di frantoio, cantina,
 caseificio, ufficio postale, conserve, gelateria, pasticceria (oggi usano un

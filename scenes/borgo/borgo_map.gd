@@ -144,14 +144,13 @@ func _build() -> void:
 	GameState.building_restored.connect(_on_building_restored)
 
 
-## Casa del paese: una delle case casa_1, casa_2... che ci sono, ogni tanto una
+## Casa del paese: una delle case casa_1 … casa_30 che ci sono, ogni tanto una
 ## bottega; "" se non ce n'è nessuna, e allora la casa si disegna da codice.
 func _house_sprite(cell: Vector2i) -> String:
 	var pool: Array = []
-	var i := 1
-	while Sprites.tex("casa_%d" % i) != null:
-		pool.append("casa_%d" % i)
-		i += 1
+	for i in range(1, 31):     # i numeri possono avere buchi (case tolte)
+		if Sprites.tex("casa_%d" % i) != null:
+			pool.append("casa_%d" % i)
 	for shop in SHOPS:
 		if Sprites.tex(shop) != null:
 			pool.append(shop)
@@ -643,8 +642,10 @@ func _draw_house(cell: Vector2i, sprite: String) -> void:
 		if posmod(hash(cell), 3) != 0:
 			_smoke(roof + Vector2(10, -6), float(posmod(hash(cell), 10)))
 		return
-	var w := TILE_W * 2.0 * 1.06
-	Sprites.draw(_ci, sprite, front + Vector2(0, 10), w, 0.0, posmod(hash(cell), 2) == 0)
+	# la base dello sprite è il rombo del lotto, senza zoccolo (tools/split_sheet.py):
+	# larga quanto il lotto, con la punta in basso sull'angolo davanti
+	var w := TILE_W * 2.0
+	Sprites.draw(_ci, sprite, front, w, 0.0, posmod(hash(cell), 2) == 0)
 	if posmod(hash(cell), 3) != 0:
 		var hgt := t.get_height() * w / t.get_width()
 		_smoke(front + Vector2(w * 0.12, -hgt * 0.92), float(posmod(hash(cell), 10)))
@@ -730,8 +731,7 @@ func _draw_building_body(id: String) -> void:
 	if Sprites.tex(std) == null:
 		std = SUBSTITUTES.get(std, std)
 	if Sprites.tex(std) != null:
-		var k := 1.0 if s.x <= 2 else 0.95
-		Sprites.draw(_ci, std, front + Vector2(0, 14), TILE_W * float(s.x) * 1.04 * k, 0.0)
+		Sprites.draw(_ci, std, front, TILE_W * float(s.x), 0.0)
 		if restored and GameData.BUILDINGS.has(id):
 			_draw_lights_later.append(id)
 		return

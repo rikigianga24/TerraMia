@@ -51,7 +51,7 @@ contorni scuri, colori caldi. I fogli stanno in `assets/graphics/source/edifici/
 | --- | --- |
 | `ruderi.jpg` | ruderi (base di prato) |
 | `botteghe.jpg` | botteghe restaurate (base di ciottoli) |
-| `case_ciottoli.jpg` | case del paese, base di ciottoli (`casa_1`…`casa_12`) |
+| `case_ciottoli.jpg` | case del paese, base di ciottoli (`casa_1`…`casa_12`, senza `casa_11`) |
 | `case_prato.jpg` | le stesse case su base di prato (`casa_prato_*`, `casale`, `cucina`, `falegnameria`) |
 
 Per portarli nel gioco si dividono in un'immagine per edificio e si importano:
@@ -60,6 +60,11 @@ Per portarli nel gioco si dividono in un'immagine per edificio e si importano:
 python3 tools/split_sheet.py assets/graphics/source/edifici/FOGLIO.jpg 3 4 CARTELLA nome1 nome2 ... nome12
 python3 tools/import_flux.py CARTELLA
 ```
+
+Lo script toglie lo zoccolo sotto la base (i fianchi di terra o di pietra):
+resta la superficie di ciottoli o di prato, che nel gioco poggia a filo del
+terreno del lotto, con la punta in basso sull'angolo davanti. Con `--zoccolo`
+si tiene. "-" al posto di un nome salta un disegno.
 
 I nomi vanno per righe, da sinistra a destra (quelli usati sono in
 `docs/asset_prompts.md`, sezione 6). Gli edifici del gioco usano
