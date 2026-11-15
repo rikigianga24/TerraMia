@@ -132,6 +132,7 @@ func _show_farm_now() -> void:
 	_backdrop.mode = "farm"
 	_dock.visible = true
 	_farm_btn.button_pressed = true
+	Music.play_area("farm")
 
 
 func _show_borgo_now() -> void:
@@ -142,6 +143,7 @@ func _show_borgo_now() -> void:
 	borgo_map.arrive()
 	_backdrop.mode = "borgo"
 	_dock.visible = false
+	Music.play_area("borgo")
 	_shop.hide()
 	_land.hide()
 	_borgo_btn.button_pressed = true

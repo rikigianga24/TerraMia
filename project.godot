@@ -23,6 +23,7 @@ Settings="*res://scripts/autoload/settings.gd"
 GameData="*res://scripts/autoload/game_data.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
+Music="*res://scripts/autoload/music.gd"
 
 [display]
 
