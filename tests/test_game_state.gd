@@ -14,6 +14,7 @@ func _initialize() -> void:
 	await process_frame
 	gs = root.get_node("GameState")
 	gd = root.get_node("GameData")
+	gs.dev_mode = false  # le regole si provano senza monete infinite
 	# Il test non deve toccare il salvataggio vero.
 	var save_manager := root.get_node("SaveManager")
 	save_manager.set_process(false)

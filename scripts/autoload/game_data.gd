@@ -116,6 +116,11 @@ const BOCCE_DAILY := 40
 const XP_FOR_LEVEL := [0, 0, 12, 40, 90, 160, 250, 370, 520, 700, 920, 1180, 1480, 1830]
 const MAX_LEVEL := 13
 
+## Modalità sviluppatore, per le prove: monete infinite e livello massimo
+## (tutto sbloccato). Da rimettere a false prima di pubblicare il gioco.
+const DEV_MODE := true
+const DEV_COINS := 999999
+
 ## Espresso: la moka di casa ne fa 1 ogni 2 ore, fino a 3.
 const MOKA_INTERVAL := 2 * HOUR
 const MOKA_MAX := 3

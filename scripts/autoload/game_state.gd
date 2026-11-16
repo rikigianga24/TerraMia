@@ -47,6 +47,25 @@ var visitors_day: String = ""
 var last_bocce_day: String = ""
 
 
+## Vale GameData.DEV_MODE; i test lo spengono per provare le regole vere.
+var dev_mode: bool = GameData.DEV_MODE
+
+
+func _ready() -> void:
+	changed.connect(_apply_dev_mode)
+
+
+## In modalità sviluppatore riporta le monete al massimo e il livello all'ultimo.
+## È collegato a `changed` prima delle scene, quindi l'interfaccia vede già i valori pieni.
+func _apply_dev_mode() -> void:
+	if not dev_mode:
+		return
+	coins = maxi(coins, GameData.DEV_COINS)
+	if level < GameData.MAX_LEVEL:
+		level = GameData.MAX_LEVEL
+		xp = maxi(xp, GameData.xp_for_level(GameData.MAX_LEVEL))
+
+
 static func now() -> float:
 	return Time.get_unix_time_from_system()
 
