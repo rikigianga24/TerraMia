@@ -30,6 +30,11 @@ const TEX_GRASS := preload("res://assets/graphics/tiles/grass.png")
 const TEX_GRASS_FLOWERS := preload("res://assets/graphics/tiles/grass_flowers.png")
 const TEX_SOIL := preload("res://assets/graphics/tiles/soil.png")
 const TEX_SOIL_WET := preload("res://assets/graphics/tiles/soil_wet.png")
+## Terra coltivata in rilievo (tools/import_flux.py, slab_soil): rombo in alto,
+## fianchi sotto. Se non c'è si usa la mattonella piatta.
+const SOIL_BLOCK := "res://assets/graphics/tiles/soil_block.png"
+const SOIL_WET_BLOCK := "res://assets/graphics/tiles/soil_wet_block.png"
+const SOIL_LIFT := 9.0           ## di quanto la terra coltivata sta sopra il prato
 const TEX_GRASS_WILD := preload("res://assets/graphics/tiles/grass_wild.png")
 const TEX_GRASS_DRY := preload("res://assets/graphics/tiles/grass_dry.png")
 const TEX_DIRT := preload("res://assets/graphics/tiles/dirt.png")
@@ -63,6 +68,15 @@ const SHAPES := {
 
 ## Le piante illustrate occupano un po' meno del quadrante: resta un filo di terra.
 const PLANT_SCALE := 0.88
+## Cartello dei lotti in vendita: sprite col foglio di carta inchiodato
+## (tools/sign_paper.py), centro del foglio in frazioni dello sprite e
+## inclinazione della tavola; la scritta tradotta la mette farm_overlay.gd.
+const SIGN_SPRITE := "cartello"
+## Auto illustrate: nome -> il muso guarda a destra nel disegno
+const CAR_SPRITES := {"auto_rossa": false, "auto_spider": true, "auto_blu": true}
+const SIGN_W := 62.0
+const SIGN_PAPER := Vector2(0.53, 0.325)
+const SIGN_ANGLE := -0.411
 ## Animali che girellano (AnimalFrames): altezza in pixel della figura in piedi
 const ANIMAL_H := {"gallina": 50.0}
 const WANDER_SEG := 5.0          ## secondi di un tratto: cammina, poi becca o sta ferma
@@ -526,6 +540,12 @@ func _draw_vehicle(v: Dictionary) -> void:
 	var s := -1.0 if flip else 1.0
 	var bump := absf(sin(_clock * 8.0 + v["y"])) * 1.5
 	_shadow(p + Vector2(0, 4), 30.0)
+	var car: String = CAR_SPRITES.keys()[posmod(int(v["speed"] * 1000.0), CAR_SPRITES.size())]
+	if v["kind"] == "car" and Sprites.tex(car) != null:
+		# verso lo spettatore (giù a sinistra) il muso guarda a sinistra, via a destra
+		var faces_right: bool = CAR_SPRITES[car]
+		Sprites.draw(self, car, p + Vector2(0, 6 - bump), 78.0, 0.0, faces_right == flip)
+		return
 	match v["kind"]:
 		"car":
 			# auto d'epoca color crema, tondeggiante
@@ -653,11 +673,35 @@ func _tile(tex: Texture2D, cell: Vector2i, modulate := Color.WHITE, can_flip := 
 		draw_texture_rect(tex, Rect2(top - Vector2(TILE_W * 0.5, 0), Vector2(TILE_W, TILE_H)), false, modulate)
 
 
+var _blocks := {}
+
+
+func _soil_block(wet: bool) -> Texture2D:
+	var path := SOIL_WET_BLOCK if wet else SOIL_BLOCK
+	if not _blocks.has(path):
+		_blocks[path] = load(path) if ResourceLoader.exists(path) else null
+	return _blocks[path]
+
+
+## Spostamento verso l'alto di ciò che sta sulla terra coltivata (in rilievo).
+func _lift(cell: Vector2i) -> Vector2:
+	if GameState.is_tilled(cell) and _soil_block(false) != null:
+		return Vector2(0, -SOIL_LIFT)
+	return Vector2.ZERO
+
+
 func _draw_ground(cell: Vector2i) -> void:
 	var rect := Rect2(cell_to_local(cell) - Vector2(TILE_W * 0.5, 0), Vector2(TILE_W, TILE_H))
 	var plot := GameState.get_plot(cell)
 	if GameState.is_tilled(cell):
 		var wet: bool = not plot.is_empty() and plot.get("watered", false)
+		var block := _soil_block(wet)
+		if block != null:
+			# il prato sotto, poi il blocco rialzato: i fianchi poggiano sul prato
+			_tile(TEX_GRASS, cell)
+			var h := block.get_height() * TILE_W / block.get_width()
+			draw_texture_rect(block, Rect2(cell_to_local(cell) - Vector2(TILE_W * 0.5, SOIL_LIFT), Vector2(TILE_W, h)), false)
+			return
 		# i solchi hanno una direzione: niente specchiatura
 		_tile(TEX_SOIL_WET if wet else TEX_SOIL, cell, Color.WHITE, false)
 		return
@@ -706,6 +750,17 @@ func _draw_sector_outline(sector: Vector2i) -> void:
 
 
 ## Cartello "in vendita" al centro di ogni lotto che si può comprare.
+## Centro del foglio di carta sul cartello "In vendita" piantato in p (dove la
+## scena di sopra scrive il testo tradotto).
+func sign_paper_center(p: Vector2) -> Vector2:
+	var t := Sprites.tex(SIGN_SPRITE)
+	if t == null:
+		return p + Vector2(0, -45)
+	var size := t.get_size() * (SIGN_W / t.get_width())
+	var top_left := p - Vector2(size.x * 0.5, size.y * 0.98)
+	return top_left + size * SIGN_PAPER
+
+
 func _draw_sector_signs(w: Vector2i) -> void:
 	var n := GameData.SECTOR_SIZE
 	for sy in GameData.WORLD_SECTORS.y:
@@ -715,6 +770,9 @@ func _draw_sector_signs(w: Vector2i) -> void:
 				continue
 			var p := cell_to_local(Vector2(sx * n + n * 0.5, sy * n + n * 0.5))
 			_shadow(p + Vector2(0, 2), 14.0)
+			if Sprites.tex(SIGN_SPRITE) != null:
+				Sprites.draw(self, SIGN_SPRITE, p, SIGN_W, 0.02)
+				continue
 			draw_line(p, p + Vector2(0, -34), COLOR_WOOD_DARK, 5.0)
 			draw_rect(Rect2(p + Vector2(-26, -58), Vector2(52, 26)), COLOR_WOOD)
 			draw_rect(Rect2(p + Vector2(-26, -58), Vector2(52, 26)), COLOR_WOOD_DARK, false, 2.0)
@@ -899,12 +957,12 @@ func _draw_plant_sprite(cell: Vector2i) -> bool:
 	var k: float = st["scale"]
 	if st["sway"]:
 		# piegata dalla base: la base resta ferma, la cima si sposta col vento
-		var base := cell_center(cell)
+		var base := cell_center(cell) + _lift(cell)
 		draw_set_transform_matrix(Transform2D(0.0, Vector2.ONE, _wind(cell), base))
 		draw_texture_rect(tex, Rect2(-st["anchor"] * k, tex.get_size() * k), false)
 		draw_set_transform_matrix(Transform2D.IDENTITY)
 	else:
-		draw_texture_rect(tex, Rect2(cell_center(cell) - st["anchor"] * k, tex.get_size() * k), false)
+		draw_texture_rect(tex, Rect2(cell_center(cell) + _lift(cell) - st["anchor"] * k, tex.get_size() * k), false)
 	if cell == _hover:
 		draw_polyline(_closed(_diamond(cell, 2.0)), COLOR_HOVER, 2.5, true)
 	return true
@@ -931,13 +989,13 @@ func _draw_plant(cell: Vector2i) -> void:
 		return
 	# Seminata e non ancora annaffiata: resta il sacchetto di semi.
 	if GameState.needs_water(cell) and int(plot.get("harvests", 0)) == 0:
-		_draw_seed_bag(cell_center(cell), Color(GameData.crop(plot["crop"])["color"]))
+		_draw_seed_bag(cell_center(cell) + _lift(cell), Color(GameData.crop(plot["crop"])["color"]))
 		return
 	var id: String = plot["crop"]
 	var crop := GameData.crop(id)
 	var progress := GameState.plot_progress(cell)
 	var color := Color(crop["color"])
-	var c := cell_center(cell) + Vector2(0, 2)
+	var c := cell_center(cell) + _lift(cell) + Vector2(0, 2)
 	var sway := sin(_clock * 1.6 + cell.x * 1.3 + cell.y * 0.7) * 1.5
 	match crop["kind"]:
 		"tree":

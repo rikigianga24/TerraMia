@@ -141,6 +141,22 @@ beccare o a guardarsi intorno (`_draw_wandering` in `scenes/farm/farm.gd`).
 Per un animale nuovo bastano gli stessi nomi di animazione e la sua altezza in
 `ANIMAL_H`.
 
+## Terra coltivata in rilievo, veicoli, cartello
+
+- **Terra coltivata:** `slab_soil.jpg` (una lastra di terra arata vista in
+  isometria, su magenta) importata con `import_flux.py` dà la mattonella piatta
+  e il blocco in rilievo `soil_block.png` (faccia di sopra + fianchi), più le
+  versioni bagnate. In fattoria i quadranti coltivati stanno `SOIL_LIFT` pixel
+  sopra il prato e le piante poggiano sul blocco.
+- **Auto e bici:** più disegni in fila su magenta si dividono con
+  `split_sheet.py FOGLIO 1 N CARTELLA nomi... --zoccolo` e si importano. Nomi:
+  `auto_rossa`, `auto_spider`, `auto_blu`, `bici_rossa`, `bici_blu`,
+  `bici_crema` (la tandem verde ha un difetto nel disegno e non si usa).
+- **Cartello "In vendita":** il disegno ha una scritta in inglese; la si copre
+  con un foglio di carta (`tools/sign_paper.py`, che stampa centro e angolo del
+  foglio per `SIGN_PAPER` / `SIGN_ANGLE` in `farm.gd`) e il gioco ci scrive
+  `tr("LAND_SIGN")`. Nei prompt: cartelli e insegne sempre senza scritte.
+
 ## Palette di riferimento
 
 - Terra coltivata: terracotta (#a8532e) con sassolini chiari.

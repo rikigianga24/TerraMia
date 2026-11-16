@@ -45,6 +45,11 @@ const SHOPS := ["bottega_fioraio", "bottega_merceria", "bottega_farmacia", "bott
 ## del foglio degli alberi (tools/import_plants.py).
 const OLIVE := "pianta_ulivo_2"
 const TREE_WIDTHS := {"cipresso": 40.0, "quercia": 96.0, "pino": 104.0, "pianta_ulivo_2": 84.0}
+## Auto d'epoca e biciclette illustrate (larghezza in pixel)
+const CAR_SPRITES := ["auto_rossa", "auto_spider", "auto_blu"]
+const CAR_W := 78.0
+const BIKE_SPRITES := ["bici_rossa", "bici_blu", "bici_crema"]
+const BIKE_W := 36.0
 ## Edifici piccoli in piazza (1x1).
 const SMALL := {"bacheca": Vector2i(24, 20), "caldarroste": Vector2i(20, 22)}
 ## Auto d'epoca: parcheggiate fuori dalla porta e qualcuna in salita.
@@ -667,6 +672,11 @@ func _draw_car(p: Vector2, body: Color) -> void:
 	_ci.draw_set_transform(foot, 0.0, Vector2(1.0, 0.45))
 	_ci.draw_circle(Vector2(0, 4), 30.0, Color(0.18, 0.12, 0.05, 0.25))
 	_ci.draw_set_transform(Vector2.ZERO)
+	# auto illustrata: una delle tre, sempre la stessa per lo stesso posto
+	var sprite: String = CAR_SPRITES[posmod(hash(p), CAR_SPRITES.size())]
+	if Sprites.tex(sprite) != null:
+		Sprites.draw(_ci, sprite, foot + Vector2(0, 6), CAR_W, 0.0, posmod(hash(p) / 7, 2) == 0)
+		return
 	_ci.draw_rect(Rect2(foot + Vector2(-26, -20), Vector2(52, 14)), body)
 	_ci.draw_circle(foot + Vector2(-6, -22), 14.0, body)
 	_ci.draw_rect(Rect2(foot + Vector2(-14, -31), Vector2(16, 9)), Color("a9cfe0"))
@@ -678,6 +688,10 @@ func _draw_car(p: Vector2, body: Color) -> void:
 
 
 func _draw_bike(p: Vector2) -> void:
+	var sprite: String = BIKE_SPRITES[posmod(hash(p), BIKE_SPRITES.size())]
+	if Sprites.tex(sprite) != null:
+		Sprites.draw(_ci, sprite, p + Vector2(0, 3), BIKE_W, 0.0, posmod(hash(p) / 5, 2) == 0)
+		return
 	var col := Color("2f6d8a")
 	for x in [-11.0, 11.0]:
 		_ci.draw_arc(p + Vector2(x, -8), 8.0, 0.0, TAU, 18, Color("2e2a26"), 2.0)

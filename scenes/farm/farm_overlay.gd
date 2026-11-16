@@ -60,6 +60,12 @@ func _draw_sign_labels() -> void:
 			if GameState.is_sector_owned(sector) or not GameState.is_sector_buyable(sector):
 				continue
 			var p := farm.cell_to_local(Vector2(sx * n + n * 0.5, sy * n + n * 0.5))
+			if Sprites.tex(farm.SIGN_SPRITE) != null:
+				# sul foglio di carta, inclinato come la tavola
+				draw_set_transform(farm.sign_paper_center(p), farm.SIGN_ANGLE)
+				draw_string(_font_bold, Vector2(-25, 4), text, HORIZONTAL_ALIGNMENT_CENTER, 50, 10, Color("6b4a2b"))
+				draw_set_transform(Vector2.ZERO)
+				continue
 			draw_string(_font_bold, p + Vector2(-26, -40), text, HORIZONTAL_ALIGNMENT_CENTER, 52, 11, Color("fbf3e2"))
 
 
