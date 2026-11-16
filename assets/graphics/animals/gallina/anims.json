@@ -1,0 +1,214 @@
+{
+ "cammina_s": {
+  "h": 189.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_0.png",
+    "anchor": [
+     112.5,
+     194.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_1.png",
+    "anchor": [
+     113.0,
+     190.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_2.png",
+    "anchor": [
+     116.5,
+     188.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_3.png",
+    "anchor": [
+     116.0,
+     186.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_4.png",
+    "anchor": [
+     115.5,
+     189.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_5.png",
+    "anchor": [
+     116.5,
+     189.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_6.png",
+    "anchor": [
+     113.0,
+     187.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_s_7.png",
+    "anchor": [
+     113.0,
+     190.0
+    ]
+   }
+  ]
+ },
+ "becca_s": {
+  "h": 204.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_s_0.png",
+    "anchor": [
+     112.5,
+     208.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_s_1.png",
+    "anchor": [
+     113.0,
+     204.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_s_2.png",
+    "anchor": [
+     116.5,
+     176.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_s_3.png",
+    "anchor": [
+     116.0,
+     203.0
+    ]
+   }
+  ]
+ },
+ "ferma_s": {
+  "h": 193.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/gallina/ferma_s_0.png",
+    "anchor": [
+     100.5,
+     193.0
+    ]
+   }
+  ]
+ },
+ "cammina_e": {
+  "h": 222.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_0.png",
+    "anchor": [
+     120.0,
+     226.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_1.png",
+    "anchor": [
+     109.0,
+     214.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_2.png",
+    "anchor": [
+     109.0,
+     215.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_3.png",
+    "anchor": [
+     109.5,
+     218.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_4.png",
+    "anchor": [
+     109.5,
+     224.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_5.png",
+    "anchor": [
+     109.0,
+     222.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_6.png",
+    "anchor": [
+     109.0,
+     221.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/cammina_e_7.png",
+    "anchor": [
+     120.0,
+     227.0
+    ]
+   }
+  ]
+ },
+ "becca_e": {
+  "h": 213.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_e_0.png",
+    "anchor": [
+     135.5,
+     220.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_e_1.png",
+    "anchor": [
+     158.5,
+     206.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_e_2.png",
+    "anchor": [
+     160.5,
+     197.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/gallina/becca_e_3.png",
+    "anchor": [
+     143.0,
+     213.0
+    ]
+   }
+  ]
+ },
+ "ferma_e": {
+  "h": 246.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/gallina/ferma_e_0.png",
+    "anchor": [
+     135.5,
+     246.0
+    ]
+   }
+  ]
+ }
+}
