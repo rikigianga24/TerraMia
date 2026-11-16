@@ -8,6 +8,10 @@ Ogni file si chiama come l'asset (vedi docs/asset_prompts.md), per esempio
 grano_2.png, mulino_restaurato.png, tex_grass.png, icon_coin.png. Lo script:
 
   - copia l'originale in assets/graphics/source/flux/ (resta la sorgente);
+  - slab_*     mattonella già disegnata in isometria, con lo spessore (per
+               esempio slab_soil): la faccia di sopra va sul rombo del gioco
+               -> assets/graphics/tiles/<nome del gioco>.png (slab_soil fa
+               anche soil_wet, più scura)
   - tex_*      texture quadrate viste dall'alto: le rende ripetibili senza
                giunture e le piega nel rombo 2:1 della griglia
                -> assets/graphics/tiles/<nome del gioco>.png
@@ -51,6 +55,9 @@ TEXTURES = {
     "tex_dirt": "dirt", "tex_sand": "bank", "tex_cobbles": "cobbles", "tex_water": "water",
     "tex_road": "road", "tex_road_puddles": "road_puddles", "tex_road_flowers": "road_flowers",
 }
+## mattonelle già isometriche con lo spessore (slab_*) -> mattonella del gioco
+SLAB_INSET = 0.9    ## quanto della faccia di sopra si tiene (il bordo della lastra è più scuro)
+SLAB_TILES = {"slab_soil": "soil", "slab_grass": "grass", "slab_dirt": "dirt", "slab_cobbles": "cobbles"}
 TOL = 38.0
 ## sfondo magenta: la quota di disegno di un pixel è 1 - magentità/magentità
 ## dello sfondo; sotto CHROMA_CUT è sfondo, e la trasparenza del bordo si
@@ -191,6 +198,33 @@ def make_seamless(img: Image.Image) -> Image.Image:
     return Image.fromarray(out.astype(np.uint8), "RGB")
 
 
+def slab_to_tile(cut: Image.Image) -> Image.Image:
+    """Faccia superiore di una mattonella isometrica con lo spessore (una lastra
+    vista dall'alto) sul rombo del gioco. Vertici: sinistro e destro agli
+    estremi in orizzontale (in cima alla colonna dello spessore), superiore in
+    alto; l'affinità porta questi tre punti sul rombo 2:1."""
+    a = np.asarray(cut)[..., 3] > 128
+    ys, xs = np.nonzero(a)
+    lx, rx = int(xs.min()), int(xs.max())
+    ly = float(np.nonzero(a[:, min(lx + 3, a.shape[1] - 1)])[0].min())
+    ry = float(np.nonzero(a[:, max(rx - 3, 0)])[0].min())
+    ty = float(ys.min())
+    tx = float(np.median(xs[ys <= ty + 2]))
+    side_y = (ly + ry) / 2.0
+    cx = (lx + rx) / 2.0
+    k = SLAB_INSET   # verso l'interno: si lascia fuori il bordo arrotondato della lastra
+    src = np.array([[cx + (tx - cx) * k, side_y + (ty - side_y) * k],
+                    [cx + (lx - cx) * k, side_y], [cx + (rx - cx) * k, side_y]], dtype=float)
+    dst = np.array([[TILE_W / 2, 0], [0, TILE_H / 2], [TILE_W, TILE_H / 2]], dtype=float)
+    m = np.linalg.solve(np.c_[dst, np.ones(3)], src)
+    coeffs = (m[0, 0], m[1, 0], m[2, 0], m[0, 1], m[1, 1], m[2, 1])
+    out = cut.convert("RGBA").transform((TILE_W, TILE_H), Image.AFFINE, coeffs, resample=Image.BICUBIC)
+    mask = Image.new("L", (TILE_W, TILE_H), 0)
+    ImageDraw.Draw(mask).polygon([(TILE_W / 2, 0), (TILE_W, TILE_H / 2), (TILE_W / 2, TILE_H), (0, TILE_H / 2)], fill=255)
+    out.putalpha(mask)
+    return out
+
+
 def square_to_tile(img: Image.Image) -> Image.Image:
     """Piega un quadrato visto dall'alto nel rombo 2:1 del gioco (240x120)."""
     s = min(img.size)
@@ -214,6 +248,18 @@ def import_one(path: Path, crop_kinds: dict, plants: dict) -> str:
     img = Image.open(path)
     FLUX.mkdir(parents=True, exist_ok=True)
     shutil.copy(path, FLUX / f"{name}{path.suffix.lower()}")
+    if name in SLAB_TILES:
+        # mattonella già disegnata in isometria (su magenta), con lo spessore sotto
+        cut = remove_background(img)
+        tile = slab_to_tile(cut)
+        tile.save(TILES / f"{SLAB_TILES[name]}.png")
+        msg = f"mattonella {SLAB_TILES[name]}"
+        if SLAB_TILES[name] == "soil":
+            wet = np.asarray(tile).astype(float)
+            wet[..., :3] *= np.array([0.72, 0.68, 0.70])
+            Image.fromarray(wet.astype(np.uint8), "RGBA").save(TILES / "soil_wet.png")
+            msg += " (e soil_wet, più scura)"
+        return msg
     if name in TEXTURES:
         tile = square_to_tile(make_seamless(img))
         tile.save(TILES / f"{TEXTURES[name]}.png")

@@ -124,7 +124,17 @@ python3 tools/import_frames.py assets/graphics/source/animali/gallina_sud.jpg ga
 python3 tools/import_frames.py assets/graphics/source/animali/gallina_est.jpg gallina 0:cammina_e 1:becca_e 2:ferma_e:1
 ```
 
-Lo script trova i riquadri dalle linee nere, ritaglia ogni fotogramma (via lo
+Il contadino viene da fogli senza riquadri (figure sparse con le scritte
+sotto): lo script se ne accorge, toglie le scritte, raccoglie semi e zolle
+staccati con la figura vicina e mette i piedi di una riga sulla stessa linea.
+
+```bash
+python3 tools/import_frames.py assets/graphics/source/animali/contadino_zappa.jpg contadino 0:zappa
+python3 tools/import_frames.py assets/graphics/source/animali/contadino_semina.jpg contadino 0:semina
+python3 tools/import_frames.py assets/graphics/source/animali/contadino_cammina.jpg contadino 0:cammina 4:corre
+```
+
+Per i fogli a riquadri, lo script trova i riquadri dalle linee nere, ritaglia ogni fotogramma (via lo
 sfondo e le scritte) e scrive `assets/graphics/animals/<animale>/anims.json`.
 Nel gioco l'animale adulto girella nel suo quadrante, cammina, si ferma a
 beccare o a guardarsi intorno (`_draw_wandering` in `scenes/farm/farm.gd`).
