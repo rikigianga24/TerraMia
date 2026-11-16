@@ -39,6 +39,9 @@ fogli di sprite fatti finora: **un asset per immagine**, stesso stile per tutti.
 - **Sfondo**: Flux non fa la trasparenza. Si chiede uno sfondo grigio chiaro
   uniforme e lo toglie lo script. Se in ComfyUI hai un nodo di rimozione dello
   sfondo (BiRefNet, RMBG), puoi salvare già PNG trasparenti: lo script li accetta.
+- **Sfondo magenta** (#FF00FF o simile): funziona meglio del grigio, perché il
+  magenta non c'è mai nei disegni. Lo script lo toglie dappertutto, anche nei
+  buchi tra le foglie, e pulisce l'alone rosa sui bordi.
 - **Niente scritte**: Flux scrive bene, quindi tende a mettere insegne con
   lettere. Ogni prompt dice "no text"; se compare una scritta, rigenera.
 

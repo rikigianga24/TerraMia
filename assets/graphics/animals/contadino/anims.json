@@ -1,0 +1,232 @@
+{
+ "zappa": {
+  "h": 180.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/contadino/zappa_0.png",
+    "anchor": [
+     55.0,
+     180.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/zappa_1.png",
+    "anchor": [
+     55.0,
+     180.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/zappa_2.png",
+    "anchor": [
+     71.0,
+     208.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/zappa_3.png",
+    "anchor": [
+     67.0,
+     165.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/zappa_4.png",
+    "anchor": [
+     87.0,
+     122.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/zappa_5.png",
+    "anchor": [
+     64.0,
+     180.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/zappa_6.png",
+    "anchor": [
+     57.0,
+     181.0
+    ]
+   }
+  ]
+ },
+ "semina": {
+  "h": 183.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/contadino/semina_0.png",
+    "anchor": [
+     52.0,
+     183.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/semina_1.png",
+    "anchor": [
+     54.0,
+     184.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/semina_2.png",
+    "anchor": [
+     56.0,
+     183.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/semina_3.png",
+    "anchor": [
+     69.0,
+     182.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/semina_4.png",
+    "anchor": [
+     72.0,
+     180.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/semina_5.png",
+    "anchor": [
+     51.0,
+     184.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/semina_6.png",
+    "anchor": [
+     50.0,
+     184.0
+    ]
+   }
+  ]
+ },
+ "cammina": {
+  "h": 192.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_0.png",
+    "anchor": [
+     51.0,
+     192.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_1.png",
+    "anchor": [
+     52.0,
+     192.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_2.png",
+    "anchor": [
+     51.0,
+     192.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_3.png",
+    "anchor": [
+     53.0,
+     192.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_4.png",
+    "anchor": [
+     52.0,
+     192.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_5.png",
+    "anchor": [
+     62.0,
+     193.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_6.png",
+    "anchor": [
+     60.0,
+     193.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/cammina_7.png",
+    "anchor": [
+     60.0,
+     193.0
+    ]
+   }
+  ]
+ },
+ "corre": {
+  "h": 171.0,
+  "frames": [
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_0.png",
+    "anchor": [
+     66.0,
+     187.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_1.png",
+    "anchor": [
+     66.0,
+     171.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_2.png",
+    "anchor": [
+     66.0,
+     171.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_3.png",
+    "anchor": [
+     67.0,
+     171.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_4.png",
+    "anchor": [
+     68.0,
+     171.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_5.png",
+    "anchor": [
+     67.0,
+     171.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_6.png",
+    "anchor": [
+     65.0,
+     171.0
+    ]
+   },
+   {
+    "file": "res://assets/graphics/animals/contadino/corre_7.png",
+    "anchor": [
+     64.0,
+     171.0
+    ]
+   }
+  ]
+ }
+}

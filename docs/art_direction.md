@@ -124,12 +124,38 @@ python3 tools/import_frames.py assets/graphics/source/animali/gallina_sud.jpg ga
 python3 tools/import_frames.py assets/graphics/source/animali/gallina_est.jpg gallina 0:cammina_e 1:becca_e 2:ferma_e:1
 ```
 
-Lo script trova i riquadri dalle linee nere, ritaglia ogni fotogramma (via lo
+Il contadino viene da fogli senza riquadri (figure sparse con le scritte
+sotto): lo script se ne accorge, toglie le scritte, raccoglie semi e zolle
+staccati con la figura vicina e mette i piedi di una riga sulla stessa linea.
+
+```bash
+python3 tools/import_frames.py assets/graphics/source/animali/contadino_zappa.jpg contadino 0:zappa
+python3 tools/import_frames.py assets/graphics/source/animali/contadino_semina.jpg contadino 0:semina
+python3 tools/import_frames.py assets/graphics/source/animali/contadino_cammina.jpg contadino 0:cammina 4:corre
+```
+
+Per i fogli a riquadri, lo script trova i riquadri dalle linee nere, ritaglia ogni fotogramma (via lo
 sfondo e le scritte) e scrive `assets/graphics/animals/<animale>/anims.json`.
 Nel gioco l'animale adulto girella nel suo quadrante, cammina, si ferma a
 beccare o a guardarsi intorno (`_draw_wandering` in `scenes/farm/farm.gd`).
 Per un animale nuovo bastano gli stessi nomi di animazione e la sua altezza in
 `ANIMAL_H`.
+
+## Terra coltivata in rilievo, veicoli, cartello
+
+- **Terra coltivata:** `slab_soil.jpg` (una lastra di terra arata vista in
+  isometria, su magenta) importata con `import_flux.py` dà la mattonella piatta
+  e il blocco in rilievo `soil_block.png` (faccia di sopra + fianchi), più le
+  versioni bagnate. In fattoria i quadranti coltivati stanno `SOIL_LIFT` pixel
+  sopra il prato e le piante poggiano sul blocco.
+- **Auto e bici:** più disegni in fila su magenta si dividono con
+  `split_sheet.py FOGLIO 1 N CARTELLA nomi... --zoccolo` e si importano. Nomi:
+  `auto_rossa`, `auto_spider`, `auto_blu`, `bici_rossa`, `bici_blu`,
+  `bici_crema` (la tandem verde ha un difetto nel disegno e non si usa).
+- **Cartello "In vendita":** il disegno ha una scritta in inglese; la si copre
+  con un foglio di carta (`tools/sign_paper.py`, che stampa centro e angolo del
+  foglio per `SIGN_PAPER` / `SIGN_ANGLE` in `farm.gd`) e il gioco ci scrive
+  `tr("LAND_SIGN")`. Nei prompt: cartelli e insegne sempre senza scritte.
 
 ## Palette di riferimento
 

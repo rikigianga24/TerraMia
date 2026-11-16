@@ -41,6 +41,15 @@ const SUBSTITUTES := {
 }
 ## Botteghe che non sono edifici del gioco: stanno tra le case del paese.
 const SHOPS := ["bottega_fioraio", "bottega_merceria", "bottega_farmacia", "bottega_agraria"]
+## Alberi del borgo (sprite) e loro larghezza in pixel; l'ulivo è quello maturo
+## del foglio degli alberi (tools/import_plants.py).
+const OLIVE := "pianta_ulivo_2"
+const TREE_WIDTHS := {"cipresso": 40.0, "quercia": 96.0, "pino": 104.0, "pianta_ulivo_2": 84.0}
+## Auto d'epoca e biciclette illustrate (larghezza in pixel)
+const CAR_SPRITES := ["auto_rossa", "auto_spider", "auto_blu"]
+const CAR_W := 78.0
+const BIKE_SPRITES := ["bici_rossa", "bici_blu", "bici_crema"]
+const BIKE_W := 36.0
 ## Edifici piccoli in piazza (1x1).
 const SMALL := {"bacheca": Vector2i(24, 20), "caldarroste": Vector2i(20, 22)}
 ## Auto d'epoca: parcheggiate fuori dalla porta e qualcuna in salita.
@@ -117,15 +126,15 @@ func _build() -> void:
 			match t:
 				"o":
 					if (x + y) % 2 == 0:
-						_trees.append([Vector2(cell) + Vector2(0.5, 0.6) + jit, "ulivo_albero_c", 0.9])
+						_trees.append([Vector2(cell) + Vector2(0.5, 0.6) + jit, OLIVE, 0.9])
 				"b":
-					_trees.append([Vector2(cell) + Vector2(0.5, 0.5) + jit * 3.0, "cipresso" if r < 22 else "albero", 0.8 + r * 0.006])
+					_trees.append([Vector2(cell) + Vector2(0.5, 0.5) + jit * 3.0, "cipresso" if r < 22 else ("pino" if r % 3 == 0 else "quercia"), 0.8 + r * 0.006])
 				" ":
 					if r < 5 and not _near_building(cell):
 						_trees.append([Vector2(cell) + Vector2(0.5, 0.6), "cipresso", 1.0])
 				".":
 					if r < 30 and not _in_lot(cell):
-						_trees.append([Vector2(cell) + Vector2(0.5, 0.6), "ulivo_albero_c" if r < 12 else "cipresso", 0.9])
+						_trees.append([Vector2(cell) + Vector2(0.5, 0.6), OLIVE if r < 12 else "cipresso", 0.9])
 	# percorsi: solo vie e piazza, senza attraversare edifici e fontana
 	_astar.region = Rect2i(Vector2i.ZERO, SIZE)
 	_astar.cell_size = Vector2.ONE
@@ -431,11 +440,11 @@ func _draw_objects() -> void:
 			"bike":
 				_draw_bike(world(it["p"]))
 			"tree":
-				if it["sprite"] == "albero":
+				if it["sprite"] == "albero" or Sprites.tex(it["sprite"]) == null:
 					_draw_tree(world(it["p"]), it["s"], it["p"])
 				else:
-					var w: float = (40.0 if it["sprite"] == "cipresso" else 76.0) * it["s"]
-					Sprites.draw(_ci, it["sprite"], world(it["p"]), w, 0.05)
+					var w: float = TREE_WIDTHS.get(it["sprite"], 76.0) * it["s"]
+					Sprites.draw(_ci, it["sprite"], world(it["p"]), w, 0.03)
 			"fountain":
 				_draw_fountain()
 			"farmer":
@@ -663,6 +672,11 @@ func _draw_car(p: Vector2, body: Color) -> void:
 	_ci.draw_set_transform(foot, 0.0, Vector2(1.0, 0.45))
 	_ci.draw_circle(Vector2(0, 4), 30.0, Color(0.18, 0.12, 0.05, 0.25))
 	_ci.draw_set_transform(Vector2.ZERO)
+	# auto illustrata: una delle tre, sempre la stessa per lo stesso posto
+	var sprite: String = CAR_SPRITES[posmod(hash(p), CAR_SPRITES.size())]
+	if Sprites.tex(sprite) != null:
+		Sprites.draw(_ci, sprite, foot + Vector2(0, 6), CAR_W, 0.0, posmod(hash(p) / 7, 2) == 0)
+		return
 	_ci.draw_rect(Rect2(foot + Vector2(-26, -20), Vector2(52, 14)), body)
 	_ci.draw_circle(foot + Vector2(-6, -22), 14.0, body)
 	_ci.draw_rect(Rect2(foot + Vector2(-14, -31), Vector2(16, 9)), Color("a9cfe0"))
@@ -674,6 +688,10 @@ func _draw_car(p: Vector2, body: Color) -> void:
 
 
 func _draw_bike(p: Vector2) -> void:
+	var sprite: String = BIKE_SPRITES[posmod(hash(p), BIKE_SPRITES.size())]
+	if Sprites.tex(sprite) != null:
+		Sprites.draw(_ci, sprite, p + Vector2(0, 3), BIKE_W, 0.0, posmod(hash(p) / 5, 2) == 0)
+		return
 	var col := Color("2f6d8a")
 	for x in [-11.0, 11.0]:
 		_ci.draw_arc(p + Vector2(x, -8), 8.0, 0.0, TAU, 18, Color("2e2a26"), 2.0)

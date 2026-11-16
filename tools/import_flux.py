@@ -8,6 +8,10 @@ Ogni file si chiama come l'asset (vedi docs/asset_prompts.md), per esempio
 grano_2.png, mulino_restaurato.png, tex_grass.png, icon_coin.png. Lo script:
 
   - copia l'originale in assets/graphics/source/flux/ (resta la sorgente);
+  - slab_*     mattonella già disegnata in isometria, con lo spessore (per
+               esempio slab_soil): la faccia di sopra va sul rombo del gioco
+               -> assets/graphics/tiles/<nome del gioco>.png (slab_soil fa
+               anche soil_wet, più scura)
   - tex_*      texture quadrate viste dall'alto: le rende ripetibili senza
                giunture e le piega nel rombo 2:1 della griglia
                -> assets/graphics/tiles/<nome del gioco>.png
@@ -51,7 +55,18 @@ TEXTURES = {
     "tex_dirt": "dirt", "tex_sand": "bank", "tex_cobbles": "cobbles", "tex_water": "water",
     "tex_road": "road", "tex_road_puddles": "road_puddles", "tex_road_flowers": "road_flowers",
 }
+## mattonelle già isometriche con lo spessore (slab_*) -> mattonella del gioco
+BLOCK_SIDE = 18     ## altezza dei fianchi del blocco in rilievo (pixel, a doppia risoluzione)
+SLAB_INSET = 0.9    ## quanto della faccia di sopra si tiene (il bordo della lastra è più scuro)
+SLAB_TILES = {"slab_soil": "soil", "slab_grass": "grass", "slab_dirt": "dirt", "slab_cobbles": "cobbles"}
 TOL = 38.0
+## sfondo magenta: la quota di disegno di un pixel è 1 - magentità/magentità
+## dello sfondo; sotto CHROMA_CUT è sfondo, e la trasparenza del bordo si
+## rinforza di CHROMA_GAIN (bordi netti come nel disegno)
+CHROMA_CUT = 0.35
+CHROMA_PURITY = 0.85  ## un pixel magenta puro almeno per questa frazione dello sfondo è sfondo
+CHROMA_GAIN = 1.6
+CHROMA_RIM = 3      ## pixel di bordo in cui si ricalcola la tinta
 
 
 def crops():
@@ -66,6 +81,80 @@ def crops():
 
 # --- sfondo -------------------------------------------------------------------
 
+def is_chroma(bg: np.ndarray) -> bool:
+    """Sfondo magenta (chroma key): rosso e blu alti, verde basso."""
+    r, g, b = bg
+    return r > 150 and b > 150 and g < 90
+
+
+def remove_chroma(img: Image.Image) -> Image.Image:
+    """Toglie uno sfondo magenta. Il magenta non c'è mai nei disegni, quindi si
+    toglie dappertutto, anche nei buchi tra le foglie. La trasparenza dipende da
+    quanto il pixel è magenta (bordi morbidi), e dai bordi si toglie il riflesso
+    rosa: il colore misto pianta-magenta torna quello della pianta."""
+    rgb = np.asarray(img.convert("RGB")).astype(float)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    # "magentità": quanto rosso e blu superano il verde (0 sul disegno, ~200 sullo sfondo)
+    m = np.clip(np.minimum(r, b) - g, 0.0, None)
+    h, w, _ = rgb.shape
+    bg_m = float(np.median(np.array([m[3, 3], m[3, w - 4], m[h - 4, 3], m[h - 4, w - 4]])))
+    bg = np.median(np.array([rgb[3, 3], rgb[3, w - 4], rgb[h - 4, 3], rgb[h - 4, w - 4]]), axis=0)
+    # quota di disegno nel pixel: dalla purezza del magenta (quanto del colore è
+    # magenta), non dalla luminosità: così anche le ombre e le macchie scure
+    # sullo sfondo (magenta più scuro) spariscono; le ombre le disegna il gioco
+    purity = m / np.maximum(np.maximum(r, b), 1.0)
+    bg_p = float(np.median(np.array([purity[3, 3], purity[3, w - 4], purity[h - 4, 3], purity[h - 4, w - 4]])))
+    a = np.clip(1.0 - purity / (bg_p * CHROMA_PURITY), 0.0, 1.0)
+    a[a < CHROMA_CUT] = 0.0
+    # colore del disegno senza la quota di sfondo: c = a * disegno + (1 - a) * sfondo
+    am = np.maximum(a, 1e-3)[..., None]
+    # lo sfondo dietro il pixel può essere in ombra: magenta scurito quanto il pixel
+    shade = np.clip(np.maximum(r, b) / max(float(bg.max()), 1.0), 0.15, 1.0)[..., None]
+    color = np.clip((rgb - (1.0 - am) * bg * shade) / am, 0, 255)
+    alpha = np.clip(a * CHROMA_GAIN, 0.0, 1.0)
+    color = _decontaminate(color, alpha)
+    out = np.dstack([color, alpha * 255.0]).astype(np.uint8)
+    res = Image.fromarray(out, "RGBA")
+    sys.path.insert(0, str(ROOT / "tools"))
+    from cut_sprites import keep_main  # noqa: E402
+    res = keep_main(res, 0.02)
+    bbox = res.getchannel("A").point(lambda v: 255 if v > 10 else 0).getbbox()
+    return res.crop(bbox) if bbox else res
+
+
+def _decontaminate(color: np.ndarray, alpha: np.ndarray) -> np.ndarray:
+    """Bordo senza alone: il JPEG salva il colore a metà risoluzione, quindi il
+    magenta sbava per qualche pixel dentro il disegno. Sul bordo (CHROMA_RIM
+    pixel dal trasparente) si tiene la luminosità del pixel (il contorno scuro
+    resta) e si prende la tinta dal disegno subito all'interno."""
+    solid = alpha >= 0.999
+    inner = np.asarray(Image.fromarray(solid.astype(np.uint8) * 255).filter(
+        ImageFilter.MinFilter(2 * CHROMA_RIM + 1))) > 0
+    rim = (alpha > 0) & ~inner
+    if not inner.any() or not rim.any():
+        return color
+    # si allarga la tinta dell'interno verso il bordo, un pixel alla volta
+    known = inner.copy()
+    tint = np.where(inner[..., None], color, 0.0)
+    for _ in range(CHROMA_RIM * 2 + 2):
+        acc = np.zeros_like(tint)
+        cnt = np.zeros(known.shape)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                acc += np.roll(np.roll(tint * known[..., None], dy, 0), dx, 1)
+                cnt += np.roll(np.roll(known, dy, 0), dx, 1)
+        new = (cnt > 0) & ~known
+        tint[new] = acc[new] / cnt[new][:, None]
+        known |= new
+    lum = lambda c: c @ np.array([0.299, 0.587, 0.114])
+    k = (lum(color) / np.maximum(lum(tint), 1.0))[..., None]
+    fixed = np.clip(tint * k, 0, 255)
+    out = color.copy()
+    sel = rim & known
+    out[sel] = fixed[sel]
+    return out
+
+
 def remove_background(img: Image.Image, tol: float = TOL) -> Image.Image:
     # già trasparente (per esempio tolto in ComfyUI): basta ritagliare
     if img.mode in ("RGBA", "LA") or "transparency" in img.info:
@@ -78,6 +167,8 @@ def remove_background(img: Image.Image, tol: float = TOL) -> Image.Image:
     h, w, _ = rgb.shape
     corners = np.array([rgb[3, 3], rgb[3, w - 4], rgb[h - 4, 3], rgb[h - 4, w - 4]])
     bg = np.median(corners, axis=0)
+    if is_chroma(bg):
+        return remove_chroma(img)
     near = np.sqrt(((rgb - bg) ** 2).sum(axis=2)) < tol
     mask = Image.fromarray(np.where(near, 255, 0).astype(np.uint8), "L").copy()
     for x in range(0, w, 5):
@@ -115,6 +206,85 @@ def make_seamless(img: Image.Image) -> Image.Image:
     return Image.fromarray(out.astype(np.uint8), "RGB")
 
 
+def slab_to_tile(cut: Image.Image) -> Image.Image:
+    """Faccia superiore di una mattonella isometrica con lo spessore (una lastra
+    vista dall'alto) sul rombo del gioco. Vertici: sinistro e destro agli
+    estremi in orizzontale (in cima alla colonna dello spessore), superiore in
+    alto; l'affinità porta questi tre punti sul rombo 2:1."""
+    a = np.asarray(cut)[..., 3] > 128
+    ys, xs = np.nonzero(a)
+    lx, rx = int(xs.min()), int(xs.max())
+    ly = float(np.nonzero(a[:, min(lx + 3, a.shape[1] - 1)])[0].min())
+    ry = float(np.nonzero(a[:, max(rx - 3, 0)])[0].min())
+    ty = float(ys.min())
+    tx = float(np.median(xs[ys <= ty + 2]))
+    side_y = (ly + ry) / 2.0
+    cx = (lx + rx) / 2.0
+    k = SLAB_INSET   # verso l'interno: si lascia fuori il bordo arrotondato della lastra
+    src = np.array([[cx + (tx - cx) * k, side_y + (ty - side_y) * k],
+                    [cx + (lx - cx) * k, side_y], [cx + (rx - cx) * k, side_y]], dtype=float)
+    dst = np.array([[TILE_W / 2, 0], [0, TILE_H / 2], [TILE_W, TILE_H / 2]], dtype=float)
+    m = np.linalg.solve(np.c_[dst, np.ones(3)], src)
+    coeffs = (m[0, 0], m[1, 0], m[2, 0], m[0, 1], m[1, 1], m[2, 1])
+    out = cut.convert("RGBA").transform((TILE_W, TILE_H), Image.AFFINE, coeffs, resample=Image.BICUBIC)
+    mask = Image.new("L", (TILE_W, TILE_H), 0)
+    ImageDraw.Draw(mask).polygon([(TILE_W / 2, 0), (TILE_W, TILE_H / 2), (TILE_W / 2, TILE_H), (0, TILE_H / 2)], fill=255)
+    out.putalpha(mask)
+    return out
+
+
+def _slab_vertices(cut: Image.Image) -> tuple:
+    """Vertici della faccia di sopra (sinistro, destro, superiore, inferiore) e
+    spessore della lastra, misurato sulla colonna del vertice sinistro."""
+    a = np.asarray(cut)[..., 3] > 128
+    ys, xs = np.nonzero(a)
+    lx, rx = int(xs.min()), int(xs.max())
+    colL = np.nonzero(a[:, min(lx + 3, a.shape[1] - 1)])[0]
+    colR = np.nonzero(a[:, max(rx - 3, 0)])[0]
+    ly, ry = float(colL.min()), float(colR.min())
+    thick = float(((colL.max() - colL.min()) + (colR.max() - colR.min())) / 2.0)
+    ty = float(ys.min())
+    tx = float(np.median(xs[ys <= ty + 2]))
+    side_y = (ly + ry) / 2.0
+    by = 2.0 * side_y - ty
+    return (lx, side_y), (rx, side_y), (tx, ty), (tx, by), thick
+
+
+def _affine(img: Image.Image, src: list, dst: list, size: tuple) -> Image.Image:
+    """Porta tre punti di img (src) su tre punti della tela (dst)."""
+    m = np.linalg.solve(np.c_[np.array(dst, dtype=float), np.ones(3)], np.array(src, dtype=float))
+    coeffs = (m[0, 0], m[1, 0], m[2, 0], m[0, 1], m[1, 1], m[2, 1])
+    return img.convert("RGBA").transform(size, Image.AFFINE, coeffs, resample=Image.BICUBIC)
+
+
+def slab_to_block(cut: Image.Image) -> Image.Image:
+    """Blocco in rilievo per il gioco: la faccia di sopra sul rombo 2:1 (col bordo
+    arrotondato della lastra, che dà il volume) e sotto i due fianchi, alti
+    BLOCK_SIDE, presi dallo spessore disegnato e allungati. Tela TILE_W x
+    (TILE_H + BLOCK_SIDE): in alto il rombo, in basso i fianchi."""
+    (lx, sy), (rx, _), (tx, ty), (bx, by), thick = _slab_vertices(cut)
+    W, H, S = TILE_W, TILE_H, BLOCK_SIDE
+    size = (W, H + S)
+    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    # fianchi: sorgente = striscia dello spessore sotto i lati davanti
+    t = max(thick - 2.0, 4.0)
+    left = _affine(cut, [(lx, sy), (bx, by), (lx, sy + t)], [(0, H / 2), (W / 2, H), (0, H / 2 + S)], size)
+    right = _affine(cut, [(bx, by), (rx, sy), (bx, by + t)], [(W / 2, H), (W, H / 2), (W / 2, H + S)], size)
+    for face, poly, shade in ((left, [(0, H / 2), (W / 2, H), (W / 2, H + S), (0, H / 2 + S)], 0.92),
+                              (right, [(W / 2, H), (W, H / 2), (W, H / 2 + S), (W / 2, H + S)], 0.78)):
+        mask = Image.new("L", size, 0)
+        ImageDraw.Draw(mask).polygon(poly, fill=255)
+        arr = np.asarray(face).astype(float)
+        arr[..., :3] *= shade         # luce da sinistra: il fianco destro è più scuro
+        face = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA")
+        canvas.paste(face, (0, 0), mask)
+    top = _affine(cut, [(tx, ty), (lx, sy), (rx, sy)], [(W / 2, 0), (0, H / 2), (W, H / 2)], size)
+    mask = Image.new("L", size, 0)
+    ImageDraw.Draw(mask).polygon([(W / 2, 0), (W, H / 2), (W / 2, H), (0, H / 2)], fill=255)
+    canvas.paste(top, (0, 0), mask)
+    return canvas
+
+
 def square_to_tile(img: Image.Image) -> Image.Image:
     """Piega un quadrato visto dall'alto nel rombo 2:1 del gioco (240x120)."""
     s = min(img.size)
@@ -138,6 +308,22 @@ def import_one(path: Path, crop_kinds: dict, plants: dict) -> str:
     img = Image.open(path)
     FLUX.mkdir(parents=True, exist_ok=True)
     shutil.copy(path, FLUX / f"{name}{path.suffix.lower()}")
+    if name in SLAB_TILES:
+        # mattonella già disegnata in isometria (su magenta), con lo spessore sotto
+        cut = remove_background(img)
+        tile = slab_to_tile(cut)
+        tile.save(TILES / f"{SLAB_TILES[name]}.png")
+        msg = f"mattonella {SLAB_TILES[name]}"
+        block = slab_to_block(cut)
+        block.save(TILES / f"{SLAB_TILES[name]}_block.png")
+        msg += f" e blocco in rilievo {SLAB_TILES[name]}_block"
+        if SLAB_TILES[name] == "soil":
+            for src, dst in ((tile, "soil_wet"), (block, "soil_wet_block")):
+                wet = np.asarray(src).astype(float)
+                wet[..., :3] *= np.array([0.72, 0.68, 0.70])
+                Image.fromarray(wet.astype(np.uint8), "RGBA").save(TILES / f"{dst}.png")
+            msg += " (e la versione bagnata, più scura)"
+        return msg
     if name in TEXTURES:
         tile = square_to_tile(make_seamless(img))
         tile.save(TILES / f"{TEXTURES[name]}.png")

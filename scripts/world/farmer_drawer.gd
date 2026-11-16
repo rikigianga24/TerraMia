@@ -7,15 +7,85 @@ const WOOD := Color("9a6a3e")
 const SHADOW := Color(0.18, 0.12, 0.05, 0.28)
 
 
+const FRAMES := "contadino"     ## animazioni a fotogrammi (AnimalFrames)
+const FRAMES_H := 62.0          ## altezza in pixel del contadino in piedi
+const WALK_FPS := 11.0
+const HOE_PERIOD := 1.1         ## secondi di una zappata
 const SPRITE := "contadino"
 const SPRITE_W := 44.0
 
 
 static func draw(ci: CanvasItem, p: Vector2, clock: float, walking: bool, action: String, flip: bool, action_t := 0.0) -> void:
+	if AnimalFrames.has(FRAMES, "cammina"):
+		_draw_frames(ci, p, clock, walking, action, flip, action_t)
+		return
 	if Sprites.tex(SPRITE) != null:
 		_draw_sprite(ci, p, clock, walking, action, flip, action_t)
 		return
 	_draw_shapes(ci, p, clock, walking, action, flip, action_t)
+
+
+## Contadino a fotogrammi (assets/graphics/animals/contadino, da
+## tools/import_frames.py): cammina, zappa (ciclo continuo finché c'è da
+## zappare) e semina (un lancio per azione). Per annaffiare e raccogliere non ci
+## sono fotogrammi: sta in piedi e gli effetti (annaffiatoio, gocce, chinarsi)
+## si disegnano da codice. I disegni guardano in basso a destra; verso
+## sinistra si specchiano.
+static func _draw_frames(ci: CanvasItem, p: Vector2, clock: float, walking: bool, action: String, flip: bool, action_t: float) -> void:
+	var dir := -1.0 if flip else 1.0
+	ci.draw_set_transform(p + Vector2(0, 2), 0.0, Vector2(1.0, 0.45))
+	ci.draw_circle(Vector2.ZERO, 16.0, SHADOW)
+	ci.draw_set_transform(Vector2.ZERO)
+	var ref := AnimalFrames.scale_of(FRAMES, "cammina")
+	var anim := "cammina"
+	var frame := 0
+	var squash := 1.0
+	if walking:
+		frame = int(clock * WALK_FPS)
+	else:
+		match action:
+			"hoe":
+				anim = "zappa"
+				# ciclo senza i due fotogrammi fermi iniziali: 2..6 e di nuovo
+				var n := 5
+				frame = 2 + int(fmod(clock, HOE_PERIOD) / HOE_PERIOD * n)
+			"sow":
+				anim = "semina"
+				frame = int(clampf(action_t, 0.0, 0.999) * 7.0)
+			"water":
+				_draw_watering(ci, p, dir, action_t)
+			"pick":
+				squash = 1.0 - sin(clampf(action_t, 0.0, 1.0) * PI) * 0.12
+	if squash < 1.0:
+		ci.draw_set_transform(p, 0.0, Vector2(1.0, squash))
+		AnimalFrames.draw(ci, FRAMES, anim, frame, Vector2.ZERO, FRAMES_H, ref, flip)
+		ci.draw_set_transform(Vector2.ZERO)
+	else:
+		AnimalFrames.draw(ci, FRAMES, anim, frame, p, FRAMES_H, ref, flip)
+	if action == "sow":
+		_draw_seeds(ci, p, dir, action_t)
+
+
+static func _draw_watering(ci: CanvasItem, p: Vector2, dir: float, action_t: float) -> void:
+	var spout := p + Vector2(30 * dir, -30)
+	ci.draw_line(p + Vector2(14 * dir, -28), spout + Vector2(-4 * dir, 4), Color("3fa36b"), 9.0)
+	ci.draw_line(spout + Vector2(-4 * dir, 4), spout + Vector2(8 * dir, 0), Color("2f8556"), 3.0)
+	for i in 5:
+		var f := fposmod(action_t * 3.0 + i * 0.2, 1.0)
+		ci.draw_circle(spout + Vector2((10 + i % 3 * 3) * dir, f * 28.0), 1.8, Color("6cc4ef"))
+
+
+## Semi lanciati: partono dalla mano quando il braccio si apre (fotogramma 3).
+static func _draw_seeds(ci: CanvasItem, p: Vector2, dir: float, action_t: float) -> void:
+	var t := clampf((action_t - 0.4) / 0.6, 0.0, 1.0)
+	if t <= 0.0:
+		return
+	for i in 6:
+		var k := float(i) / 5.0
+		var fall := t * 1.5 - k * 0.4
+		if fall <= 0.0 or fall >= 1.0:
+			continue     # ancora in mano, o già a terra
+		ci.draw_circle(p + Vector2((26 + k * 18.0) * dir, -38 + fall * 36.0), 1.8, Color("8a5a2b"))
 
 
 ## Contadino illustrato (foglio C): saltella camminando, si china zappando
