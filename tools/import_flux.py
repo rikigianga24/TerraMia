@@ -52,6 +52,12 @@ TEXTURES = {
     "tex_road": "road", "tex_road_puddles": "road_puddles", "tex_road_flowers": "road_flowers",
 }
 TOL = 38.0
+## sfondo magenta: la quota di disegno di un pixel è 1 - magentità/magentità
+## dello sfondo; sotto CHROMA_CUT è sfondo, e la trasparenza del bordo si
+## rinforza di CHROMA_GAIN (bordi netti come nel disegno)
+CHROMA_CUT = 0.12
+CHROMA_GAIN = 1.25
+CHROMA_RIM = 3      ## pixel di bordo in cui si ricalcola la tinta
 
 
 def crops():
@@ -66,6 +72,74 @@ def crops():
 
 # --- sfondo -------------------------------------------------------------------
 
+def is_chroma(bg: np.ndarray) -> bool:
+    """Sfondo magenta (chroma key): rosso e blu alti, verde basso."""
+    r, g, b = bg
+    return r > 150 and b > 150 and g < 90
+
+
+def remove_chroma(img: Image.Image) -> Image.Image:
+    """Toglie uno sfondo magenta. Il magenta non c'è mai nei disegni, quindi si
+    toglie dappertutto, anche nei buchi tra le foglie. La trasparenza dipende da
+    quanto il pixel è magenta (bordi morbidi), e dai bordi si toglie il riflesso
+    rosa: il colore misto pianta-magenta torna quello della pianta."""
+    rgb = np.asarray(img.convert("RGB")).astype(float)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    # "magentità": quanto rosso e blu superano il verde (0 sul disegno, ~200 sullo sfondo)
+    m = np.clip(np.minimum(r, b) - g, 0.0, None)
+    h, w, _ = rgb.shape
+    bg_m = float(np.median(np.array([m[3, 3], m[3, w - 4], m[h - 4, 3], m[h - 4, w - 4]])))
+    bg = np.median(np.array([rgb[3, 3], rgb[3, w - 4], rgb[h - 4, 3], rgb[h - 4, w - 4]]), axis=0)
+    # quota di disegno nel pixel: 1 dove non c'è magenta, 0 sullo sfondo
+    a = np.clip(1.0 - m / bg_m, 0.0, 1.0)
+    a[a < CHROMA_CUT] = 0.0
+    # colore del disegno senza la quota di sfondo: c = a * disegno + (1 - a) * sfondo
+    am = np.maximum(a, 1e-3)[..., None]
+    color = np.clip((rgb - (1.0 - am) * bg) / am, 0, 255)
+    alpha = np.clip(a * CHROMA_GAIN, 0.0, 1.0)
+    color = _decontaminate(color, alpha)
+    out = np.dstack([color, alpha * 255.0]).astype(np.uint8)
+    res = Image.fromarray(out, "RGBA")
+    sys.path.insert(0, str(ROOT / "tools"))
+    from cut_sprites import keep_main  # noqa: E402
+    res = keep_main(res, 0.02)
+    bbox = res.getchannel("A").point(lambda v: 255 if v > 10 else 0).getbbox()
+    return res.crop(bbox) if bbox else res
+
+
+def _decontaminate(color: np.ndarray, alpha: np.ndarray) -> np.ndarray:
+    """Bordo senza alone: il JPEG salva il colore a metà risoluzione, quindi il
+    magenta sbava per qualche pixel dentro il disegno. Sul bordo (CHROMA_RIM
+    pixel dal trasparente) si tiene la luminosità del pixel (il contorno scuro
+    resta) e si prende la tinta dal disegno subito all'interno."""
+    solid = alpha >= 0.999
+    inner = np.asarray(Image.fromarray(solid.astype(np.uint8) * 255).filter(
+        ImageFilter.MinFilter(2 * CHROMA_RIM + 1))) > 0
+    rim = (alpha > 0) & ~inner
+    if not inner.any() or not rim.any():
+        return color
+    # si allarga la tinta dell'interno verso il bordo, un pixel alla volta
+    known = inner.copy()
+    tint = np.where(inner[..., None], color, 0.0)
+    for _ in range(CHROMA_RIM * 2 + 2):
+        acc = np.zeros_like(tint)
+        cnt = np.zeros(known.shape)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                acc += np.roll(np.roll(tint * known[..., None], dy, 0), dx, 1)
+                cnt += np.roll(np.roll(known, dy, 0), dx, 1)
+        new = (cnt > 0) & ~known
+        tint[new] = acc[new] / cnt[new][:, None]
+        known |= new
+    lum = lambda c: c @ np.array([0.299, 0.587, 0.114])
+    k = (lum(color) / np.maximum(lum(tint), 1.0))[..., None]
+    fixed = np.clip(tint * k, 0, 255)
+    out = color.copy()
+    sel = rim & known
+    out[sel] = fixed[sel]
+    return out
+
+
 def remove_background(img: Image.Image, tol: float = TOL) -> Image.Image:
     # già trasparente (per esempio tolto in ComfyUI): basta ritagliare
     if img.mode in ("RGBA", "LA") or "transparency" in img.info:
@@ -78,6 +152,8 @@ def remove_background(img: Image.Image, tol: float = TOL) -> Image.Image:
     h, w, _ = rgb.shape
     corners = np.array([rgb[3, 3], rgb[3, w - 4], rgb[h - 4, 3], rgb[h - 4, w - 4]])
     bg = np.median(corners, axis=0)
+    if is_chroma(bg):
+        return remove_chroma(img)
     near = np.sqrt(((rgb - bg) ** 2).sum(axis=2)) < tol
     mask = Image.fromarray(np.where(near, 255, 0).astype(np.uint8), "L").copy()
     for x in range(0, w, 5):

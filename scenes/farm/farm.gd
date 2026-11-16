@@ -802,8 +802,8 @@ func _draw_tree_decor(t: Dictionary) -> void:
 	var p := cell_to_local(c) + Vector2(0, TILE_H * 0.5)
 	var s: float = t.get("s", 1.0)
 	# illustrati, se ci sono gli sprite; altrimenti disegnati da codice
-	var illustrated := {"tree": ["ulivo_albero_c"], "cypress": ["cipresso", "cipressi_coppia"], "bush": ["cespuglio_fiori"], "hay": ["balle_fieno"]}
-	var widths := {"tree": 92.0, "cypress": 40.0, "bush": 64.0, "hay": 78.0}
+	var illustrated := {"tree": ["quercia", "pino", "quercia"], "cypress": ["cipresso"], "bush": ["cespuglio_fiori"], "hay": ["balle_fieno"]}
+	var widths := {"tree": 110.0, "cypress": 44.0, "bush": 64.0, "hay": 78.0}
 	if t["kind"] == "sprite":
 		Sprites.draw(self, t["name"], p, t["w"], 0.04)
 		return
