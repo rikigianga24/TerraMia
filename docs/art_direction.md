@@ -97,11 +97,13 @@ mostra l'ultimo stadio quando la pianta è pronta e divide gli altri sulla cresc
 | `piante_6.jpg` | patata, melanzana, aglio (`--secca`) |
 | `piante_7.jpg` | zucchina, cipolla, carciofo (`--secca`) |
 | `piante_8.jpg` | carota, basilico, fragola (`--secca`) |
+| `pomodoro.png` | pomodoro (`--secca`; sfondo marrone, convertito dal webp) |
+| `grano.jpg` | grano (`--secca`) |
 | `alberi_1.jpg` | vite, ciliegio, castagno (`--secca --larghezza 1.3 --cancella 0,300,2000,350`: via le scritte) |
 | `alberi_2.jpg` | ulivo, nocciolo, fico (`--secca --larghezza 1.3`) |
 | `piante_9.jpg` | anguria, zafferano (`--secca --cancella 0,470,2000,532 --cancella 0,980,2000,1040`) |
 | `alberi_vite_pergola.jpg` | vite a pergola (una riga, non importata: variante della vite di `alberi_1`) |
-| `piante_1.jpg` … `piante_4.jpg` | fogli precedenti (sfondo grigio, senza la pianta secca): da lì vengono ancora finocchio, pomodoro e grano (`piante_1.jpg peperoncino rucola fagioli finocchio --riga 1200,190=0 --riga 630,450=2 --riga 890,450=2`, `piante_4.jpg pomodoro grano - basilico`); vanno importati **prima** dei fogli nuovi, che sovrascrivono le colture in comune |
+| `piante_1.jpg` … `piante_4.jpg` | fogli precedenti (sfondo grigio, senza la pianta secca): da lì viene ancora il finocchio (`piante_1.jpg peperoncino rucola fagioli finocchio --riga 1200,190=0 --riga 630,450=2 --riga 890,450=2`, `piante_4.jpg pomodoro grano - basilico`); vanno importati **prima** dei fogli nuovi, che sovrascrivono le colture in comune |
 
 I fogli nuovi (5-8) hanno sfondo bianco, l'ombra morbida sotto la pianta e
 nell'ultima colonna la pianta secca: con `--secca` diventa

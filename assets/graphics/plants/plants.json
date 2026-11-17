@@ -3,112 +3,58 @@
     {
       "file": "res://assets/graphics/sprites/pianta_grano_0.png",
       "anchor": [
-        14.5,
-        66.6
+        61.5,
+        191.0
       ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
+      "tile_w": 710.0,
+      "sheet": "grano.jpg"
     },
     {
       "file": "res://assets/graphics/sprites/pianta_grano_1.png",
       "anchor": [
-        31.0,
-        94.1
+        215.5,
+        422.0
       ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
+      "tile_w": 710.0,
+      "sheet": "grano.jpg"
     },
     {
       "file": "res://assets/graphics/sprites/pianta_grano_2.png",
       "anchor": [
-        47.0,
-        129.4
+        283.5,
+        505.5
       ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
-    },
-    {
-      "file": "res://assets/graphics/sprites/pianta_grano_3.png",
-      "anchor": [
-        48.5,
-        171.5
-      ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
-    },
-    {
-      "file": "res://assets/graphics/sprites/pianta_grano_4.png",
-      "anchor": [
-        81.0,
-        167.6
-      ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
-    },
-    {
-      "file": "res://assets/graphics/sprites/pianta_grano_5.png",
-      "anchor": [
-        84.0,
-        171.5
-      ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
+      "tile_w": 710.0,
+      "sheet": "grano.jpg"
     }
   ],
   "pomodoro": [
     {
       "file": "res://assets/graphics/sprites/pianta_pomodoro_0.png",
       "anchor": [
-        27.5,
-        57.8
+        111.0,
+        251.9
       ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
+      "tile_w": 595.0,
+      "sheet": "pomodoro.png"
     },
     {
       "file": "res://assets/graphics/sprites/pianta_pomodoro_1.png",
       "anchor": [
-        65.5,
-        114.7
+        206.5,
+        555.7
       ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
+      "tile_w": 595.0,
+      "sheet": "pomodoro.png"
     },
     {
       "file": "res://assets/graphics/sprites/pianta_pomodoro_2.png",
       "anchor": [
-        71.5,
-        149.0
+        238.5,
+        659.5
       ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
-    },
-    {
-      "file": "res://assets/graphics/sprites/pianta_pomodoro_3.png",
-      "anchor": [
-        71.0,
-        164.6
-      ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
-    },
-    {
-      "file": "res://assets/graphics/sprites/pianta_pomodoro_4.png",
-      "anchor": [
-        72.0,
-        165.6
-      ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
-    },
-    {
-      "file": "res://assets/graphics/sprites/pianta_pomodoro_5.png",
-      "anchor": [
-        89.0,
-        172.5
-      ],
-      "tile_w": 218.1,
-      "sheet": "piante_4.jpg"
+      "tile_w": 595.0,
+      "sheet": "pomodoro.png"
     }
   ],
   "ulivo": [
